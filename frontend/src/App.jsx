@@ -10,6 +10,9 @@ import LichTauPage from '@/pages/admin/LichTauPage';
 import ContainerPage from '@/pages/admin/ContainerPage';
 import TaiKhoanPage from '@/pages/admin/TaiKhoanPage';
 import CongXuatNhapPage from '@/pages/admin/CongXuatNhapPage';
+import DashboardPage from '@/pages/admin/DashboardPage';
+import SoDoBaiPage from '@/pages/admin/SoDoBaiPage';
+import BaoCaoPage from '@/pages/admin/BaoCaoPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,9 +63,11 @@ export default function App() {
             <Route path="container" element={<ContainerPage />} />
             <Route path="tai-khoan" element={<TaiKhoanPage />} />
             <Route path="cong" element={<CongXuatNhapPage />} />
+            <Route path="so-do-bai" element={<SoDoBaiPage />} />
+            <Route path="bao-cao"   element={<BaoCaoPage />} />
             <Route path="hang-tau" element={<HangTauPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<div style={{padding:20}}>Dashboard coming soon</div>} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="loai-container" element={<LoaiContainerPage />} />
           </Route>
           <Route path="/customer/*" element={

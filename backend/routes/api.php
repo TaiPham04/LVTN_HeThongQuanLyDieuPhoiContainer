@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\ChuyenTauController;
+use App\Http\Controllers\Admin\BaoCaoController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SoDoBaiController;
 use App\Http\Controllers\Admin\ContainerController;
 use App\Http\Controllers\Admin\HangTauController;
 use App\Http\Controllers\Admin\KhuVucBaiController;
@@ -29,6 +32,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── ADMIN only ───────────────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+
+        // Dashboard
+        Route::get('dashboard', [DashboardController::class, 'index']);
+
+        // Báo cáo
+        Route::get('bao-cao/xuat-nhap', [BaoCaoController::class, 'xuatNhap']);
+        Route::get('bao-cao/container', [BaoCaoController::class, 'container']);
+        Route::get('bao-cao/hang-tau',  [BaoCaoController::class, 'hangTau']);
+
+        // Sơ đồ bãi
+        Route::get('so-do-bai',             [SoDoBaiController::class, 'index']);
+        Route::get('so-do-bai/{khuvucbai}', [SoDoBaiController::class, 'show']);
 
         // Loại container
         Route::get('loai-container',                            [LoaiContainerController::class, 'index']);

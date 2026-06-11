@@ -273,9 +273,15 @@ export default function ContainerPage() {
       <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có container nào" />
 
       {/* Phân trang */}
-      {meta.last_page > 1 && (
-        <Pagination current={meta.current_page} total={meta.last_page} onChange={setTrang} />
-      )}
+      <Pagination
+        meta={{
+          trang_hien: meta.current_page,
+          tong_trang: meta.last_page,
+          tong:       meta.total,
+          per_page:   meta.per_page,
+        }}
+        onChange={setTrang}
+      />
 
       {/* ── Modal Thêm / Sửa ── */}
       <Modal
