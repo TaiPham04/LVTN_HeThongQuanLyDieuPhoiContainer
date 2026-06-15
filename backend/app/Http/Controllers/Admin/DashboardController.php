@@ -22,7 +22,7 @@ class DashboardController extends Controller
                 SUM(trangthai = 'dangky')                                AS dang_ky,
                 SUM(trangthai = 'xuatcong')                              AS xuat_cong,
                 SUM(bi_hong = 1)                                         AS bi_hong,
-                SUM(trangthai_haiquan IN ('choxuly','dangxuly'))         AS cho_haiquan
+                SUM(trangthai_haiquan IN ('luong_vang','luong_do'))      AS cho_haiquan
             ")
             ->first();
 

@@ -42,8 +42,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('bao-cao/hang-tau',  [BaoCaoController::class, 'hangTau']);
 
         // Sơ đồ bãi
-        Route::get('so-do-bai',             [SoDoBaiController::class, 'index']);
-        Route::get('so-do-bai/{khuvucbai}', [SoDoBaiController::class, 'show']);
+        Route::get('so-do-bai/cho-gan-vitri',                      [SoDoBaiController::class, 'choGanViTri']);
+        Route::get('so-do-bai/goi-y-vitri/{container}',           [SoDoBaiController::class, 'goiYViTri']);
+        Route::post('so-do-bai/gan-vitri',                        [SoDoBaiController::class, 'ganVitri']);
+        Route::get('so-do-bai/goi-y-daochuyen/{obai}',           [SoDoBaiController::class, 'goiYDaoChuyen']);
+        Route::post('so-do-bai/daochuyen',                        [SoDoBaiController::class, 'daoChuyen']);
+        Route::get('so-do-bai',                                   [SoDoBaiController::class, 'index']);
+        Route::get('so-do-bai/{khuvucbai}',                       [SoDoBaiController::class, 'show']);
 
         // Loại container
         Route::get('loai-container',                            [LoaiContainerController::class, 'index']);
@@ -104,10 +109,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('tai-khoan/{user}/reset-mat-khau',        [TaiKhoanController::class, 'resetMatKhau']);
 
         // Lịch tàu
-        Route::get('lich-tau',                    [ChuyenTauController::class, 'index']);
-        Route::post('lich-tau',                   [ChuyenTauController::class, 'store']);
-        Route::put('lich-tau/{chuyentau}',        [ChuyenTauController::class, 'update']);
-        Route::delete('lich-tau/{chuyentau}',     [ChuyenTauController::class, 'destroy']);
+        Route::get('lich-tau',                               [ChuyenTauController::class, 'index']);
+        Route::post('lich-tau',                             [ChuyenTauController::class, 'store']);
+        Route::put('lich-tau/{chuyentau}',                 [ChuyenTauController::class, 'update']);
+        Route::patch('lich-tau/{chuyentau}/trang-thai',    [ChuyenTauController::class, 'chuyenTrangThai']);
+        Route::delete('lich-tau/{chuyentau}',              [ChuyenTauController::class, 'destroy']);
     });
 
     // ─── ADMIN + NHANVIEN ─────────────────────────────────────────

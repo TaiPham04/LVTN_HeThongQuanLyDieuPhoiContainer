@@ -13,6 +13,7 @@ import {
   useThemChuyenTau,
   useCapNhatChuyenTau,
   useHuyChuyenTau,
+  useChuyenTrangThai,
 } from '@/hooks/useChuyenTau';
 import { useHangTauList } from '@/hooks/useHangTau';
 
@@ -55,9 +56,10 @@ export default function LichTauPage() {
 
   const { data, isLoading }  = useChuyenTauList({ trang, search, trangthai: filterTT, per_page: 10 });
   const { data: htData }     = useHangTauList({ per_page: 100 });
-  const them    = useThemChuyenTau();
-  const capNhat = useCapNhatChuyenTau();
-  const huy     = useHuyChuyenTau();
+  const them          = useThemChuyenTau();
+  const capNhat       = useCapNhatChuyenTau();
+  const huy           = useHuyChuyenTau();
+  const chuyenTT      = useChuyenTrangThai();
 
   const {
     register, handleSubmit, reset,
@@ -107,9 +109,23 @@ export default function LichTauPage() {
       key: 'actions',
       label: 'Thao tác',
       align: 'center',
-      width: 140,
+      width: 200,
       render: (_, row) => (
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {row.trangthai === 'dalenlich' && (
+            <Button
+              size="sm" variant="warning"
+              disabled={chuyenTT.isPending}
+              onClick={() => chuyenTT.mutate(row.machuyentau)}
+            >Đã đến cảng</Button>
+          )}
+          {row.trangthai === 'dadencan' && (
+            <Button
+              size="sm" variant="success"
+              disabled={chuyenTT.isPending}
+              onClick={() => chuyenTT.mutate(row.machuyentau)}
+            >Đã rời bến</Button>
+          )}
           <Button
             size="sm" variant="ghost"
             onClick={() => openSua(row)}

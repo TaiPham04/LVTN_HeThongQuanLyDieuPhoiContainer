@@ -70,9 +70,9 @@ class BienBanKTDController extends Controller
         // Biên bản hải quan → cập nhật trangthai_haiquan
         if ($request->loaiktd === 'haiquan') {
             $containerUpdate['trangthai_haiquan'] = match ($request->ketluan) {
-                'datieu'   => 'dathongguan',
-                'tamgiu'   => 'biugiu',
-                'khongdat' => 'biugiu',
+                'datieu'   => 'luong_xanh',
+                'tamgiu'   => 'luong_do',
+                'khongdat' => 'luong_do',
                 default    => $container->trangthai_haiquan,
             };
         }

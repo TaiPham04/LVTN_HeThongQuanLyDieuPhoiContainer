@@ -89,7 +89,7 @@ class ContainerController extends Controller
         $container = Container::create([
             ...$request->validated(),
             'trangthai'         => 'dangky',
-            'trangthai_haiquan' => 'choxuly',
+            'trangthai_haiquan' => 'luong_vang',
         ]);
 
         return response()->json([

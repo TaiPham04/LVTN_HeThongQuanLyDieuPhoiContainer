@@ -68,6 +68,16 @@ class LogCongController extends Controller
                     'message' => "Container {$container->socontainer} không đang trong bãi (trạng thái: {$container->trangthai}).",
                 ], 422);
             }
+            if ($container->trangthai_haiquan !== 'luong_xanh') {
+                $nhan = match($container->trangthai_haiquan) {
+                    'luong_vang' => 'nghi vấn (luồng vàng)',
+                    'luong_do'   => 'bị giữ / kiểm hàng (luồng đỏ)',
+                    default      => $container->trangthai_haiquan,
+                };
+                return response()->json([
+                    'message' => "Container {$container->socontainer} chưa thông quan — {$nhan}. Không thể xuất khỏi bãi.",
+                ], 422);
+            }
         }
 
         $log = LogCong::create([
@@ -80,15 +90,21 @@ class LogCongController extends Controller
             'niemchi_ktra'  => $request->niemchi_ktra,
             'niemchi_ok'    => $request->niemchi_ok,
             // Snapshot trạng thái hải quan tại thời điểm qua cổng (không dùng để cập nhật container)
-            'haiquan_ok'    => $container->trangthai_haiquan === 'dathongguan',
+            'haiquan_ok'    => $container->trangthai_haiquan === 'luong_xanh',
             'ghichu'        => $request->ghichu,
             'thoigian_xl'   => now(),
         ]);
 
         if ($request->kieu_xuatnhap === 'nhap') {
-            $container->update(['trangthai' => 'trongbai']);
+            $container->update([
+                'trangthai'       => 'trongbai',
+                'thoigian_vaobai' => now(),
+            ]);
         } else {
-            $container->update(['trangthai' => 'xuatcong']);
+            $container->update([
+                'trangthai'      => 'xuatcong',
+                'thoigian_rabai' => now(),
+            ]);
             LichSuViTri::where('macontainer', $container->macontainer)
                 ->whereNull('thoigian_roi')
                 ->update(['thoigian_roi' => now()]);

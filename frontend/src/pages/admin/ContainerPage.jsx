@@ -28,9 +28,9 @@ const trangThaiBadge = (v) => {
 
 const haiquanBadge = (v) => {
   const map = {
-    choxuly:     { label: 'Chờ xử lý',   variant: 'warning' },
-    dathongguan: { label: 'Thông quan',   variant: 'success' },
-    biugiu:      { label: 'Bị giữ',       variant: 'danger' },
+    luong_xanh: { label: 'Luồng xanh', variant: 'success' },
+    luong_vang: { label: 'Luồng vàng', variant: 'warning' },
+    luong_do:   { label: 'Luồng đỏ',   variant: 'danger'  },
   };
   const b = map[v] || { label: v, variant: 'gray' };
   return <Badge variant={b.variant}>{b.label}</Badge>;

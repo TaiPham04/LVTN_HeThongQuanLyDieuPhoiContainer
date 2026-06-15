@@ -37,3 +37,11 @@ export function useHuyChuyenTau() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
+
+export function useChuyenTrangThai() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (machuyentau) => api.patch(`/admin/lich-tau/${machuyentau}/trang-thai`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  });
+}

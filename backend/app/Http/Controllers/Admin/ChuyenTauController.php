@@ -80,6 +80,35 @@ class ChuyenTauController extends Controller
         ]);
     }
 
+    // ─── PATCH /api/admin/lich-tau/{chuyentau}/trang-thai ────────
+    public function chuyenTrangThai(ChuyenTau $chuyentau): JsonResponse
+    {
+        $buocTiep = [
+            'dalenlich' => 'dadencan',
+            'dadencan'  => 'daroi',
+        ];
+
+        if (!isset($buocTiep[$chuyentau->trangthai])) {
+            return response()->json([
+                'message' => 'Trạng thái hiện tại không thể chuyển tiếp.',
+            ], 422);
+        }
+
+        $trangThaiMoi = $buocTiep[$chuyentau->trangthai];
+        $chuyentau->update(['trangthai' => $trangThaiMoi]);
+
+        $nhan = match($trangThaiMoi) {
+            'dadencan' => 'đã đến cảng',
+            'daroi'    => 'đã rời bến',
+            default    => $trangThaiMoi,
+        };
+
+        return response()->json([
+            'message' => "Chuyến tàu {$chuyentau->sovoyage} {$nhan}.",
+            'data'    => new ChuyenTauResource($chuyentau->fresh()->load('hangtau')),
+        ]);
+    }
+
     // ─── DELETE /api/admin/lich-tau/{chuyentau} ──────────────────
     public function destroy(XoaChuyenTau $request, ChuyenTau $chuyentau): JsonResponse
     {

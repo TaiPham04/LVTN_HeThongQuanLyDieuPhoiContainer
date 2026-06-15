@@ -119,6 +119,10 @@ function TabCong() {
   const { data: contLookup } = useContainerLookup(socontainerVal);
   const contInfo = contLookup?.data ?? null;
 
+  const canhBaoHaiQuan = kieuXuatNhap === 'xuat'
+    && contInfo
+    && contInfo.trangthai_haiquan !== 'luong_xanh';
+
   // So khớp seal: so sánh số nhập với số trên chứng từ
   const sealMatch = contInfo?.soniemchi && niemchiVal
     ? niemchiVal.toUpperCase() === contInfo.soniemchi.toUpperCase()
@@ -304,19 +308,33 @@ function TabCong() {
               })}
             />
             {contInfo && (
-              <div style={{ marginTop: 6, padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                <span>
-                  Trạng thái: <strong style={{ color: contInfo.trangthai === 'trongbai' ? '#dc2626' : '#16a34a' }}>
-                    {contInfo.trangthai === 'trongbai' ? 'Đang trong bãi' : contInfo.trangthai === 'dangky' ? 'Đăng ký' : contInfo.trangthai}
-                  </strong>
-                </span>
-                <span>
-                  Hải quan: <strong style={{ color: contInfo.trangthai_haiquan === 'dathongguan' ? '#16a34a' : contInfo.trangthai_haiquan === 'biugiu' ? '#dc2626' : '#d97706' }}>
-                    {contInfo.trangthai_haiquan === 'dathongguan' ? 'Đã thông quan' : contInfo.trangthai_haiquan === 'biugiu' ? 'Bị giữ' : 'Chờ xử lý'}
-                  </strong>
-                </span>
-                {contInfo.soniemchi && (
-                  <span>Seal chứng từ: <strong>{contInfo.soniemchi}</strong></span>
+              <div style={{ marginTop: 6 }}>
+                <div style={{ padding: '8px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <span>
+                    Trạng thái: <strong style={{ color: contInfo.trangthai === 'trongbai' ? '#dc2626' : '#16a34a' }}>
+                      {contInfo.trangthai === 'trongbai' ? 'Đang trong bãi' : contInfo.trangthai === 'dangky' ? 'Đăng ký' : contInfo.trangthai}
+                    </strong>
+                  </span>
+                  <span>
+                    Hải quan: <strong style={{ color: contInfo.trangthai_haiquan === 'luong_xanh' ? '#16a34a' : contInfo.trangthai_haiquan === 'luong_do' ? '#dc2626' : '#d97706' }}>
+                      {contInfo.trangthai_haiquan === 'luong_xanh' ? 'Thông quan' : contInfo.trangthai_haiquan === 'luong_do' ? 'Luồng đỏ — chờ kiểm hóa' : 'Luồng vàng — nghi vấn'}
+                    </strong>
+                  </span>
+                  {contInfo.soniemchi && (
+                    <span>Seal chứng từ: <strong>{contInfo.soniemchi}</strong></span>
+                  )}
+                </div>
+                {canhBaoHaiQuan && (
+                  <div style={{
+                    marginTop: 6, padding: '10px 14px',
+                    background: '#fef2f2', border: '1px solid #fca5a5',
+                    borderRadius: 6, fontSize: 13, color: '#dc2626', fontWeight: 500,
+                  }}>
+                    {contInfo.trangthai_haiquan === 'luong_do'
+                      ? 'Container đang trong diện kiểm hóa (luồng đỏ) — bắt buộc chờ kết quả kiểm tra hải quan trước khi xuất bãi.'
+                      : 'Container chưa được thông quan (luồng vàng) — không thể xuất bãi.'
+                    }
+                  </div>
                 )}
               </div>
             )}
@@ -412,7 +430,7 @@ function TabCong() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Hủy</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || canhBaoHaiQuan}>
               {isSubmitting ? 'Đang lưu…' : 'Ghi nhận'}
             </Button>
           </div>

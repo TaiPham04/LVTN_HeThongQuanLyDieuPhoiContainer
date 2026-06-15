@@ -92,15 +92,32 @@ class KhuVucBaiController extends Controller
             'soocamlanh' => $request->lablock_lanh ? $request->soocamlanh : 0,
         ]);
 
-        // Nếu kích thước thay đổi → cảnh báo (không tự xóa ô cũ vì có thể đang chứa container)
         $kichThuocThayDoi = $soKhoangCu !== $khuvucbai->sokhoang
             || $soHangCu !== $khuvucbai->sohang
             || $soTangCu !== $khuvucbai->sotang;
 
         $canh_bao = null;
         if ($kichThuocThayDoi) {
-            $canh_bao = 'Kích thước block đã thay đổi. Các ô bãi mới sẽ được tạo thêm nếu cần. Ô bãi cũ vẫn giữ nguyên.';
+            // Tìm ô bãi nằm ngoài kích thước mới
+            $oDu = OBai::where('makhuvuc', $khuvucbai->makhuvuc)
+                ->where(function ($q) use ($khuvucbai) {
+                    $q->where('khoang', '>', $khuvucbai->sokhoang)
+                      ->orWhere('hang',  '>', $khuvucbai->sohang)
+                      ->orWhere('tang',  '>', $khuvucbai->sotang);
+                });
+
+            // Không cho giảm kích thước nếu ô dư đang có container
+            $soDangDung = (clone $oDu)->where('trangthai', 'dangsudung')->count();
+            if ($soDangDung > 0) {
+                return response()->json([
+                    'message' => "Không thể giảm kích thước — có {$soDangDung} container đang nằm ngoài vùng kích thước mới.",
+                ], 422);
+            }
+
+            // Vô hiệu hóa ô dư (không có container) và tạo thêm ô mới nếu cần
+            $oDu->update(['trangthai' => 'khonghoatdong']);
             $this->taoOBaiBoSung($khuvucbai);
+            $canh_bao = 'Kích thước block đã cập nhật. Ô bãi dư đã được vô hiệu hóa, ô mới đã được tạo thêm nếu cần.';
         }
 
         return response()->json([
