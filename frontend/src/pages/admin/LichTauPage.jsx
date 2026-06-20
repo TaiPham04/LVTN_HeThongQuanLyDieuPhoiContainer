@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -14,8 +14,8 @@ import {
   useCapNhatChuyenTau,
   useHuyChuyenTau,
   useChuyenTrangThai,
-} from '@/hooks/useChuyenTau';
-import { useHangTauList } from '@/hooks/useHangTau';
+} from '@/hooks/admin/useChuyenTau';
+import { useHangTauList } from '@/hooks/admin/useHangTau';
 
 /* ── helpers ── */
 const trangThaiBadge = (v) => {

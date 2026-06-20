@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -8,10 +8,11 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import { useContainerList, useThemContainer, useCapNhatContainer, useXoaContainer } from '@/hooks/useContainer';
-import { useLoaiContainerList } from '@/hooks/useLoaiContainer';
-import { useHangTauList } from '@/hooks/useHangTau';
-import { useChuyenTauList } from '@/hooks/useChuyenTau';
+import { useContainerList, useThemContainer, useCapNhatContainer, useXoaContainer } from '@/hooks/admin/useContainer';
+import useAuthStore from '@/store/authStore';
+import { useLoaiContainerList } from '@/hooks/admin/useLoaiContainer';
+import { useHangTauList } from '@/hooks/admin/useHangTau';
+import { useChuyenTauList } from '@/hooks/admin/useChuyenTau';
 
 /* ── helpers ── */
 const trangThaiBadge = (v) => {
@@ -64,6 +65,7 @@ export default function ContainerPage() {
   const [deleteRow, setDeleteRow]       = useState(null);
   const [serverErr, setServerErr]       = useState('');
 
+  const { isAdmin, isNhanVienBai } = useAuthStore();
   const { data, isLoading }     = useContainerList({ trang, search, trangthai: filterTT, mahangtau: filterHT, per_page: 15 });
   const { data: loaiData }      = useLoaiContainerList({ per_page: 100 });
   const { data: htData }        = useHangTauList({ per_page: 100 });
@@ -124,14 +126,16 @@ export default function ContainerPage() {
       render: (_, row) => (
         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
           <Button size="sm" variant="secondary" onClick={() => setDetailRow(row)}>Chi tiết</Button>
-          <Button size="sm" variant="ghost"
-            onClick={() => openSua(row)}
-            disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
-          >Sửa</Button>
-          <Button size="sm" variant="danger"
-            onClick={() => setDeleteRow(row)}
-            disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
-          >Xóa</Button>
+          {isAdmin() && <>
+            <Button size="sm" variant="ghost"
+              onClick={() => openSua(row)}
+              disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
+            >Sửa</Button>
+            <Button size="sm" variant="danger"
+              onClick={() => setDeleteRow(row)}
+              disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
+            >Xóa</Button>
+          </>}
         </div>
       ),
     },
@@ -220,7 +224,7 @@ export default function ContainerPage() {
       <PageHeader
         title="Quản lý container"
         description="Đăng ký và quản lý thông tin container"
-        action={<Button onClick={openThem}>+ Đăng ký container</Button>}
+        action={!isNhanVienBai() && <Button onClick={openThem}>+ Đăng ký container</Button>}
       />
 
       {/* Thanh tìm kiếm + lọc */}

@@ -1,6 +1,6 @@
-import PageHeader from '@/components/shared/PageHeader';
+﻿import PageHeader from '@/components/shared/PageHeader';
 import Badge from '@/components/ui/Badge';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from '@/hooks/admin/useDashboard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,

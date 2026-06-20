@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import Badge from '@/components/ui/Badge';
 import {
   useSoDoBai, useSoDoBaiList,
   useChoGanViTri, useGoiYViTri, useGoiYDaoChuyen,
   useGanViTri, useDaoChuyen,
-} from '@/hooks/useSoDoBai';
+} from '@/hooks/admin/useSoDoBai';
 
 /* ── Màu ô bãi ─────────────────────────────────────────────────── */
 const CELL = {

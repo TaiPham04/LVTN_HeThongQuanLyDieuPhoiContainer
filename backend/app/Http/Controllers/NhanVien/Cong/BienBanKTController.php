@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\NhanVien\Cong;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BienBanKTD\LuuBienBan;
-use App\Http\Resources\BienBanKTDResource;
-use App\Models\BienBanKTD;
+use App\Http\Requests\BienBanKT\LuuBienBan;
+use App\Http\Resources\BienBanKTResource;
+use App\Models\BienBanKT;
 use App\Models\Container;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class BienBanKTDController extends Controller
+class BienBanKTController extends Controller
 {
-    // ─── GET /api/admin/bien-ban-ktd ──────────────────────────────
+    // ─── GET /api/nv/cong/bien-ban-kt ────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = BienBanKTD::with(['container.hangtau', 'nhanvien']);
+        $query = BienBanKT::with(['container.hangtau', 'nhanvien']);
 
         if ($request->loaiktd) {
             $query->where('loaiktd', $request->loaiktd);
@@ -35,7 +35,7 @@ class BienBanKTDController extends Controller
                       ->paginate($request->get('per_page', 15));
 
         return response()->json([
-            'data' => BienBanKTDResource::collection($data->items()),
+            'data' => BienBanKTResource::collection($data->items()),
             'meta' => [
                 'current_page' => $data->currentPage(),
                 'last_page'    => $data->lastPage(),
@@ -45,12 +45,12 @@ class BienBanKTDController extends Controller
         ]);
     }
 
-    // ─── POST /api/admin/bien-ban-ktd ─────────────────────────────
+    // ─── POST /api/nv/cong/bien-ban-kt ───────────────────────────
     public function store(LuuBienBan $request): JsonResponse
     {
         $container = Container::where('socontainer', $request->socontainer)->first();
 
-        $bienban = BienBanKTD::create([
+        $bienban = BienBanKT::create([
             'macontainer'  => $container->macontainer,
             'manhanvien'   => $request->user()->mataikhoan,
             'loaiktd'      => $request->loaiktd,
@@ -62,12 +62,10 @@ class BienBanKTDController extends Controller
 
         $containerUpdate = [];
 
-        // Đồng bộ trạng thái hư hỏng
         if ($request->bi_hong) {
             $containerUpdate['bi_hong'] = true;
         }
 
-        // Biên bản hải quan → cập nhật trangthai_haiquan
         if ($request->loaiktd === 'haiquan') {
             $containerUpdate['trangthai_haiquan'] = match ($request->ketluan) {
                 'datieu'   => 'luong_xanh',
@@ -83,7 +81,7 @@ class BienBanKTDController extends Controller
 
         return response()->json([
             'message' => "Đã lập biên bản kiểm tra container {$container->socontainer}.",
-            'data'    => new BienBanKTDResource($bienban->load(['container.hangtau', 'nhanvien'])),
+            'data'    => new BienBanKTResource($bienban->load(['container.hangtau', 'nhanvien'])),
         ], 201);
     }
 }

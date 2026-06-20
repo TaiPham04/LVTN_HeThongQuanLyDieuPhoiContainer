@@ -20,9 +20,12 @@ export default function LoginPage() {
     const result = await login(data.email, data.password);
     if (result.success) {
       const role = result.user.role;
-      if (role === 'admin' || role === 'nhanvien') navigate('/admin/dashboard');
-      else if (role === 'khachhang') navigate('/customer/containers');
-      else if (role === 'taixe') navigate('/driver/trips');
+      if (role === 'admin')           navigate('/admin/dashboard');
+      else if (role === 'nhanvien_cong') navigate('/nv/cong/cong');
+      else if (role === 'nhanvien_bai')  navigate('/nv/bai/so-do-bai');
+      else if (role === 'khachhang')  navigate('/customer/containers');
+      else if (role === 'taixe')      navigate('/driver/trips');
+      else navigate('/admin/dashboard');
     } else {
       setServerError(result.message);
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -13,7 +13,7 @@ import {
   useThemKhuVucBai,
   useCapNhatKhuVucBai,
   useXoaKhuVucBai,
-} from '@/hooks/useKhuVucBai';
+} from '@/hooks/admin/useKhuVucBai';
 
 /* ── helpers ── */
 const tileColor = (pct) => {

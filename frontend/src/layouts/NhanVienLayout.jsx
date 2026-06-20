@@ -1,23 +1,26 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 
-const MENU = [
-  { path: '/admin/dashboard',      icon: 'ti-layout-dashboard', label: 'Dashboard' },
-  { path: '/admin/loai-container', icon: 'ti-box',              label: 'Loại container' },
-  { path: '/admin/hang-tau',       icon: 'ti-ship',             label: 'Hãng tàu' },
-  { path: '/admin/lich-tau',       icon: 'ti-calendar-event',   label: 'Lịch tàu' },
-  { path: '/admin/khu-vuc-bai',    icon: 'ti-map-pin',          label: 'Khu vực bãi' },
-  { path: '/admin/container',      icon: 'ti-package',          label: 'Container' },
-  { path: '/admin/cong',           icon: 'ti-door-enter',       label: 'Xuất nhập cổng' },
-  { path: '/admin/bien-ban-kt',   icon: 'ti-clipboard-check',  label: 'Biên bản KTĐ' },
-  { path: '/admin/so-do-bai',      icon: 'ti-layout-grid',      label: 'Sơ đồ bãi' },
-  { path: '/admin/tai-khoan',      icon: 'ti-users',            label: 'Tài khoản' },
-  { path: '/admin/bao-cao',        icon: 'ti-chart-bar',        label: 'Báo cáo' },
+const MENU_CONG = [
+  { path: '/nv/cong/container',    icon: 'ti-package',        label: 'Container' },
+  { path: '/nv/cong/lich-tau',     icon: 'ti-calendar-event', label: 'Lịch tàu' },
+  { path: '/nv/cong/cong',         icon: 'ti-door-enter',     label: 'Xuất nhập cổng' },
+  { path: '/nv/cong/bien-ban-kt', icon: 'ti-clipboard-check', label: 'Biên bản KTĐ' },
 ];
 
-export default function AdminLayout() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+const MENU_BAI = [
+  { path: '/nv/bai/container', icon: 'ti-package',     label: 'Container' },
+  { path: '/nv/bai/so-do-bai', icon: 'ti-layout-grid', label: 'Sơ đồ bãi' },
+];
+
+const ROLE_LABEL = {
+  nhanvien_cong: 'Nhân viên cổng',
+  nhanvien_bai:  'Nhân viên bãi',
+};
+
+export default function NhanVienLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -25,13 +28,14 @@ export default function AdminLayout() {
     navigate('/login');
   };
 
-  const menu = MENU;
+  const menu = user?.role === 'nhanvien_cong' ? MENU_CONG : MENU_BAI;
+  const allMenu = [...MENU_CONG, ...MENU_BAI];
 
   const vietTat = user?.hoten
     ? user.hoten.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase()
-    : 'AD';
+    : 'NV';
 
-  const tenTrang = MENU.find(m => location.pathname.startsWith(m.path))?.label || 'Dashboard';
+  const tenTrang = allMenu.find(m => location.pathname.startsWith(m.path))?.label || 'Trang chủ';
 
   return (
     <div style={s.root}>
@@ -50,6 +54,9 @@ export default function AdminLayout() {
         </div>
 
         <div style={s.divider} />
+
+        {/* Role badge */}
+        <div style={s.roleBadge}>{ROLE_LABEL[user?.role] || 'Nhân viên'}</div>
 
         {/* Menu */}
         <nav style={s.nav}>
@@ -85,10 +92,8 @@ export default function AdminLayout() {
           <span style={s.breadcrumb}>{tenTrang}</span>
           <div style={s.headerRight}>
             <div style={s.userInfo}>
-              <div style={s.userName}>{user?.hoten || 'Admin'}</div>
-              <div style={s.userRole}>
-                Quản trị viên
-              </div>
+              <div style={s.userName}>{user?.hoten || 'Nhân viên'}</div>
+              <div style={s.userRole}>{ROLE_LABEL[user?.role] || 'Nhân viên'}</div>
             </div>
             <div style={s.avatar}>{vietTat}</div>
           </div>
@@ -103,7 +108,7 @@ export default function AdminLayout() {
   );
 }
 
-const OR = '#e8920a';
+const BLUE = '#0d6efd';
 
 const s = {
   root: {
@@ -113,7 +118,7 @@ const s = {
   },
   sidebar: {
     width: 220,
-    background: '#1c2231',
+    background: '#1a2744',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
@@ -130,7 +135,7 @@ const s = {
   logoBox: {
     width: 32,
     height: 32,
-    background: OR,
+    background: BLUE,
     borderRadius: 7,
     display: 'flex',
     alignItems: 'center',
@@ -145,7 +150,14 @@ const s = {
   divider: {
     height: '0.5px',
     background: 'rgba(255,255,255,0.07)',
-    margin: '0 12px 8px',
+    margin: '0 12px 6px',
+  },
+  roleBadge: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.45)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    padding: '0 20px 8px',
   },
   nav: {
     flex: 1,
@@ -165,8 +177,8 @@ const s = {
     userSelect: 'none',
   },
   navActive: {
-    background: 'rgba(232,146,10,0.15)',
-    color: OR,
+    background: 'rgba(13,110,253,0.18)',
+    color: '#60a5fa',
   },
   navLabel: {
     fontSize: 13,
@@ -220,7 +232,7 @@ const s = {
   avatar: {
     width: 32,
     height: 32,
-    background: OR,
+    background: BLUE,
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',

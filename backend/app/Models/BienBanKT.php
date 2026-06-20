@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class BienBanKTD extends Model
+class BienBanKT extends Model
 {
     protected $table      = 'bienbanktd';
     protected $primaryKey = 'mabienban';
@@ -21,8 +21,8 @@ class BienBanKTD extends Model
     ];
 
     protected $casts = [
-        'bi_hong'     => 'boolean',
-        'anhchup'     => 'array',
+        'bi_hong'      => 'boolean',
+        'anhchup'      => 'array',
         'thoigian_ktd' => 'datetime',
     ];
 

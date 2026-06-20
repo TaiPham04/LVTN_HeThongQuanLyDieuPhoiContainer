@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -14,7 +14,7 @@ import {
   useCapNhatHangTau,
   useXoaHangTau,
   useKhoiPhucHangTau,
-} from '@/hooks/useHangTau';
+} from '@/hooks/admin/useHangTau';
 
 export default function HangTauPage() {
   const [trang, setTrang]           = useState(1);

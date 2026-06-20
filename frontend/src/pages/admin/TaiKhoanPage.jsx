@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -14,7 +14,7 @@ import {
   useVoHieuHoa,
   useKhoiPhuc,
   useResetMatKhau,
-} from '@/hooks/useTaiKhoan';
+} from '@/hooks/admin/useTaiKhoan';
 
 /* ── static data ── */
 const VAI_TRO_LIST = [
@@ -22,11 +22,13 @@ const VAI_TRO_LIST = [
   { mavaitro: 2, tenvaitro: 'Nhân viên' },
   { mavaitro: 3, tenvaitro: 'Khách hàng' },
   { mavaitro: 4, tenvaitro: 'Tài xế' },
+  { mavaitro: 5, tenvaitro: 'NV Cổng' },
+  { mavaitro: 6, tenvaitro: 'NV Bãi' },
 ];
 
 /* ── helpers ── */
 const vaiTroBadge = (mavaitro, tenvaitro) => {
-  const map = { 1: 'danger', 2: 'info', 3: 'secondary', 4: 'warning' };
+  const map = { 1: 'danger', 2: 'info', 3: 'secondary', 4: 'warning', 5: 'info', 6: 'success' };
   return <Badge variant={map[mavaitro] || 'gray'}>{tenvaitro || `Vai trò ${mavaitro}`}</Badge>;
 };
 

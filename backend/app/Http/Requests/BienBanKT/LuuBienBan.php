@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\BienBanKTD;
+namespace App\Http\Requests\BienBanKT;
 
 use Illuminate\Foundation\Http\FormRequest;
 

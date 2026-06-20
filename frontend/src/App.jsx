@@ -1,8 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import useAuthStore from '@/store/authStore';
+
+// ── Auth ──────────────────────────────────────────────────────────
 import LoginPage from '@/pages/auth/LoginPage';
+
+// ── Admin layout + pages ──────────────────────────────────────────
 import AdminLayout from '@/layouts/AdminLayout';
+import DashboardPage from '@/pages/admin/DashboardPage';
 import LoaiContainerPage from '@/pages/admin/LoaiContainerPage';
 import HangTauPage from '@/pages/admin/HangTauPage';
 import KhuVucBaiPage from '@/pages/admin/KhuVucBaiPage';
@@ -10,16 +15,22 @@ import LichTauPage from '@/pages/admin/LichTauPage';
 import ContainerPage from '@/pages/admin/ContainerPage';
 import TaiKhoanPage from '@/pages/admin/TaiKhoanPage';
 import CongXuatNhapPage from '@/pages/admin/CongXuatNhapPage';
-import DashboardPage from '@/pages/admin/DashboardPage';
 import SoDoBaiPage from '@/pages/admin/SoDoBaiPage';
 import BaoCaoPage from '@/pages/admin/BaoCaoPage';
+import BienBanKTPage from '@/pages/admin/BienBanKTPage';
+
+// ── NhanVien layout + pages ───────────────────────────────────────
+import NhanVienLayout from '@/layouts/NhanVienLayout';
+import ContainerCongPage from '@/pages/nhanvien/cong/ContainerPage';
+import LichTauCongPage from '@/pages/nhanvien/cong/LichTauPage';
+import CongXuatNhapNVPage from '@/pages/nhanvien/cong/CongXuatNhapPage';
+import BienBanKTCongPage from '@/pages/nhanvien/cong/BienBanKTPage';
+import ContainerBaiPage from '@/pages/nhanvien/bai/ContainerPage';
+import SoDoBaiNVPage from '@/pages/nhanvien/bai/SoDoBaiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30_000,
-    },
+    queries: { retry: 1, staleTime: 30_000 },
   },
 });
 
@@ -36,11 +47,12 @@ function RootRedirect() {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   switch (user?.role) {
-    case 'admin':
-    case 'nhanvien': return <Navigate to="/admin/dashboard" replace />;
-    case 'khachhang': return <Navigate to="/customer/containers" replace />;
-    case 'taixe':    return <Navigate to="/driver/trips" replace />;
-    default:         return <Navigate to="/login" replace />;
+    case 'admin':          return <Navigate to="/admin/dashboard" replace />;
+    case 'nhanvien_cong':  return <Navigate to="/nv/cong/cong" replace />;
+    case 'nhanvien_bai':   return <Navigate to="/nv/bai/so-do-bai" replace />;
+    case 'khachhang':      return <Navigate to="/customer/containers" replace />;
+    case 'taixe':          return <Navigate to="/driver/trips" replace />;
+    default:               return <Navigate to="/login" replace />;
   }
 }
 
@@ -52,34 +64,61 @@ export default function App() {
           <Route path="/"      element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Placeholder — sẽ bổ sung khi làm từng module */}
+          {/* ── Admin ── */}
           <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['admin','nhanvien']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout />
             </ProtectedRoute>
           }>
-            <Route path="khu-vuc-bai" element={<KhuVucBaiPage />} />
-            <Route path="lich-tau" element={<LichTauPage />} />
-            <Route path="container" element={<ContainerPage />} />
-            <Route path="tai-khoan" element={<TaiKhoanPage />} />
-            <Route path="cong" element={<CongXuatNhapPage />} />
-            <Route path="so-do-bai" element={<SoDoBaiPage />} />
-            <Route path="bao-cao"   element={<BaoCaoPage />} />
-            <Route path="hang-tau" element={<HangTauPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard"      element={<DashboardPage />} />
             <Route path="loai-container" element={<LoaiContainerPage />} />
+            <Route path="hang-tau"       element={<HangTauPage />} />
+            <Route path="khu-vuc-bai"    element={<KhuVucBaiPage />} />
+            <Route path="lich-tau"       element={<LichTauPage />} />
+            <Route path="container"      element={<ContainerPage />} />
+            <Route path="tai-khoan"      element={<TaiKhoanPage />} />
+            <Route path="cong"           element={<CongXuatNhapPage />} />
+            <Route path="bien-ban-kt"   element={<BienBanKTPage />} />
+            <Route path="so-do-bai"      element={<SoDoBaiPage />} />
+            <Route path="bao-cao"        element={<BaoCaoPage />} />
           </Route>
+
+          {/* ── Nhân viên cổng ── */}
+          <Route path="/nv/cong" element={
+            <ProtectedRoute allowedRoles={['nhanvien_cong']}>
+              <NhanVienLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="cong" replace />} />
+            <Route path="container"    element={<ContainerCongPage />} />
+            <Route path="lich-tau"     element={<LichTauCongPage />} />
+            <Route path="cong"         element={<CongXuatNhapNVPage />} />
+            <Route path="bien-ban-kt" element={<BienBanKTCongPage />} />
+          </Route>
+
+          {/* ── Nhân viên bãi ── */}
+          <Route path="/nv/bai" element={
+            <ProtectedRoute allowedRoles={['nhanvien_bai']}>
+              <NhanVienLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="so-do-bai" replace />} />
+            <Route path="container"  element={<ContainerBaiPage />} />
+            <Route path="so-do-bai"  element={<SoDoBaiNVPage />} />
+          </Route>
+
+          {/* ── Khách hàng / Tài xế (placeholder) ── */}
           <Route path="/customer/*" element={
             <ProtectedRoute allowedRoles={['khachhang']}>
-              <div style={{padding:40}}>Customer — coming soon</div>
+              <div style={{ padding: 40 }}>Customer — coming soon</div>
             </ProtectedRoute>
-          }/>
-          <Route path="/driver/*"   element={
+          } />
+          <Route path="/driver/*" element={
             <ProtectedRoute allowedRoles={['taixe']}>
-              <div style={{padding:40}}>Driver — coming soon</div>
+              <div style={{ padding: 40 }}>Driver — coming soon</div>
             </ProtectedRoute>
-          }/>
+          } />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

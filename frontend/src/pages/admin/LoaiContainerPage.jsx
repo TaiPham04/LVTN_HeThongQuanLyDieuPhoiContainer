@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -14,7 +14,7 @@ import {
   useCapNhatLoaiContainer,
   useXoaLoaiContainer,
   useKhoiPhucLoaiContainer,
-} from '@/hooks/useLoaiContainer';
+} from '@/hooks/admin/useLoaiContainer';
 
 
 export default function LoaiContainerPage() {

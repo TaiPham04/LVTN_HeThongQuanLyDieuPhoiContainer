@@ -50,10 +50,12 @@ const useAuthStore = create(
         set({ user: null, token: null, isAuthenticated: false });
       },
 
-      isAdmin:     () => get().user?.role === 'admin',
-      isStaff:     () => get().user?.role === 'nhanvien',
-      isCustomer:  () => get().user?.role === 'khachhang',
-      isDriver:    () => get().user?.role === 'taixe',
+      isAdmin:         () => get().user?.role === 'admin',
+      isStaff:         () => ['nhanvien_cong', 'nhanvien_bai'].includes(get().user?.role),
+      isNhanVienCong:  () => get().user?.role === 'nhanvien_cong',
+      isNhanVienBai:   () => get().user?.role === 'nhanvien_bai',
+      isCustomer:      () => get().user?.role === 'khachhang',
+      isDriver:        () => get().user?.role === 'taixe',
     }),
     {
       name: 'logicon-auth',
