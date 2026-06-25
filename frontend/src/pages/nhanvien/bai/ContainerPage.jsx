@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
@@ -127,7 +127,7 @@ export default function ContainerBaiPage() {
 
       <Table columns={columns} data={list} loading={isLoading} emptyText="Không có container nào" />
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
     </div>

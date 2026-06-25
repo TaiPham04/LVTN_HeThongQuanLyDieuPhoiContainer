@@ -2,15 +2,16 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 
 const MENU_CONG = [
-  { path: '/nv/cong/container',    icon: 'ti-package',        label: 'Container' },
-  { path: '/nv/cong/lich-tau',     icon: 'ti-calendar-event', label: 'Lịch tàu' },
-  { path: '/nv/cong/cong',         icon: 'ti-door-enter',     label: 'Xuất nhập cổng' },
-  { path: '/nv/cong/bien-ban-kt', icon: 'ti-clipboard-check', label: 'Biên bản KTĐ' },
+  { path: '/nv/cong/container',      icon: 'ti-package',        label: 'Container' },
+  { path: '/nv/cong/cong',           icon: 'ti-door-enter',     label: 'Xuất nhập cổng' },
+  { path: '/nv/cong/phieu-lay-hang', icon: 'ti-ticket',         label: 'Phiếu lấy hàng' },
+  { path: '/nv/cong/bien-ban-kt',   icon: 'ti-clipboard-check', label: 'Biên bản KT' },
 ];
 
 const MENU_BAI = [
-  { path: '/nv/bai/container', icon: 'ti-package',     label: 'Container' },
-  { path: '/nv/bai/so-do-bai', icon: 'ti-layout-grid', label: 'Sơ đồ bãi' },
+  { path: '/nv/bai/container', icon: 'ti-package',        label: 'Container' },
+  { path: '/nv/bai/lich-tau',  icon: 'ti-calendar-event', label: 'Lịch tàu' },
+  { path: '/nv/bai/so-do-bai', icon: 'ti-layout-grid',    label: 'Sơ đồ bãi' },
 ];
 
 const ROLE_LABEL = {

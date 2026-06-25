@@ -208,7 +208,7 @@ export default function BienBanKTPage() {
       <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có biên bản nào" />
 
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
 

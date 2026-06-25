@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import { useLichTauCongList, useChuyenTrangThaiCong } from '@/hooks/nhanvien/use
 const trangThaiBadge = (v) => {
   switch (v) {
     case 'dalenlich': return <Badge variant="info">Đã lên lịch</Badge>;
-    case 'dadencan':  return <Badge variant="warning">Đã đến cảng</Badge>;
+    case 'dadencang':  return <Badge variant="warning">Đã đến cảng</Badge>;
     case 'daroi':     return <Badge variant="success">Đã rời</Badge>;
     case 'dahuy':     return <Badge variant="danger">Đã hủy</Badge>;
     default:          return <Badge variant="gray">{v}</Badge>;
@@ -19,7 +19,7 @@ const trangThaiBadge = (v) => {
 
 const NEXT_ACTION = {
   dalenlich: { label: 'Ghi nhận đến cảng', variant: 'warning' },
-  dadencan:  { label: 'Ghi nhận rời bến',  variant: 'secondary' },
+  dadencang:  { label: 'Ghi nhận rời bến',  variant: 'secondary' },
 };
 
 export default function LichTauCongPage() {
@@ -137,14 +137,14 @@ export default function LichTauCongPage() {
         >
           <option value="">Chờ xử lý (đặt mặc định)</option>
           <option value="dalenlich">Đã lên lịch</option>
-          <option value="dadencan">Đã đến cảng</option>
+          <option value="dadencang">Đã đến cảng</option>
           <option value="daroi">Đã rời</option>
         </select>
       </div>
 
       <Table columns={columns} data={list} loading={isLoading} emptyText="Không có chuyến tàu nào" />
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
     </div>

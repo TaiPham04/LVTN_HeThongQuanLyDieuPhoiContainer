@@ -1,0 +1,236 @@
+<?php
+
+namespace App\Http\Controllers\NhanVien\Cong;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\PhieuLayHang\TaoPhieu;
+use App\Http\Resources\PhieuLayHangResource;
+use App\Models\Container;
+use App\Models\LichSuViTri;
+use App\Models\LogCong;
+use App\Models\PhieuLayHang;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class PhieuLayHangController extends Controller
+{
+    // GET /api/nv/cong/phieu-lay-hang
+    public function index(Request $request): JsonResponse
+    {
+        // Tự động đánh dấu hết hạn trước khi truy vấn
+        PhieuLayHang::where('trangthai', 'cho_lay')
+            ->where('thoigian_het_han', '<', now())
+            ->update(['trangthai' => 'het_han']);
+
+        $query = PhieuLayHang::with(['container.hangtau', 'nhanvien', 'taixe']);
+
+        if ($request->search) {
+            $query->whereHas('container', fn($q) =>
+                $q->where('socontainer', 'like', "%{$request->search}%")
+            );
+        }
+
+        if ($request->trangthai) {
+            $query->where('trangthai', $request->trangthai);
+        }
+
+        if ($request->ngay) {
+            $query->whereDate('thoigian_xuat', $request->ngay);
+        }
+
+        $data = $query->orderBy('thoigian_xuat', 'desc')
+                      ->paginate($request->get('per_page', 15), ['*'], 'trang', (int) $request->get('trang', 1));
+
+        return response()->json([
+            'data' => PhieuLayHangResource::collection($data->items()),
+            'meta' => [
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
+                'per_page'     => $data->perPage(),
+            ],
+        ]);
+    }
+
+    // POST /api/nv/cong/phieu-lay-hang
+    public function store(TaoPhieu $request): JsonResponse
+    {
+        $socontainer = strtoupper(trim($request->socontainer));
+
+        $container = Container::where('socontainer', $socontainer)->first();
+
+        if (!$container) {
+            return response()->json(['message' => "Không tìm thấy container {$socontainer}."], 404);
+        }
+
+        if ($container->trangthai !== 'trongbai') {
+            $label = match($container->trangthai) {
+                'xuatcong'  => 'đã xuất khỏi cảng',
+                'dalenken'  => 'đã lên tàu',
+                default     => $container->trangthai,
+            };
+            return response()->json([
+                'message' => "Container {$socontainer} không đang trong bãi ({$label}). Không thể xuất phiếu."
+            ], 422);
+        }
+
+        // Kiểm tra phiếu còn hiệu lực cho container này
+        $phieuConHieuLuc = PhieuLayHang::where('macontainer', $container->macontainer)
+            ->where('trangthai', 'cho_lay')
+            ->where('thoigian_het_han', '>', now())
+            ->first();
+
+        if ($phieuConHieuLuc) {
+            return response()->json([
+                'message' => "Container {$socontainer} đã có phiếu lấy hàng còn hiệu lực (hết hạn lúc {$phieuConHieuLuc->thoigian_het_han->format('H:i d/m/Y')}). Hủy phiếu cũ trước khi xuất phiếu mới.",
+                'maphieu_cu' => $phieuConHieuLuc->maphieu,
+            ], 422);
+        }
+
+        // Lấy vị trí hiện tại
+        $lichsu = LichSuViTri::with(['obai.khuvucbai'])
+            ->where('macontainer', $container->macontainer)
+            ->whereNull('thoigian_roi')
+            ->latest('thoigian_gan')
+            ->first();
+
+        if (!$lichsu || !$lichsu->obai) {
+            return response()->json([
+                'message' => "Container {$socontainer} chưa được gán vị trí trong bãi."
+            ], 422);
+        }
+
+        $obai   = $lichsu->obai;
+        $khuvuc = $obai->khuvucbai;
+
+        $vitriSnapshot = [
+            'maobai'      => $obai->maobai,
+            'maobai_code' => $obai->maobai_code,
+            'tenblock'    => $khuvuc?->tenblock,
+            'khoang'      => $obai->khoang,
+            'hang'        => $obai->hang,
+            'tang'        => $obai->tang,
+        ];
+
+        $thoiGianXuat   = now();
+        $thoiGianHetHan = $thoiGianXuat->copy()->addHours(4);
+
+        $phieu = PhieuLayHang::create([
+            'macontainer'      => $container->macontainer,
+            'manhanvien'       => $request->user()->mataikhoan,
+            'mataixe'          => $request->mataixe,
+            'biensoxe'         => $request->biensoxe,
+            'vitri_snapshot'   => $vitriSnapshot,
+            'ma_qr'            => Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)),
+            'trangthai'        => 'cho_lay',
+            'thoigian_xuat'    => $thoiGianXuat,
+            'thoigian_het_han' => $thoiGianHetHan,
+            'ghichu'           => $request->ghichu,
+        ]);
+
+        return response()->json([
+            'message' => "Xuất phiếu lấy hàng container {$socontainer} thành công.",
+            'data'    => new PhieuLayHangResource(
+                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+            ),
+        ], 201);
+    }
+
+    // GET /api/nv/cong/phieu-lay-hang/{maphieu}
+    public function show(PhieuLayHang $phieu): JsonResponse
+    {
+        $this->capNhatHetHanNeuCan($phieu);
+
+        return response()->json([
+            'data' => new PhieuLayHangResource(
+                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+            ),
+        ]);
+    }
+
+    // PATCH /api/nv/cong/phieu-lay-hang/{maphieu}/xac-nhan
+    public function xacNhan(PhieuLayHang $phieu): JsonResponse
+    {
+        $this->capNhatHetHanNeuCan($phieu);
+
+        if ($phieu->trangthai === 'het_han') {
+            return response()->json(['message' => 'Phiếu đã hết hạn, không thể xác nhận.'], 422);
+        }
+
+        if ($phieu->trangthai !== 'cho_lay') {
+            return response()->json(['message' => 'Phiếu này không ở trạng thái chờ lấy hàng.'], 422);
+        }
+
+        $container = Container::findOrFail($phieu->macontainer);
+
+        if ($container->trangthai !== 'trongbai') {
+            return response()->json(['message' => 'Container không còn trong bãi, không thể xác nhận.'], 422);
+        }
+
+        DB::transaction(function () use ($phieu, $container) {
+            $now = now();
+
+            LogCong::create([
+                'macontainer'   => $container->macontainer,
+                'machuyentau'   => $container->machuyentau,
+                'mataixe'       => $phieu->mataixe,
+                'manhanvien'    => $phieu->manhanvien,
+                'kieu_xuatnhap' => 'xuat',
+                'biensoxe'      => $phieu->biensoxe,
+                'niemchi_ok'    => false,
+                'haiquan_ok'    => true,
+                'ghichu'        => "Xuất theo phiếu lấy hàng #{$phieu->maphieu}",
+                'thoigian_xl'   => $now,
+            ]);
+
+            $container->update([
+                'trangthai'      => 'xuatcong',
+                'thoigian_rabai' => $now,
+            ]);
+
+            LichSuViTri::where('macontainer', $container->macontainer)
+                ->whereNull('thoigian_roi')
+                ->update(['thoigian_roi' => $now]);
+
+            $phieu->update([
+                'trangthai'    => 'da_lay',
+                'thoigian_lay' => $now,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Xác nhận đã lấy hàng thành công. Container đã được ghi nhận xuất cổng.',
+            'data'    => new PhieuLayHangResource(
+                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+            ),
+        ]);
+    }
+
+    // PATCH /api/nv/cong/phieu-lay-hang/{maphieu}/huy
+    public function huy(PhieuLayHang $phieu): JsonResponse
+    {
+        $this->capNhatHetHanNeuCan($phieu);
+
+        if (!in_array($phieu->trangthai, ['cho_lay'])) {
+            $msg = $phieu->trangthai === 'het_han'
+                ? 'Phiếu đã hết hạn.'
+                : 'Chỉ có thể hủy phiếu đang chờ lấy hàng.';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        $phieu->update(['trangthai' => 'huy']);
+
+        return response()->json(['message' => 'Đã hủy phiếu.']);
+    }
+
+    // ── helper: tự động chuyển sang het_han nếu quá thời hạn ─────
+    private function capNhatHetHanNeuCan(PhieuLayHang $phieu): void
+    {
+        if ($phieu->trangthai === 'cho_lay' && $phieu->thoigian_het_han < now()) {
+            $phieu->update(['trangthai' => 'het_han']);
+            $phieu->refresh();
+        }
+    }
+}

@@ -7,6 +7,7 @@ use App\Http\Requests\ChuyenTau\LuuChuyenTau;
 use App\Http\Requests\ChuyenTau\XoaChuyenTau;
 use App\Http\Resources\ChuyenTauResource;
 use App\Models\ChuyenTau;
+use App\Models\Container;
 use App\Models\LogXoa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class ChuyenTauController extends Controller
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);
         } else {
-            $query->whereIn('trangthai', ['dalenlich', 'dadencan']);
+            $query->whereIn('trangthai', ['dalenlich', 'dadencang']);
         }
 
         if ($request->search) {
@@ -36,14 +37,14 @@ class ChuyenTauController extends Controller
         }
 
         $data = $query->orderBy('thoigiandukien', 'desc')
-                      ->paginate($request->get('per_page', 10));
+                      ->paginate($request->get('per_page', 10), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => ChuyenTauResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);
@@ -84,8 +85,8 @@ class ChuyenTauController extends Controller
     public function chuyenTrangThai(ChuyenTau $chuyentau): JsonResponse
     {
         $buocTiep = [
-            'dalenlich' => 'dadencan',
-            'dadencan'  => 'daroi',
+            'dalenlich' => 'dadencang',
+            'dadencang'  => 'daroi',
         ];
 
         if (!isset($buocTiep[$chuyentau->trangthai])) {
@@ -95,10 +96,24 @@ class ChuyenTauController extends Controller
         }
 
         $trangThaiMoi = $buocTiep[$chuyentau->trangthai];
+
+        // L5: Không cho tàu rời bến khi còn container của chuyến đang trong bãi
+        if ($trangThaiMoi === 'daroi') {
+            $soConLai = Container::where('machuyentau', $chuyentau->machuyentau)
+                ->where('trangthai', 'trongbai')
+                ->count();
+
+            if ($soConLai > 0) {
+                return response()->json([
+                    'message' => "Không thể xác nhận tàu rời bến. Còn {$soConLai} container của chuyến này đang trong bãi.",
+                ], 422);
+            }
+        }
+
         $chuyentau->update(['trangthai' => $trangThaiMoi]);
 
         $nhan = match($trangThaiMoi) {
-            'dadencan' => 'đã đến cảng',
+            'dadencang' => 'đã đến cảng',
             'daroi'    => 'đã rời bến',
             default    => $trangThaiMoi,
         };
@@ -114,6 +129,29 @@ class ChuyenTauController extends Controller
     {
         if ($chuyentau->trangthai === 'dahuy') {
             return response()->json(['message' => 'Chuyến tàu này đã được hủy trước đó.'], 422);
+        }
+
+        if ($chuyentau->trangthai === 'daroi') {
+            return response()->json([
+                'message' => 'Chuyến tàu đã hoàn thành (đã rời bến). Không thể hủy chuyến đã kết thúc.',
+            ], 422);
+        }
+
+        if ($chuyentau->trangthai === 'dadencang') {
+            return response()->json([
+                'message' => 'Chuyến tàu đang ở cảng (đang xếp/dỡ hàng). Không thể hủy khi tàu đang hoạt động.',
+            ], 422);
+        }
+
+        // Chỉ còn trạng thái dalenlich — kiểm tra container liên kết
+        $soContainer = Container::where('machuyentau', $chuyentau->machuyentau)
+            ->where('trangthai', '!=', 'khonghoatdong')
+            ->count();
+
+        if ($soContainer > 0) {
+            return response()->json([
+                'message' => "Không thể hủy. Chuyến tàu đang có {$soContainer} container liên kết. Hãy gỡ liên kết container trước.",
+            ], 422);
         }
 
         $chuoiDungThan = "Delete {$chuyentau->sovoyage}";

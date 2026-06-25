@@ -285,7 +285,7 @@ export default function TaiKhoanPage() {
 
       {/* Phân trang */}
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
 

@@ -22,8 +22,12 @@ class ChuyenTauResource extends JsonResource
             'thoigianroiben'    => $this->thoigianroiben?->format('Y-m-d\TH:i'),
             'thoigiandenthuc'   => $this->thoigiandenthuc?->format('Y-m-d\TH:i'),
             'thoigianroithuc'   => $this->thoigianroithuc?->format('Y-m-d\TH:i'),
-            'socontainerdukien' => $this->socontainerdukien,
-            'trangthai'         => $this->trangthai,
+            'socontainerdukien'  => $this->socontainerdukien,
+            'so_container_cho_do' => $this->whenLoaded('containers',
+                fn () => $this->containers->where('trangthai', 'dangky')->count(),
+                null
+            ),
+            'trangthai'          => $this->trangthai,
             'created_at'        => $this->created_at?->format('d/m/Y H:i'),
         ];
     }

@@ -12,16 +12,6 @@ const PIE_COLORS = {
   xuatcong: '#22c55e',
 };
 
-const KPI_LIST = [
-  { key: 'container_trong_bai',     label: 'Container trong bãi',  color: '#3b82f6', icon: '📦' },
-  { key: 'nhap_hom_nay',            label: 'Nhập hôm nay',         color: '#6366f1', icon: '⬇️' },
-  { key: 'xuat_hom_nay',            label: 'Xuất hôm nay',         color: '#22c55e', icon: '⬆️' },
-  { key: 'ty_le_lap_day_phan_tram', label: 'Lấp đầy bãi (%)',      color: '#f59e0b', icon: '📊' },
-  { key: 'chuyen_tau_hoat_dong',    label: 'Chuyến tàu hoạt động', color: '#0ea5e9', icon: '🚢' },
-  { key: 'container_cho_haiquan',   label: 'Chờ thông quan',       color: '#f97316', icon: '🛃' },
-  { key: 'container_bi_hong',       label: 'Container bị hỏng',    color: '#ef4444', icon: '⚠️' },
-];
-
 function Card({ title, children }) {
   return (
     <div style={{
@@ -55,7 +45,6 @@ export default function DashboardPage() {
   }
 
   const {
-    the_so             = {},
     bieu_do_7_ngay     = [],
     phan_bo_container  = [],
     lap_day_khu_vuc    = [],
@@ -68,30 +57,6 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Tổng quan trạng thái hệ thống cảng Cát Lái"
       />
-
-      {/* ── Row 0: KPI Cards ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: 10,
-        marginBottom: 14,
-      }}>
-        {KPI_LIST.map(k => (
-          <div key={k.key} style={{
-            background: '#fff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 10,
-            padding: '14px 12px',
-            borderTop: `3px solid ${k.color}`,
-          }}>
-            <div style={{ fontSize: 20, marginBottom: 4 }}>{k.icon}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: k.color, lineHeight: 1 }}>
-              {the_so[k.key] ?? 0}{k.key === 'ty_le_lap_day_phan_tram' ? '%' : ''}
-            </div>
-            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{k.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* ── Row 1: Biểu đồ ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14, marginBottom: 14 }}>

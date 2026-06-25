@@ -25,7 +25,9 @@ import ContainerCongPage from '@/pages/nhanvien/cong/ContainerPage';
 import LichTauCongPage from '@/pages/nhanvien/cong/LichTauPage';
 import CongXuatNhapNVPage from '@/pages/nhanvien/cong/CongXuatNhapPage';
 import BienBanKTCongPage from '@/pages/nhanvien/cong/BienBanKTPage';
+import PhieuLayHangPage from '@/pages/nhanvien/cong/PhieuLayHangPage';
 import ContainerBaiPage from '@/pages/nhanvien/bai/ContainerPage';
+import LichTauBaiPage from '@/pages/nhanvien/bai/LichTauPage';
 import SoDoBaiNVPage from '@/pages/nhanvien/bai/SoDoBaiPage';
 
 const queryClient = new QueryClient({
@@ -91,10 +93,10 @@ export default function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Navigate to="cong" replace />} />
-            <Route path="container"    element={<ContainerCongPage />} />
-            <Route path="lich-tau"     element={<LichTauCongPage />} />
-            <Route path="cong"         element={<CongXuatNhapNVPage />} />
-            <Route path="bien-ban-kt" element={<BienBanKTCongPage />} />
+            <Route path="container"      element={<ContainerCongPage />} />
+            <Route path="cong"           element={<CongXuatNhapNVPage />} />
+            <Route path="phieu-lay-hang" element={<PhieuLayHangPage />} />
+            <Route path="bien-ban-kt"   element={<BienBanKTCongPage />} />
           </Route>
 
           {/* ── Nhân viên bãi ── */}
@@ -105,6 +107,7 @@ export default function App() {
           }>
             <Route index element={<Navigate to="so-do-bai" replace />} />
             <Route path="container"  element={<ContainerBaiPage />} />
+            <Route path="lich-tau"   element={<LichTauBaiPage />} />
             <Route path="so-do-bai"  element={<SoDoBaiNVPage />} />
           </Route>
 

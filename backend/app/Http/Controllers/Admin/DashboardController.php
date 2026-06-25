@@ -89,7 +89,7 @@ class DashboardController extends Controller
                 'nhap_hom_nay'            => $nhapTD,
                 'xuat_hom_nay'            => $xuatTD,
                 'ty_le_lap_day_phan_tram' => $tyLe,
-                'chuyen_tau_hoat_dong'    => ChuyenTau::whereIn('trangthai', ['dalenlich', 'dadencan'])->count(),
+                'chuyen_tau_hoat_dong'    => ChuyenTau::whereIn('trangthai', ['dalenlich', 'dadencang'])->count(),
                 'container_cho_haiquan'   => (int) ($cStats->cho_haiquan ?? 0),
                 'container_bi_hong'       => (int) ($cStats->bi_hong     ?? 0),
             ],

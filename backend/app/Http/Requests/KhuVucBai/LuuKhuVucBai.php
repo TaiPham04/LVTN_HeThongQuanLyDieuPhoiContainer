@@ -26,7 +26,16 @@ class LuuKhuVucBai extends FormRequest
             'sokhoang'    => ['required', 'integer', 'min:1'],
             'sohang'      => ['required', 'integer', 'min:1'],
             'sotang'      => ['required', 'integer', 'min:1', 'max:10'],
-            'lablock_lanh' => ['required', 'boolean'],
+            'lablock_lanh'     => ['required', 'boolean'],
+            'lablock_hangnguy' => [
+                'required',
+                'boolean',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->boolean('lablock_lanh')) {
+                        $fail('Khu vực không thể vừa là block lạnh vừa là block hàng nguy hiểm.');
+                    }
+                },
+            ],
             'soocamlanh'  => ['required_if:lablock_lanh,true', 'integer', 'min:0'],
         ];
     }
@@ -43,8 +52,9 @@ class LuuKhuVucBai extends FormRequest
             'sotang.required'         => 'Vui lòng nhập số tầng.',
             'sotang.min'              => 'Số tầng phải lớn hơn 0.',
             'sotang.max'              => 'Số tầng tối đa là 10.',
-            'lablock_lanh.required'    => 'Vui lòng chọn loại khu vực.',
-            'soocamlanh.required_if'  => 'Vui lòng nhập số ổ cắm lạnh cho khu vực lạnh.',
+            'lablock_lanh.required'       => 'Vui lòng chọn loại khu vực lạnh.',
+            'lablock_hangnguy.required'   => 'Vui lòng chọn khu vực hàng nguy hiểm.',
+            'soocamlanh.required_if'      => 'Vui lòng nhập số ổ cắm lạnh cho khu vực lạnh.',
         ];
     }
 }

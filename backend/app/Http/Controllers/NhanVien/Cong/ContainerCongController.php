@@ -59,14 +59,14 @@ class ContainerCongController extends Controller
         }
 
         $data = $query->orderBy('created_at', 'desc')
-                      ->paginate($request->get('per_page', 15));
+                      ->paginate($request->get('per_page', 15), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => ContainerResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);
@@ -77,6 +77,33 @@ class ContainerCongController extends Controller
     {
         return response()->json([
             'data' => new ContainerResource($container->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+        ]);
+    }
+
+    // ─── PATCH /api/nv/cong/container/{container}/hai-quan ───────
+    public function capNhatHaiQuan(Request $request, Container $container): JsonResponse
+    {
+        $request->validate([
+            'trangthai_haiquan' => 'required|in:luong_xanh,luong_vang,luong_do',
+            'ghichu_haiquan'    => 'nullable|string|max:500',
+        ]);
+
+        $labelMap = ['luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
+        $cu  = $container->trangthai_haiquan;
+        $moi = $request->trangthai_haiquan;
+
+        if (in_array($container->trangthai, ['dalenken', 'xuatcong']) && $moi !== 'luong_xanh') {
+            $trangthaiLabel = $container->trangthai === 'dalenken' ? 'đã lên tàu' : 'đã xuất cổng';
+            return response()->json([
+                'message' => "Container {$container->socontainer} {$trangthaiLabel}. Chỉ có thể cập nhật thành Luồng xanh (để hiệu chỉnh hồ sơ).",
+            ], 422);
+        }
+
+        $container->update(['trangthai_haiquan' => $moi]);
+
+        return response()->json([
+            'message' => "Cập nhật hải quan {$container->socontainer}: {$labelMap[$cu]} → {$labelMap[$moi]}.",
+            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'hangtau', 'chuyentau'])),
         ]);
     }
 

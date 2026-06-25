@@ -30,14 +30,14 @@ class ContainerBaiController extends Controller
         }
 
         $data = $query->orderBy('created_at', 'desc')
-                      ->paginate($request->get('per_page', 15));
+                      ->paginate($request->get('per_page', 15), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => ContainerResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);

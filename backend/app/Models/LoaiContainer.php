@@ -18,19 +18,23 @@ class LoaiContainer extends Model
         'taithong_kg',
         'lalanh',
         'lahangnguy',
+        'cho_phep_xep_chong',
+        'tang_toi_da',
         'gialuubai_ngay',
         'soNgayMienPhi',
         'trangthai',
     ];
 
     protected $casts = [
-        'chieudai_ft'    => 'decimal:2',
-        'chieurong_ft'   => 'decimal:2',
-        'chieucao_ft'    => 'decimal:2',
-        'taithong_kg'    => 'decimal:2',
-        'gialuubai_ngay' => 'decimal:2',
-        'lalanh'         => 'boolean',
-        'lahangnguy'     => 'boolean',
+        'chieudai_ft'        => 'decimal:2',
+        'chieurong_ft'       => 'decimal:2',
+        'chieucao_ft'        => 'decimal:2',
+        'taithong_kg'        => 'decimal:2',
+        'gialuubai_ngay'     => 'decimal:2',
+        'lalanh'             => 'boolean',
+        'lahangnguy'         => 'boolean',
+        'cho_phep_xep_chong' => 'boolean',
+        'tang_toi_da'        => 'integer',
     ];
 
     // ─── Relationships ───────────────────────────────────────────
@@ -58,6 +62,6 @@ class LoaiContainer extends Model
     // ─── Helpers ─────────────────────────────────────────────────
     public function dangDuocSuDung(): bool
     {
-        return $this->containers()->exists();
+        return $this->containers()->where('trangthai', '!=', 'khonghoatdong')->exists();
     }
 }

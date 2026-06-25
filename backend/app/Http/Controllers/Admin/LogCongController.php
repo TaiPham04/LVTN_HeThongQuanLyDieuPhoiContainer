@@ -10,6 +10,7 @@ use App\Models\LichSuViTri;
 use App\Models\LogCong;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LogCongController extends Controller
 {
@@ -33,14 +34,14 @@ class LogCongController extends Controller
         }
 
         $data = $query->orderBy('thoigian_xl', 'desc')
-                      ->paginate($request->get('per_page', 15));
+                      ->paginate($request->get('per_page', 15), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => LogCongResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);
@@ -80,35 +81,40 @@ class LogCongController extends Controller
             }
         }
 
-        $log = LogCong::create([
-            'macontainer'   => $container->macontainer,
-            'machuyentau'   => $request->machuyentau,
-            'mataixe'       => $request->mataixe,
-            'manhanvien'    => $request->user()->mataikhoan,
-            'kieu_xuatnhap' => $request->kieu_xuatnhap,
-            'biensoxe'      => $request->biensoxe,
-            'niemchi_ktra'  => $request->niemchi_ktra,
-            'niemchi_ok'    => $request->niemchi_ok,
-            // Snapshot trạng thái hải quan tại thời điểm qua cổng (không dùng để cập nhật container)
-            'haiquan_ok'    => $container->trangthai_haiquan === 'luong_xanh',
-            'ghichu'        => $request->ghichu,
-            'thoigian_xl'   => now(),
-        ]);
+        $log = null;
 
-        if ($request->kieu_xuatnhap === 'nhap') {
-            $container->update([
-                'trangthai'       => 'trongbai',
-                'thoigian_vaobai' => now(),
+        DB::transaction(function () use ($request, $container, &$log) {
+            $now = now();
+
+            $log = LogCong::create([
+                'macontainer'   => $container->macontainer,
+                'machuyentau'   => $request->machuyentau,
+                'mataixe'       => $request->mataixe,
+                'manhanvien'    => $request->user()->mataikhoan,
+                'kieu_xuatnhap' => $request->kieu_xuatnhap,
+                'biensoxe'      => $request->biensoxe,
+                'niemchi_ktra'  => $request->niemchi_ktra,
+                'niemchi_ok'    => $request->niemchi_ok,
+                'haiquan_ok'    => $container->trangthai_haiquan === 'luong_xanh',
+                'ghichu'        => $request->ghichu,
+                'thoigian_xl'   => $now,
             ]);
-        } else {
-            $container->update([
-                'trangthai'      => 'xuatcong',
-                'thoigian_rabai' => now(),
-            ]);
-            LichSuViTri::where('macontainer', $container->macontainer)
-                ->whereNull('thoigian_roi')
-                ->update(['thoigian_roi' => now()]);
-        }
+
+            if ($request->kieu_xuatnhap === 'nhap') {
+                $container->update([
+                    'trangthai'       => 'trongbai',
+                    'thoigian_vaobai' => $now,
+                ]);
+            } else {
+                $container->update([
+                    'trangthai'      => 'xuatcong',
+                    'thoigian_rabai' => $now,
+                ]);
+                LichSuViTri::where('macontainer', $container->macontainer)
+                    ->whereNull('thoigian_roi')
+                    ->update(['thoigian_roi' => $now]);
+            }
+        });
 
         $label = $request->kieu_xuatnhap === 'nhap' ? 'nhập bãi' : 'xuất bãi';
 

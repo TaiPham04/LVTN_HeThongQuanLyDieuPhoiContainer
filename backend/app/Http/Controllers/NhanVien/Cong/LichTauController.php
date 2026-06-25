@@ -18,7 +18,7 @@ class LichTauController extends Controller
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);
         } else {
-            $query->whereIn('trangthai', ['dalenlich', 'dadencan']);
+            $query->whereIn('trangthai', ['dalenlich', 'dadencang']);
         }
 
         if ($request->search) {
@@ -33,14 +33,14 @@ class LichTauController extends Controller
         }
 
         $data = $query->orderBy('thoigiandukien', 'desc')
-                      ->paginate($request->get('per_page', 10));
+                      ->paginate($request->get('per_page', 10), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => ChuyenTauResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);
@@ -50,8 +50,8 @@ class LichTauController extends Controller
     public function chuyenTrangThai(ChuyenTau $chuyentau): JsonResponse
     {
         $buocTiep = [
-            'dalenlich' => 'dadencan',
-            'dadencan'  => 'daroi',
+            'dalenlich' => 'dadencang',
+            'dadencang'  => 'daroi',
         ];
 
         if (!isset($buocTiep[$chuyentau->trangthai])) {
@@ -62,7 +62,7 @@ class LichTauController extends Controller
         $chuyentau->update(['trangthai' => $trangThaiMoi]);
 
         $nhan = match($trangThaiMoi) {
-            'dadencan' => 'đã đến cảng',
+            'dadencang' => 'đã đến cảng',
             'daroi'    => 'đã rời bến',
             default    => $trangThaiMoi,
         };

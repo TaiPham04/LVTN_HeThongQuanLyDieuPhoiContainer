@@ -34,4 +34,9 @@ class ChuyenTau extends Model
     {
         return $this->belongsTo(HangTau::class, 'mahangtau', 'mahangtau');
     }
+
+    public function containers()
+    {
+        return $this->hasMany(Container::class, 'machuyentau', 'machuyentau');
+    }
 }

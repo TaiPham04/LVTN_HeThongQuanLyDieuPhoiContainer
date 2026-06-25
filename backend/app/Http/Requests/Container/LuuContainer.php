@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Container;
 
+use App\Models\ChuyenTau;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,17 @@ class LuuContainer extends FormRequest
                                 Rule::unique('container', 'socontainer')->ignore($macontainer, 'macontainer')->whereNull('deleted_at')],
             'maloai'        => ['required', 'exists:loaicontainer,maloai'],
             'mahangtau'     => ['required', 'exists:hangtau,mahangtau'],
-            'machuyentau'   => ['nullable', 'exists:chuyentau,machuyentau'],
+            'machuyentau'   => [
+                'nullable',
+                'exists:chuyentau,machuyentau',
+                function ($attribute, $value, $fail) {
+                    if ($value === null) return;
+                    $chuyen = ChuyenTau::find($value);
+                    if ($chuyen && (string) $chuyen->mahangtau !== (string) $this->mahangtau) {
+                        $fail('Chuyến tàu không thuộc hãng tàu đã chọn.');
+                    }
+                },
+            ],
             'soniemchi'     => ['nullable', 'string', 'max:50'],
             'trongluong_kg' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'mota_hanghoa'  => ['nullable', 'string', 'max:1000'],

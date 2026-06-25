@@ -37,6 +37,12 @@ class HangTau extends Model
     // ─── Helpers ─────────────────────────────────────────────────
     public function dangDuocSuDung(): bool
     {
-        return $this->chuyentau()->exists() || $this->containers()->exists();
+        $coChuyenTauHoatDong = $this->chuyentau()
+            ->whereIn('trangthai', ['dalenlich', 'dadencang'])
+            ->exists();
+        $coContainerHoatDong = $this->containers()
+            ->where('trangthai', '!=', 'khonghoatdong')
+            ->exists();
+        return $coChuyenTauHoatDong || $coContainerHoatDong;
     }
 }

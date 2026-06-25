@@ -9,7 +9,7 @@ const MENU = [
   { path: '/admin/khu-vuc-bai',    icon: 'ti-map-pin',          label: 'Khu vực bãi' },
   { path: '/admin/container',      icon: 'ti-package',          label: 'Container' },
   { path: '/admin/cong',           icon: 'ti-door-enter',       label: 'Xuất nhập cổng' },
-  { path: '/admin/bien-ban-kt',   icon: 'ti-clipboard-check',  label: 'Biên bản KTĐ' },
+  { path: '/admin/bien-ban-kt',   icon: 'ti-clipboard-check',  label: 'Biên bản KT' },
   { path: '/admin/so-do-bai',      icon: 'ti-layout-grid',      label: 'Sơ đồ bãi' },
   { path: '/admin/tai-khoan',      icon: 'ti-users',            label: 'Tài khoản' },
   { path: '/admin/bao-cao',        icon: 'ti-chart-bar',        label: 'Báo cáo' },

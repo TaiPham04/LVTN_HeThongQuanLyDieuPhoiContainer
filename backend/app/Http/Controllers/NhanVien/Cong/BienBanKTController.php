@@ -32,14 +32,14 @@ class BienBanKTController extends Controller
         }
 
         $data = $query->orderBy('thoigian_ktd', 'desc')
-                      ->paginate($request->get('per_page', 15));
+                      ->paginate($request->get('per_page', 15), ['*'], 'trang', (int) $request->get('trang', 1));
 
         return response()->json([
             'data' => BienBanKTResource::collection($data->items()),
             'meta' => [
-                'current_page' => $data->currentPage(),
-                'last_page'    => $data->lastPage(),
-                'total'        => $data->total(),
+                'trang_hien' => $data->currentPage(),
+                'tong_trang' => $data->lastPage(),
+                'tong'       => $data->total(),
                 'per_page'     => $data->perPage(),
             ],
         ]);
@@ -49,6 +49,14 @@ class BienBanKTController extends Controller
     public function store(LuuBienBan $request): JsonResponse
     {
         $container = Container::where('socontainer', $request->socontainer)->first();
+
+        // L10: Không lập biên bản hải quan cho container đã rời bãi
+        if ($request->loaiktd === 'haiquan' && in_array($container->trangthai, ['xuatcong', 'dalenken'])) {
+            $label = $container->trangthai === 'dalenken' ? 'đã lên tàu' : 'đã xuất khỏi cảng';
+            return response()->json([
+                'message' => "Container {$container->socontainer} {$label}. Không thể lập biên bản kiểm tra hải quan.",
+            ], 422);
+        }
 
         $bienban = BienBanKT::create([
             'macontainer'  => $container->macontainer,

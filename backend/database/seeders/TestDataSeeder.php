@@ -26,14 +26,14 @@ class TestDataSeeder extends Seeder
                 'mahangtau' => 2, 'tentau' => 'MSC Ambra', 'sovoyage' => 'MSC001N',
                 'cangxuatphat' => 'SGSIN', 'cangdich' => 'VNCLI',
                 'thoigiandukien' => '2026-06-09 14:00:00', 'thoigianroiben' => '2026-06-11 20:00:00',
-                'socontainerdukien' => 200, 'trangthai' => 'dadencan',
+                'socontainerdukien' => 200, 'trangthai' => 'dadencang',
                 'created_at' => $now, 'updated_at' => $now,
             ],
             [
                 'mahangtau' => 3, 'tentau' => 'COSCO Star', 'sovoyage' => 'COS001W',
                 'cangxuatphat' => 'JPNGO', 'cangdich' => 'VNCLI',
                 'thoigiandukien' => '2026-06-08 06:00:00', 'thoigianroiben' => '2026-06-10 12:00:00',
-                'socontainerdukien' => 150, 'trangthai' => 'dadencan',
+                'socontainerdukien' => 150, 'trangthai' => 'dadencang',
                 'created_at' => $now, 'updated_at' => $now,
             ],
             [

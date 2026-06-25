@@ -47,3 +47,12 @@ export function useXoaContainer() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
+
+export function useCapNhatHaiQuan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ macontainer, ...payload }) =>
+      api.patch(`/admin/container/${macontainer}/hai-quan`, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  });
+}

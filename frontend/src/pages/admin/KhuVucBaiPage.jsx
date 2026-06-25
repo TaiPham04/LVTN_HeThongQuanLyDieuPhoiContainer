@@ -257,13 +257,7 @@ export default function KhuVucBaiPage() {
       />
 
       {/* Phân trang */}
-      {meta.last_page > 1 && (
-        <Pagination
-          current={meta.current_page}
-          total={meta.last_page}
-          onChange={setTrang}
-        />
-      )}
+      <Pagination meta={meta} onChange={setTrang} />
 
       {/* ── Modal Thêm / Sửa ── */}
       <Modal

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -7,7 +7,8 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import { useContainerCongList, useDangKyContainer } from '@/hooks/nhanvien/useContainerCong';
+import { useContainerCongList, useDangKyContainer, useCapNhatHaiQuanCong } from '@/hooks/nhanvien/useContainerCong';
+import { HaiQuanModal } from '@/pages/admin/ContainerPage';
 
 /* ── helpers ── */
 const trangThaiBadge = (v) => {
@@ -55,9 +56,13 @@ export default function ContainerCongPage() {
   const [filterTT, setFilterTT]       = useState('');
   const [modalOpen, setModalOpen]     = useState(false);
   const [serverErr, setServerErr]     = useState('');
+  const [hqRow, setHqRow]             = useState(null);
+  const [hqTT, setHqTT]               = useState('');
+  const [hqGhiChu, setHqGhiChu]       = useState('');
 
   const { data, isLoading } = useContainerCongList({ trang, search, trangthai: filterTT });
   const dangKy              = useDangKyContainer();
+  const capNhatHQ           = useCapNhatHaiQuanCong();
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ defaultValues });
 
@@ -120,6 +125,22 @@ export default function ContainerCongPage() {
       label: 'Vào bãi',
       render: (v) => <span style={{ fontSize: 13 }}>{v || '—'}</span>,
     },
+    {
+      key: 'actions',
+      label: 'Thao tác',
+      align: 'center',
+      width: 110,
+      render: (_, row) => (
+        <Button
+          size="sm"
+          variant={row.trangthai_haiquan === 'luong_xanh' ? 'secondary' : 'ghost'}
+          onClick={() => { setHqRow(row); setHqTT(row.trangthai_haiquan); setHqGhiChu(''); }}
+          title="Cập nhật trạng thái hải quan"
+        >
+          Cập nhật HQ
+        </Button>
+      ),
+    },
   ];
 
   const list = data?.data ?? [];
@@ -166,9 +187,33 @@ export default function ContainerCongPage() {
 
       <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có container nào" />
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
+
+      {/* ── Modal Cập nhật hải quan ── */}
+      {hqRow && (
+        <Modal
+          open={!!hqRow}
+          onClose={() => setHqRow(null)}
+          title={`Cập nhật hải quan — ${hqRow.socontainer}`}
+          width={420}
+        >
+          <HaiQuanModal
+            row={hqRow}
+            value={hqTT}
+            onChange={setHqTT}
+            ghichu={hqGhiChu}
+            onGhichuChange={setHqGhiChu}
+            loading={capNhatHQ.isPending}
+            onSubmit={async () => {
+              await capNhatHQ.mutateAsync({ macontainer: hqRow.macontainer, trangthai_haiquan: hqTT, ghichu_haiquan: hqGhiChu });
+              setHqRow(null);
+            }}
+            onClose={() => setHqRow(null)}
+          />
+        </Modal>
+      )}
 
       {/* ── Modal đăng ký ── */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Đăng ký container mới" width={480}>

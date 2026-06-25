@@ -97,8 +97,8 @@ class SoDoBaiController extends Controller
             'maobai'      => 'required|exists:obai,maobai',
         ]);
 
-        $container = Container::findOrFail($request->macontainer);
-        $obai      = OBai::findOrFail($request->maobai);
+        $container = Container::with('loaicontainer')->findOrFail($request->macontainer);
+        $obai      = OBai::with('khuvucbai')->findOrFail($request->maobai);
 
         if ($obai->trangthai !== 'trong') {
             return response()->json(['message' => 'Ô bãi này đã được sử dụng.'], 422);
@@ -108,6 +108,57 @@ class SoDoBaiController extends Controller
         }
         if (LichSuViTri::where('macontainer', $container->macontainer)->whereNull('thoigian_roi')->exists()) {
             return response()->json(['message' => 'Container đã được gán vị trí rồi.'], 422);
+        }
+
+        $loai   = $container->loaicontainer;
+        $khuvuc = $obai->khuvucbai;
+
+        // L3: Container lạnh / thường phải đúng block
+        if ((bool) $loai?->lalanh !== (bool) $khuvuc?->lablock_lanh) {
+            $msg = $loai?->lalanh
+                ? 'Container lạnh phải được đặt vào block lạnh.'
+                : 'Ô bãi này thuộc block lạnh, chỉ dành cho container lạnh.';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        // Hàng nguy hiểm phải vào block hàng nguy hiểm và ngược lại
+        if ((bool) $loai?->lahangnguy !== (bool) $khuvuc?->lablock_hangnguy) {
+            $msg = $loai?->lahangnguy
+                ? 'Container hàng nguy hiểm phải được đặt vào block hàng nguy hiểm.'
+                : 'Block này chỉ dành cho container hàng nguy hiểm.';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        // Kiểm tra tầng tối đa của loại container
+        $tangToiDa = $loai?->tang_toi_da;
+        if ($tangToiDa !== null && $obai->tang > $tangToiDa) {
+            return response()->json([
+                'message' => "Loại container {$loai->tenloai} chỉ được đặt tối đa tầng {$tangToiDa}.",
+            ], 422);
+        }
+
+        // Kiểm tra container bên dưới có cho phép xếp chồng không
+        if ($obai->tang > 1) {
+            $obaiDuoi = OBai::where('makhuvuc', $obai->makhuvuc)
+                ->where('khoang', $obai->khoang)
+                ->where('hang', $obai->hang)
+                ->where('tang', $obai->tang - 1)
+                ->where('trangthai', 'dangsudung')
+                ->first();
+
+            if ($obaiDuoi) {
+                $lichSuDuoi = LichSuViTri::where('maobai', $obaiDuoi->maobai)
+                    ->whereNull('thoigian_roi')
+                    ->with('container.loaicontainer')
+                    ->first();
+
+                if ($lichSuDuoi?->container?->loaicontainer?->cho_phep_xep_chong === false) {
+                    $tenLoaiDuoi = $lichSuDuoi->container->loaicontainer->tenloai;
+                    return response()->json([
+                        'message' => "Không thể đặt container lên ô này — {$tenLoaiDuoi} bên dưới không cho phép xếp chồng.",
+                    ], 422);
+                }
+            }
         }
 
         DB::transaction(function () use ($container, $obai, $request) {
@@ -171,12 +222,66 @@ class SoDoBaiController extends Controller
             return response()->json(['message' => 'Không thể đảo chuyển — có container đang xếp trên ô này.'], 422);
         }
 
+        $obaiMoi->load('khuvucbai');
+
         $lichSuCu = LichSuViTri::where('maobai', $obaiCu->maobai)
             ->whereNull('thoigian_roi')
+            ->with(['container.loaicontainer'])
             ->first();
 
         if (!$lichSuCu) {
             return response()->json(['message' => 'Không tìm thấy container tại ô này.'], 422);
+        }
+
+        $loaiDich  = $lichSuCu->container?->loaicontainer;
+        $khuvucMoi = $obaiMoi->khuvucbai;
+
+        // L4: Container lạnh / thường phải đúng block
+        if ((bool) $loaiDich?->lalanh !== (bool) $khuvucMoi?->lablock_lanh) {
+            $msg = $loaiDich?->lalanh
+                ? 'Container lạnh phải được đặt vào block lạnh.'
+                : 'Ô bãi đích thuộc block lạnh, chỉ dành cho container lạnh.';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        // Hàng nguy hiểm phải đúng block
+        if ((bool) $loaiDich?->lahangnguy !== (bool) $khuvucMoi?->lablock_hangnguy) {
+            $msg = $loaiDich?->lahangnguy
+                ? 'Container hàng nguy hiểm phải được đặt vào block hàng nguy hiểm.'
+                : 'Block đích chỉ dành cho container hàng nguy hiểm.';
+            return response()->json(['message' => $msg], 422);
+        }
+
+        // Kiểm tra tầng tối đa
+        $tangToiDa = $loaiDich?->tang_toi_da;
+        if ($tangToiDa !== null && $obaiMoi->tang > $tangToiDa) {
+            return response()->json([
+                'message' => "Loại container {$loaiDich->tenloai} chỉ được đặt tối đa tầng {$tangToiDa}.",
+            ], 422);
+        }
+
+        // Kiểm tra container bên dưới ô đích có cho phép xếp chồng không
+        if ($obaiMoi->tang > 1) {
+            $obaiDuoi = OBai::where('makhuvuc', $obaiMoi->makhuvuc)
+                ->where('khoang', $obaiMoi->khoang)
+                ->where('hang', $obaiMoi->hang)
+                ->where('tang', $obaiMoi->tang - 1)
+                ->where('trangthai', 'dangsudung')
+                ->first();
+
+            if ($obaiDuoi) {
+                $lichSuDuoi = LichSuViTri::where('maobai', $obaiDuoi->maobai)
+                    ->whereNull('thoigian_roi')
+                    ->with('container.loaicontainer')
+                    ->first();
+
+                if ($lichSuDuoi?->container?->loaicontainer?->cho_phep_xep_chong === false) {
+                    $tenLoaiDuoi = $lichSuDuoi->container->loaicontainer->tenloai;
+                    return response()->json([
+                        'message' => "Không thể đảo chuyển vào ô này — {$tenLoaiDuoi} bên dưới không cho phép xếp chồng.",
+                    ], 422);
+                }
+            }
         }
 
         DB::transaction(function () use ($obaiCu, $obaiMoi, $lichSuCu, $request) {
@@ -211,10 +316,39 @@ class SoDoBaiController extends Controller
 
     private function tinhGoiY(Container $container, ?int $excludeObai = null, ?int $maxTang = null): \Illuminate\Support\Collection
     {
+        $container->loadMissing('loaicontainer');
+        $loai            = $container->loaicontainer;
+        $laLanhContainer = (bool) $loai?->lalanh;
+        $laHangNguy      = (bool) $loai?->lahangnguy;
+        $tangToiDa       = $loai?->tang_toi_da;
+
         $query = OBai::where('trangthai', 'trong')->with('khuvucbai');
         if ($excludeObai) $query->where('maobai', '!=', $excludeObai);
-        if ($maxTang)     $query->where('tang', '<=', $maxTang);
-        $emptySlots = $query->get();
+        $tangGioiHan = $tangToiDa;
+        if ($maxTang !== null) {
+            $tangGioiHan = $tangGioiHan !== null ? min($tangGioiHan, $maxTang) : $maxTang;
+        }
+        if ($tangGioiHan !== null) $query->where('tang', '<=', $tangGioiHan);
+
+        $noStackKeys = DB::table('lichsuvitri')
+            ->join('obai',         'lichsuvitri.maobai',      '=', 'obai.maobai')
+            ->join('container',    'lichsuvitri.macontainer', '=', 'container.macontainer')
+            ->join('loaicontainer','container.maloai',        '=', 'loaicontainer.maloai')
+            ->whereNull('lichsuvitri.thoigian_roi')
+            ->where('loaicontainer.cho_phep_xep_chong', false)
+            ->select('obai.makhuvuc', 'obai.khoang', 'obai.hang',
+                     DB::raw('(obai.tang + 1) as tang_tren'))
+            ->get()
+            ->map(fn ($r) => "{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang_tren}")
+            ->flip()
+            ->all();
+
+        $emptySlots = $query->get()->filter(function ($o) use ($laLanhContainer, $laHangNguy, $noStackKeys) {
+            if ((bool) $o->khuvucbai?->lablock_lanh     !== $laLanhContainer) return false;
+            if ((bool) $o->khuvucbai?->lablock_hangnguy !== $laHangNguy)      return false;
+            $key = "{$o->makhuvuc}-{$o->khoang}-{$o->hang}-{$o->tang}";
+            return !isset($noStackKeys[$key]);
+        });
 
         if ($emptySlots->isEmpty()) return collect();
 

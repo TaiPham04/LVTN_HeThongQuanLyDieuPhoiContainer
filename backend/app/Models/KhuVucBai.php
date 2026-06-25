@@ -15,12 +15,14 @@ class KhuVucBai extends Model
         'sohang',
         'sotang',
         'lablock_lanh',
+        'lablock_hangnguy',
         'soocamlanh',
         'trangthai',
     ];
 
     protected $casts = [
-        'lablock_lanh' => 'boolean',
+        'lablock_lanh'     => 'boolean',
+        'lablock_hangnguy' => 'boolean',
     ];
 
     // ─── Relationships ───────────────────────────────────────────

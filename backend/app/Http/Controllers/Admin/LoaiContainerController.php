@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoaiContainer\LuuLoaiContainerRequest;
+use App\Http\Requests\LoaiContainer\LuuLoaiContainer;
 use App\Http\Requests\LoaiContainer\XoaLoaiContainerRequest;
 use App\Http\Resources\LoaiContainerResource;
 use App\Models\LogXoa;

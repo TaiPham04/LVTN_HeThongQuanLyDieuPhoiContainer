@@ -16,8 +16,10 @@ use App\Http\Controllers\NhanVien\Bai\ContainerBaiController;
 use App\Http\Controllers\NhanVien\Bai\SoDoBaiController as NVSoDoBaiController;
 use App\Http\Controllers\NhanVien\Cong\BienBanKTController as NVBienBanKTController;
 use App\Http\Controllers\NhanVien\Cong\ContainerCongController;
+use App\Http\Controllers\NhanVien\Bai\LichTauBaiController;
 use App\Http\Controllers\NhanVien\Cong\LichTauController as NVLichTauController;
 use App\Http\Controllers\NhanVien\Cong\LogCongController as NVLogCongController;
+use App\Http\Controllers\NhanVien\Cong\PhieuLayHangController as NVPhieuLayHangController;
 use Illuminate\Support\Facades\Route;
 
 // ─── PUBLIC ──────────────────────────────────────────────────────────────────
@@ -72,12 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('khu-vuc-bai/{khuvucbai}/khoiphuc',  [KhuVucBaiController::class, 'khoiPhuc']);
 
         // Container
-        Route::get('container',             [ContainerController::class, 'index']);
-        Route::get('container/lookup',      [ContainerController::class, 'lookup']);
-        Route::get('container/{container}', [ContainerController::class, 'show']);
-        Route::post('container',            [ContainerController::class, 'store']);
-        Route::put('container/{container}', [ContainerController::class, 'update']);
-        Route::delete('container/{container}', [ContainerController::class, 'destroy']);
+        Route::get('container',                                [ContainerController::class, 'index']);
+        Route::get('container/lookup',                         [ContainerController::class, 'lookup']);
+        Route::get('container/{container}',                    [ContainerController::class, 'show']);
+        Route::post('container',                               [ContainerController::class, 'store']);
+        Route::put('container/{container}',                    [ContainerController::class, 'update']);
+        Route::delete('container/{container}',                 [ContainerController::class, 'destroy']);
+        Route::patch('container/{container}/hai-quan',         [ContainerController::class, 'capNhatHaiQuan']);
 
         // Lịch tàu
         Route::get('lich-tau',                           [ChuyenTauController::class, 'index']);
@@ -125,15 +128,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── NHÂN VIÊN CỔNG ──────────────────────────────────────────────────────
     Route::middleware('role:nhanvien_cong')->prefix('nv/cong')->group(function () {
 
-        // Container — đăng ký và tra cứu (không sửa/xóa)
-        Route::get('container',             [ContainerCongController::class, 'index']);
-        Route::get('container/lookup',      [ContainerCongController::class, 'lookup']);
-        Route::get('container/{container}', [ContainerCongController::class, 'show']);
-        Route::post('container',            [ContainerCongController::class, 'store']);
+        // Container — đăng ký, tra cứu và cập nhật hải quan
+        Route::get('container',                            [ContainerCongController::class, 'index']);
+        Route::get('container/lookup',                     [ContainerCongController::class, 'lookup']);
+        Route::get('container/{container}',                [ContainerCongController::class, 'show']);
+        Route::post('container',                           [ContainerCongController::class, 'store']);
+        Route::patch('container/{container}/hai-quan',     [ContainerCongController::class, 'capNhatHaiQuan']);
 
-        // Lịch tàu — xem + chuyển trạng thái (không CRUD)
-        Route::get('lich-tau',                          [NVLichTauController::class, 'index']);
-        Route::patch('lich-tau/{chuyentau}/trang-thai', [NVLichTauController::class, 'chuyenTrangThai']);
+        // Lịch tàu — chỉ xem (CongXuatNhapPage cần để lấy danh sách tàu đang cập cảng)
+        Route::get('lich-tau', [NVLichTauController::class, 'index']);
 
         // Cổng xuất nhập
         Route::get('cong',  [NVLogCongController::class, 'index']);
@@ -142,6 +145,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Biên bản KTĐ
         Route::get('bien-ban-kt',  [NVBienBanKTController::class, 'index']);
         Route::post('bien-ban-kt', [NVBienBanKTController::class, 'store']);
+
+        // Phiếu lấy hàng
+        Route::get('phieu-lay-hang',                          [NVPhieuLayHangController::class, 'index']);
+        Route::post('phieu-lay-hang',                         [NVPhieuLayHangController::class, 'store']);
+        Route::get('phieu-lay-hang/{phieu}',                  [NVPhieuLayHangController::class, 'show']);
+        Route::patch('phieu-lay-hang/{phieu}/xac-nhan',       [NVPhieuLayHangController::class, 'xacNhan']);
+        Route::patch('phieu-lay-hang/{phieu}/huy',            [NVPhieuLayHangController::class, 'huy']);
 
         // Lookups dùng chung (hãng tàu, loại container, tài xế)
         Route::get('hang-tau',           [HangTauController::class, 'index']);
@@ -171,6 +181,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('so-do-bai/{khuvucbai}',               [NVSoDoBaiController::class, 'show']);
         Route::post('so-do-bai/gan-vitri',                [NVSoDoBaiController::class, 'ganVitri']);
         Route::post('so-do-bai/daochuyen',                [NVSoDoBaiController::class, 'daoChuyen']);
+
+        // Lịch tàu — xem + cập nhật trạng thái + xác nhận dỡ hàng
+        Route::get('lich-tau',                                    [LichTauBaiController::class, 'index']);
+        Route::patch('lich-tau/{chuyentau}/trang-thai',           [LichTauBaiController::class, 'chuyenTrangThai']);
+        Route::post('lich-tau/{chuyentau}/xac-nhan-do-hang',      [LichTauBaiController::class, 'xacNhanDoHang']);
 
         // Lookups dùng chung
         Route::get('hang-tau',  [HangTauController::class, 'index']);

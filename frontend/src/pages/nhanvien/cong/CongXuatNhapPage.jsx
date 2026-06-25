@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -41,7 +41,7 @@ export default function CongXuatNhapNVPage() {
   const [serverErr, setServerErr]     = useState('');
 
   const { data, isLoading } = useLogCongList({ trang, search, kieu_xuatnhap: filterKieu, ngay: filterNgay });
-  const { data: ctData }    = useLichTauCongList({ trangthai: 'dadencan', per_page: 100 });
+  const { data: ctData }    = useLichTauCongList({ trangthai: 'dadencang', per_page: 100 });
   const { data: txData }    = useTaiXeListCong();
   const ghiNhan             = useGhiNhanXuatNhap();
 
@@ -185,7 +185,7 @@ export default function CongXuatNhapNVPage() {
 
       <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có bản ghi nào" />
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
 

@@ -21,7 +21,7 @@ import { useHangTauList } from '@/hooks/admin/useHangTau';
 const trangThaiBadge = (v) => {
   switch (v) {
     case 'dalenlich': return <Badge variant="info">Đã lên lịch</Badge>;
-    case 'dadencan':  return <Badge variant="warning">Đã đến cảng</Badge>;
+    case 'dadencang':  return <Badge variant="warning">Đã đến cảng</Badge>;
     case 'daroi':     return <Badge variant="success">Đã rời</Badge>;
     case 'dahuy':     return <Badge variant="danger">Đã hủy</Badge>;
     default:          return <Badge variant="gray">{v}</Badge>;
@@ -119,7 +119,7 @@ export default function LichTauPage() {
               onClick={() => chuyenTT.mutate(row.machuyentau)}
             >Đã đến cảng</Button>
           )}
-          {row.trangthai === 'dadencan' && (
+          {row.trangthai === 'dadencang' && (
             <Button
               size="sm" variant="success"
               disabled={chuyenTT.isPending}
@@ -256,7 +256,7 @@ export default function LichTauPage() {
         >
           <option value="">Đang hoạt động</option>
           <option value="dalenlich">Đã lên lịch</option>
-          <option value="dadencan">Đã đến cảng</option>
+          <option value="dadencang">Đã đến cảng</option>
           <option value="daroi">Đã rời</option>
           <option value="dahuy">Đã hủy</option>
         </select>
@@ -272,7 +272,7 @@ export default function LichTauPage() {
 
       {/* Phân trang */}
       <Pagination
-        meta={{ trang_hien: meta.current_page, tong_trang: meta.last_page, tong: meta.total, per_page: meta.per_page }}
+        meta={meta}
         onChange={setTrang}
       />
 
