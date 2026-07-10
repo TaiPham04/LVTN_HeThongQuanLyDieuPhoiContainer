@@ -27,7 +27,7 @@ class BaoCaoController extends Controller
             $base->where('kieu_xuatnhap', $request->kieu);
         }
 
-        $data = $base->with(['container.hangtau', 'chuyentau', 'taixe', 'nhanvien'])
+        $data = $base->with(['container.chuyentau.hangtau', 'chuyentau', 'taixe', 'nhanvien'])
                      ->orderBy('thoigian_xl', 'desc')
                      ->paginate($request->get('per_page', 20));
 
@@ -62,7 +62,7 @@ class BaoCaoController extends Controller
             $base->where('trangthai', $request->trangthai);
         }
 
-        $data = $base->with(['loaicontainer', 'hangtau', 'chuyentau'])
+        $data = $base->with(['loaicontainer', 'chuyentau.hangtau'])
                      ->orderBy('created_at', 'desc')
                      ->paginate($request->get('per_page', 20));
 
@@ -85,8 +85,10 @@ class BaoCaoController extends Controller
 
         $rows = Container::whereNot('container.trangthai', 'khonghoatdong')
             ->whereBetween('container.created_at', [$tu, $den])
-            ->join('hangtau', 'container.mahangtau', '=', 'hangtau.mahangtau')
+            ->join('chuyentau', 'container.machuyentau', '=', 'chuyentau.machuyentau')
+            ->join('hangtau',   'chuyentau.mahangtau',   '=', 'hangtau.mahangtau')
             ->selectRaw("
+                hangtau.mahangtau,
                 hangtau.mascac,
                 hangtau.tenhangtau,
                 COUNT(*)                                       AS tong,

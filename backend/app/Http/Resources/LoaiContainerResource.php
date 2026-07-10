@@ -9,9 +9,19 @@ class LoaiContainerResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Derive kichthuoc từ chieudai_ft
+        $chieudai = (float) $this->chieudai_ft;
+        $kichthuoc = match(true) {
+            $chieudai >= 45 => '45ft',
+            $chieudai >= 40 => '40ft',
+            default         => '20ft',
+        };
+
         return [
             'maloai'         => $this->maloai,
             'maiso'          => $this->maiso,
+            'kieu_cont'      => $this->kieu_cont,
+            'kichthuoc'      => $kichthuoc,
             'tenloai'        => $this->tenloai,
             'chieudai_ft'    => (float) $this->chieudai_ft,
             'chieurong_ft'   => (float) $this->chieurong_ft,

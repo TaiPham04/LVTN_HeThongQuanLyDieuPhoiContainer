@@ -10,7 +10,7 @@ class PhieuLayHangResource extends JsonResource
     public function toArray(Request $request): array
     {
         $container = $this->container;
-        $hangtau   = $container?->hangtau;
+        $hangtau   = $container?->chuyentau?->hangtau;
         $vitri     = $this->vitri_snapshot ?? [];
 
         return [

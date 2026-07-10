@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
-import { useLichTauBaiList, useChuyenTrangThaiBai, useXacNhanDoHang } from '@/hooks/nhanvien/useLichTauBai';
+import { useLichTauBaiList, useChuyenTrangThaiBai } from '@/hooks/nhanvien/useLichTauBai';
 
 const daDeoDen = (thoigiandukien) => {
   if (!thoigiandukien) return true;
@@ -41,11 +42,10 @@ export default function LichTauBaiPage() {
   const [successMsg, setSuccessMsg]   = useState('');
   const [errorMsg, setErrorMsg]       = useState('');
 
+  const navigate = useNavigate();
   const { data, isLoading } = useLichTauBaiList({ trang, search, trangthai: filterTT });
-  const chuyenTT  = useChuyenTrangThaiBai();
-  const doHangMut = useXacNhanDoHang();
-
-  const isPending = chuyenTT.isPending || doHangMut.isPending;
+  const chuyenTT = useChuyenTrangThaiBai();
+  const isPending = chuyenTT.isPending;
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg); setErrorMsg('');
@@ -69,21 +69,16 @@ export default function LichTauBaiPage() {
     }
   };
 
-  // Inline confirm cho doHang / roiBen
-  const handleAction = async (machuyentau, action) => {
-    if (!confirming || confirming.id !== machuyentau || confirming.action !== action) {
-      setConfirming({ id: machuyentau, action });
+  // Inline confirm cho roiBen
+  const handleRoiBen = async (machuyentau) => {
+    if (!confirming || confirming.id !== machuyentau) {
+      setConfirming({ id: machuyentau });
       return;
     }
     setConfirming(null);
     try {
-      if (action === 'doHang') {
-        const res = await doHangMut.mutateAsync(machuyentau);
-        showSuccess(res.message);
-      } else {
-        const res = await chuyenTT.mutateAsync(machuyentau);
-        showSuccess(res.message);
-      }
+      const res = await chuyenTT.mutateAsync(machuyentau);
+      showSuccess(res.message);
     } catch (e) {
       showError(e?.response?.data?.message || 'Đã có lỗi xảy ra.');
     }
@@ -146,40 +141,38 @@ export default function LichTauBaiPage() {
         }
 
         if (trangthai === 'dadencang') {
-          const conHangChoDo = row.so_container_cho_do > 0;
+          const conHangChoDo = (row.so_container_cho_do ?? 0) > 0;
 
-          // Đang xác nhận một trong hai hành động
+          // Đang xác nhận rời bến
           if (conf) {
             return (
               <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                 <Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>Hủy</Button>
                 <Button size="sm" variant="danger"
-                  onClick={() => handleAction(machuyentau, conf)}
+                  onClick={() => handleRoiBen(machuyentau)}
                   disabled={isPending}
                 >
-                  {conf === 'doHang' ? 'Xác nhận dỡ hàng?' : 'Xác nhận rời bến?'}
+                  Xác nhận rời bến?
                 </Button>
               </div>
             );
           }
+
           return (
-            <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-              {conHangChoDo ? (
-                <Button size="sm" variant="primary"
-                  onClick={() => handleAction(machuyentau, 'doHang')}
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', alignItems: 'center' }}>
+              <Button size="sm" variant="primary"
+                onClick={() => navigate('/nv/bai/tiep-nhan-nhap', { state: { chuyentau: row } })}
+              >
+                Dỡ hàng
+              </Button>
+              {!conHangChoDo && (
+                <Button size="sm" variant="secondary"
+                  onClick={() => handleRoiBen(machuyentau)}
                   disabled={isPending}
                 >
-                  Dỡ hàng
+                  Rời bến
                 </Button>
-              ) : (
-                <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 500 }}>✓ Đã dỡ</span>
               )}
-              <Button size="sm" variant="secondary"
-                onClick={() => handleAction(machuyentau, 'roiBen')}
-                disabled={isPending}
-              >
-                Rời bến
-              </Button>
             </div>
           );
         }

@@ -38,7 +38,7 @@ class ContainerCongController extends Controller
     // ─── GET /api/nv/cong/container ──────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = Container::with(['loaicontainer', 'hangtau', 'chuyentau']);
+        $query = Container::with(['loaicontainer', 'chuyentau.hangtau']);
 
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);
@@ -47,7 +47,7 @@ class ContainerCongController extends Controller
         }
 
         if ($request->mahangtau) {
-            $query->where('mahangtau', $request->mahangtau);
+            $query->whereHas('chuyentau', fn ($q) => $q->where('mahangtau', $request->mahangtau));
         }
 
         if ($request->maloai) {
@@ -76,7 +76,7 @@ class ContainerCongController extends Controller
     public function show(Container $container): JsonResponse
     {
         return response()->json([
-            'data' => new ContainerResource($container->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data' => new ContainerResource($container->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }
 
@@ -103,7 +103,7 @@ class ContainerCongController extends Controller
 
         return response()->json([
             'message' => "Cập nhật hải quan {$container->socontainer}: {$labelMap[$cu]} → {$labelMap[$moi]}.",
-            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }
 
@@ -113,12 +113,12 @@ class ContainerCongController extends Controller
         $container = Container::create([
             ...$request->validated(),
             'trangthai'         => 'dangky',
-            'trangthai_haiquan' => 'luong_vang',
+            'trangthai_haiquan' => 'chua_khai',
         ]);
 
         return response()->json([
             'message' => "Đã đăng ký container {$container->socontainer} thành công.",
-            'data'    => new ContainerResource($container->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data'    => new ContainerResource($container->load(['loaicontainer', 'chuyentau.hangtau'])),
         ], 201);
     }
 }

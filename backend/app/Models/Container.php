@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\PhieuLayHang;
 
 class Container extends Model
 {
@@ -15,9 +16,9 @@ class Container extends Model
     protected $fillable = [
         'socontainer',
         'maloai',
-        'mahangtau',
         'machuyentau',
         'makhachhang',
+        'loai_hinh',
         'soniemchi',
         'trongluong_kg',
         'mota_hanghoa',
@@ -42,14 +43,14 @@ class Container extends Model
         return $this->belongsTo(LoaiContainer::class, 'maloai', 'maloai');
     }
 
-    public function hangtau()
-    {
-        return $this->belongsTo(HangTau::class, 'mahangtau', 'mahangtau');
-    }
-
     public function chuyentau()
     {
         return $this->belongsTo(ChuyenTau::class, 'machuyentau', 'machuyentau');
+    }
+
+    public function phieulayhangs()
+    {
+        return $this->hasMany(PhieuLayHang::class, 'macontainer', 'macontainer');
     }
 
     // ─── Helpers ─────────────────────────────────────────────────

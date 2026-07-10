@@ -10,7 +10,7 @@ class BienBanKTResource extends JsonResource
     public function toArray(Request $request): array
     {
         $container = $this->container;
-        $hangtau   = $container?->hangtau;
+        $hangtau   = $container?->chuyentau?->hangtau;
 
         return [
             'mabienban'      => $this->mabienban,

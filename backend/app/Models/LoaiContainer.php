@@ -11,6 +11,7 @@ class LoaiContainer extends Model
 
     protected $fillable = [
         'maiso',
+        'kieu_cont',
         'tenloai',
         'chieudai_ft',
         'chieurong_ft',

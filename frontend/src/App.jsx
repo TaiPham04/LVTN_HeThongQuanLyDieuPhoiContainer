@@ -18,6 +18,8 @@ import CongXuatNhapPage from '@/pages/admin/CongXuatNhapPage';
 import SoDoBaiPage from '@/pages/admin/SoDoBaiPage';
 import BaoCaoPage from '@/pages/admin/BaoCaoPage';
 import BienBanKTPage from '@/pages/admin/BienBanKTPage';
+import ManifestPage from '@/pages/admin/ManifestPage';
+import TraCuuContainerPage from '@/pages/admin/TraCuuContainerPage';
 
 // ── NhanVien layout + pages ───────────────────────────────────────
 import NhanVienLayout from '@/layouts/NhanVienLayout';
@@ -29,6 +31,19 @@ import PhieuLayHangPage from '@/pages/nhanvien/cong/PhieuLayHangPage';
 import ContainerBaiPage from '@/pages/nhanvien/bai/ContainerPage';
 import LichTauBaiPage from '@/pages/nhanvien/bai/LichTauPage';
 import SoDoBaiNVPage from '@/pages/nhanvien/bai/SoDoBaiPage';
+import TiepNhanNhapPage from '@/pages/nhanvien/bai/TiepNhanNhapPage';
+
+// ── Tài xế layout + pages ────────────────────────────────────────
+import TaiXeLayout from '@/layouts/TaiXeLayout';
+import PhieuLayHangTXPage from '@/pages/taixe/PhieuLayHangPage';
+
+// ── KhachHang layout + pages ──────────────────────────────────────
+import KhachHangLayout from '@/layouts/KhachHangLayout';
+import DashboardKHPage from '@/pages/khachhang/DashboardPage';
+import BookingKHPage from '@/pages/khachhang/BookingPage';
+import ContainerKHPage from '@/pages/khachhang/ContainerPage';
+import PhieuLayHangKHPage from '@/pages/khachhang/PhieuLayHangPage';
+import TaiXeKHPage from '@/pages/khachhang/TaiXePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,8 +67,8 @@ function RootRedirect() {
     case 'admin':          return <Navigate to="/admin/dashboard" replace />;
     case 'nhanvien_cong':  return <Navigate to="/nv/cong/cong" replace />;
     case 'nhanvien_bai':   return <Navigate to="/nv/bai/so-do-bai" replace />;
-    case 'khachhang':      return <Navigate to="/customer/containers" replace />;
-    case 'taixe':          return <Navigate to="/driver/trips" replace />;
+    case 'khachhang':      return <Navigate to="/kh/dashboard" replace />;
+    case 'taixe':          return <Navigate to="/driver/phieu-lay-hang" replace />;
     default:               return <Navigate to="/login" replace />;
   }
 }
@@ -84,6 +99,8 @@ export default function App() {
             <Route path="bien-ban-kt"   element={<BienBanKTPage />} />
             <Route path="so-do-bai"      element={<SoDoBaiPage />} />
             <Route path="bao-cao"        element={<BaoCaoPage />} />
+            <Route path="manifest"       element={<ManifestPage />} />
+            <Route path="tra-cuu"        element={<TraCuuContainerPage />} />
           </Route>
 
           {/* ── Nhân viên cổng ── */}
@@ -106,22 +123,35 @@ export default function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Navigate to="so-do-bai" replace />} />
-            <Route path="container"  element={<ContainerBaiPage />} />
-            <Route path="lich-tau"   element={<LichTauBaiPage />} />
-            <Route path="so-do-bai"  element={<SoDoBaiNVPage />} />
+            <Route path="container"       element={<ContainerBaiPage />} />
+            <Route path="tiep-nhan-nhap"  element={<TiepNhanNhapPage />} />
+            <Route path="lich-tau"        element={<LichTauBaiPage />} />
+            <Route path="so-do-bai"       element={<SoDoBaiNVPage />} />
           </Route>
 
-          {/* ── Khách hàng / Tài xế (placeholder) ── */}
-          <Route path="/customer/*" element={
+          {/* ── Khách hàng ── */}
+          <Route path="/kh" element={
             <ProtectedRoute allowedRoles={['khachhang']}>
-              <div style={{ padding: 40 }}>Customer — coming soon</div>
+              <KhachHangLayout />
             </ProtectedRoute>
-          } />
-          <Route path="/driver/*" element={
+          }>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard"      element={<DashboardKHPage />} />
+            <Route path="booking"        element={<BookingKHPage />} />
+            <Route path="containers"     element={<ContainerKHPage />} />
+            <Route path="phieu-lay-hang" element={<PhieuLayHangKHPage />} />
+            <Route path="tai-xe"         element={<TaiXeKHPage />} />
+          </Route>
+
+          {/* ── Tài xế ── */}
+          <Route path="/driver" element={
             <ProtectedRoute allowedRoles={['taixe']}>
-              <div style={{ padding: 40 }}>Driver — coming soon</div>
+              <TaiXeLayout />
             </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<Navigate to="phieu-lay-hang" replace />} />
+            <Route path="phieu-lay-hang" element={<PhieuLayHangTXPage />} />
+          </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

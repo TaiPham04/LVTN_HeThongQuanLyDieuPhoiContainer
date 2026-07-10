@@ -18,7 +18,7 @@ class RegisterRequest extends FormRequest
             'email'                => ['required', 'email', 'unique:taikhoan,email'],
             'password'             => ['required', 'string', 'min:8', 'confirmed'],
             'sodienthoai'          => ['nullable', 'string', 'max:20'],
-            'tentochinhe'          => ['required', 'string', 'max:255'],
+            'tentochuc'          => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -32,7 +32,7 @@ class RegisterRequest extends FormRequest
             'password.required'    => 'Vui lòng nhập mật khẩu.',
             'password.min'         => 'Mật khẩu phải có ít nhất 8 ký tự.',
             'password.confirmed'   => 'Mật khẩu xác nhận không khớp.',
-            'tentochinhe.required' => 'Vui lòng nhập tên công ty.',
+            'tentochuc.required' => 'Vui lòng nhập tên công ty.',
         ];
     }
 }

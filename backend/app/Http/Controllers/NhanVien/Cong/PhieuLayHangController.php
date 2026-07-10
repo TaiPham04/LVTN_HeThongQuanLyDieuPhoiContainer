@@ -24,7 +24,7 @@ class PhieuLayHangController extends Controller
             ->where('thoigian_het_han', '<', now())
             ->update(['trangthai' => 'het_han']);
 
-        $query = PhieuLayHang::with(['container.hangtau', 'nhanvien', 'taixe']);
+        $query = PhieuLayHang::with(['container.chuyentau.hangtau', 'nhanvien', 'taixe']);
 
         if ($request->search) {
             $query->whereHas('container', fn($q) =>
@@ -133,7 +133,7 @@ class PhieuLayHangController extends Controller
         return response()->json([
             'message' => "Xuất phiếu lấy hàng container {$socontainer} thành công.",
             'data'    => new PhieuLayHangResource(
-                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+                $phieu->load(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
             ),
         ], 201);
     }
@@ -145,7 +145,7 @@ class PhieuLayHangController extends Controller
 
         return response()->json([
             'data' => new PhieuLayHangResource(
-                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+                $phieu->load(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
             ),
         ]);
     }
@@ -203,7 +203,7 @@ class PhieuLayHangController extends Controller
         return response()->json([
             'message' => 'Xác nhận đã lấy hàng thành công. Container đã được ghi nhận xuất cổng.',
             'data'    => new PhieuLayHangResource(
-                $phieu->load(['container.hangtau', 'nhanvien', 'taixe'])
+                $phieu->load(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
             ),
         ]);
     }

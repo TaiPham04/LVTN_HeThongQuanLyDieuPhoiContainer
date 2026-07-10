@@ -19,7 +19,7 @@ class LuuTaiKhoan extends FormRequest
             'hoten'       => ['required', 'string', 'max:100'],
             'mavaitro'    => ['required', 'integer', 'exists:vaitro,mavaitro'],
             'sodienthoai' => ['nullable', 'string', 'max:20'],
-            'tentochinhe' => ['nullable', 'string', 'max:255'],
+            'tentochuc' => ['nullable', 'string', 'max:255'],
         ];
 
         if (!$isUpdate) {

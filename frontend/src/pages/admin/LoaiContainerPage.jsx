@@ -73,8 +73,6 @@ export default function LoaiContainerPage() {
       render: (_, r) => `${r.chieudai_ft} × ${r.chieurong_ft} × ${r.chieucao_ft}` },
     { key: 'taithong_kg', label: 'Tải trọng (kg)', align: 'right',
       render: (v) => Number(v).toLocaleString('vi-VN') },
-    { key: 'lalanh', label: 'Lạnh', align: 'center',
-      render: (v) => v ? <Badge variant="info">Có</Badge> : <Badge variant="gray">Không</Badge> },
     { key: 'gialuubai_ngay', label: 'Giá lưu bãi/ngày', align: 'right',
       render: (v) => `$${Number(v).toFixed(2)}` },
     { key: 'soNgayMienPhi', label: 'Miễn phí', align: 'center',

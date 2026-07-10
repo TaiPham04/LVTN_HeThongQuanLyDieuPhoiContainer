@@ -6,12 +6,14 @@ const MENU = [
   { path: '/admin/loai-container', icon: 'ti-box',              label: 'Loại container' },
   { path: '/admin/hang-tau',       icon: 'ti-ship',             label: 'Hãng tàu' },
   { path: '/admin/lich-tau',       icon: 'ti-calendar-event',   label: 'Lịch tàu' },
+  { path: '/admin/manifest',       icon: 'ti-file-spreadsheet', label: 'Import Manifest' },
   { path: '/admin/khu-vuc-bai',    icon: 'ti-map-pin',          label: 'Khu vực bãi' },
   { path: '/admin/container',      icon: 'ti-package',          label: 'Container' },
   { path: '/admin/cong',           icon: 'ti-door-enter',       label: 'Xuất nhập cổng' },
   { path: '/admin/bien-ban-kt',   icon: 'ti-clipboard-check',  label: 'Biên bản KT' },
   { path: '/admin/so-do-bai',      icon: 'ti-layout-grid',      label: 'Sơ đồ bãi' },
   { path: '/admin/tai-khoan',      icon: 'ti-users',            label: 'Tài khoản' },
+  { path: '/admin/tra-cuu',        icon: 'ti-search',           label: 'Tra cứu container' },
   { path: '/admin/bao-cao',        icon: 'ti-chart-bar',        label: 'Báo cáo' },
 ];
 

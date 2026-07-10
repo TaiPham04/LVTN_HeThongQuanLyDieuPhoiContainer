@@ -51,7 +51,7 @@ class TaiKhoanController extends Controller
     public function store(LuuTaiKhoan $request): JsonResponse
     {
         $user = User::create([
-            ...$request->only('hoten', 'email', 'mavaitro', 'sodienthoai', 'tentochinhe'),
+            ...$request->only('hoten', 'email', 'mavaitro', 'sodienthoai', 'tentochuc'),
             'matkhau'   => Hash::make($request->matkhau),
             'trangthai' => 'hoatdong',
         ]);
@@ -65,7 +65,7 @@ class TaiKhoanController extends Controller
     // ─── PUT /api/admin/tai-khoan/{user} ──────────────────────────
     public function update(LuuTaiKhoan $request, User $user): JsonResponse
     {
-        $user->update($request->only('hoten', 'mavaitro', 'sodienthoai', 'tentochinhe'));
+        $user->update($request->only('hoten', 'mavaitro', 'sodienthoai', 'tentochuc'));
 
         return response()->json([
             'message' => "Cập nhật tài khoản {$user->email} thành công.",

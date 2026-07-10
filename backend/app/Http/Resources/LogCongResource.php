@@ -10,7 +10,7 @@ class LogCongResource extends JsonResource
     public function toArray(Request $request): array
     {
         $container = $this->container;
-        $hangtau   = $container?->hangtau;
+        $hangtau   = $container?->chuyentau?->hangtau;
         $chuyen    = $this->chuyentau;
 
         return [

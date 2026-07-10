@@ -27,6 +27,10 @@ class ChuyenTauResource extends JsonResource
                 fn () => $this->containers->where('trangthai', 'dangky')->count(),
                 null
             ),
+            'so_container_nhap'   => $this->whenLoaded('containers',
+                fn () => $this->containers->where('loai_hinh', 'nhap')->whereIn('trangthai', ['trongbai', 'xuatcong'])->count(),
+                null
+            ),
             'trangthai'          => $this->trangthai,
             'created_at'        => $this->created_at?->format('d/m/Y H:i'),
         ];

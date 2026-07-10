@@ -7,12 +7,73 @@ use App\Http\Requests\Container\LuuContainer;
 use App\Http\Requests\Container\XoaContainer;
 use App\Http\Resources\ContainerResource;
 use App\Models\Container;
+use App\Models\LichSuViTri;
 use App\Models\LogXoa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ContainerController extends Controller
 {
+    // ─── GET /api/admin/container/tra-cuu?socontainer=XXXX ──────
+    public function traCuu(Request $request): JsonResponse
+    {
+        $socontainer = strtoupper(trim($request->socontainer ?? ''));
+
+        if (!$socontainer) {
+            return response()->json(['message' => 'Vui lòng nhập số container.'], 422);
+        }
+
+        $container = Container::where('socontainer', $socontainer)
+            ->with(['loaicontainer', 'chuyentau.hangtau'])
+            ->first();
+
+        if (!$container) {
+            return response()->json(['message' => "Không tìm thấy container {$socontainer}."], 404);
+        }
+
+        $lichSu = LichSuViTri::where('macontainer', $container->macontainer)
+            ->with(['obai.khuvucbai', 'nhanvien'])
+            ->orderBy('thoigian_gan')
+            ->get();
+
+        $rows = $lichSu->values()->map(function ($ls, $idx) use ($lichSu) {
+            $tuObai = $idx > 0 ? $lichSu[$idx - 1]->obai?->maobai_code : null;
+            return [
+                'malichsu'       => $ls->malichsu,
+                'kieudichchuyen' => $ls->kieudichchuyen,
+                'tu_obai'        => $tuObai,
+                'den_obai'       => $ls->obai?->maobai_code,
+                'tenblock'       => $ls->obai?->khuvucbai?->tenblock,
+                'khoang'         => $ls->obai?->khoang,
+                'hang'           => $ls->obai?->hang,
+                'tang'           => $ls->obai?->tang,
+                'hoten_nv'       => $ls->nhanvien?->hoten,
+                'thoigian_gan'   => $ls->thoigian_gan?->format('d/m/Y H:i'),
+                'thoigian_roi'   => $ls->thoigian_roi?->format('d/m/Y H:i'),
+                'la_hien_tai'    => is_null($ls->thoigian_roi),
+                'ghichu'         => $ls->ghichu,
+            ];
+        });
+
+        return response()->json([
+            'container' => [
+                'socontainer'       => $container->socontainer,
+                'tenloai'           => $container->loaicontainer?->tenloai,
+                'loai_hinh'         => $container->loai_hinh,
+                'trangthai'         => $container->trangthai,
+                'trangthai_haiquan' => $container->trangthai_haiquan,
+                'sovoyage'          => $container->chuyentau?->sovoyage,
+                'tentau'            => $container->chuyentau?->tentau,
+                'mascac'            => $container->chuyentau?->hangtau?->mascac,
+                'so_vandon'         => $container->so_vandon,
+                'ten_consignee'     => $container->ten_consignee,
+                'thoigian_vaobai'   => $container->thoigian_vaobai?->format('d/m/Y H:i'),
+                'thoigian_rabai'    => $container->thoigian_rabai?->format('d/m/Y H:i'),
+            ],
+            'lich_su' => $rows,
+        ]);
+    }
+
     // ─── GET /api/admin/container/lookup?socontainer=XXXX ────────
     public function lookup(Request $request): JsonResponse
     {
@@ -40,7 +101,7 @@ class ContainerController extends Controller
     // ─── GET /api/admin/container ─────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = Container::with(['loaicontainer', 'hangtau', 'chuyentau']);
+        $query = Container::with(['loaicontainer', 'chuyentau.hangtau']);
 
         // Mặc định ẩn khonghoatdong
         if ($request->trangthai) {
@@ -50,7 +111,7 @@ class ContainerController extends Controller
         }
 
         if ($request->mahangtau) {
-            $query->where('mahangtau', $request->mahangtau);
+            $query->whereHas('chuyentau', fn ($q) => $q->where('mahangtau', $request->mahangtau));
         }
 
         if ($request->maloai) {
@@ -79,7 +140,7 @@ class ContainerController extends Controller
     public function show(Container $container): JsonResponse
     {
         return response()->json([
-            'data' => new ContainerResource($container->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data' => new ContainerResource($container->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }
 
@@ -89,12 +150,12 @@ class ContainerController extends Controller
         $container = Container::create([
             ...$request->validated(),
             'trangthai'         => 'dangky',
-            'trangthai_haiquan' => 'luong_vang',
+            'trangthai_haiquan' => 'chua_khai',
         ]);
 
         return response()->json([
             'message' => "Đã đăng ký container {$container->socontainer} thành công.",
-            'data'    => new ContainerResource($container->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data'    => new ContainerResource($container->load(['loaicontainer', 'chuyentau.hangtau'])),
         ], 201);
     }
 
@@ -117,7 +178,7 @@ class ContainerController extends Controller
 
         return response()->json([
             'message' => "Cập nhật container {$container->socontainer} thành công.",
-            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }
 
@@ -145,7 +206,7 @@ class ContainerController extends Controller
 
         return response()->json([
             'message' => "Cập nhật hải quan {$container->socontainer}: {$labelMap[$cu]} → {$labelMap[$moi]}.",
-            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'hangtau', 'chuyentau'])),
+            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }
 

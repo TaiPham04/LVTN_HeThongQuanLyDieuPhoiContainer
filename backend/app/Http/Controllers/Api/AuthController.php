@@ -53,7 +53,7 @@ class AuthController extends Controller
             'email'       => $request->email,
             'matkhau'     => Hash::make($request->password),
             'sodienthoai' => $request->sodienthoai,
-            'tentochinhe' => $request->tentochinhe,
+            'tentochuc' => $request->tentochuc,
             'trangthai'   => 'hoatdong',
         ]);
 
@@ -90,11 +90,11 @@ class AuthController extends Controller
         $request->validate([
             'hoten'       => ['sometimes', 'string', 'max:100'],
             'sodienthoai' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'tentochinhe' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'tentochuc' => ['sometimes', 'nullable', 'string', 'max:255'],
         ]);
 
         $user = $request->user();
-        $user->update($request->only('hoten', 'sodienthoai', 'tentochinhe'));
+        $user->update($request->only('hoten', 'sodienthoai', 'tentochuc'));
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công.',

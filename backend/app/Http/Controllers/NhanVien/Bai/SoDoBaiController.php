@@ -69,13 +69,13 @@ class SoDoBaiController extends Controller
 
         $containers = Container::where('trangthai', 'trongbai')
             ->whereNotIn('macontainer', $assigned)
-            ->with(['hangtau', 'chuyentau'])
+            ->with(['chuyentau.hangtau'])
             ->orderBy('thoigian_vaobai')
             ->get()
             ->map(fn ($c) => [
                 'macontainer'     => $c->macontainer,
                 'socontainer'     => $c->socontainer,
-                'mascac'          => $c->hangtau?->mascac,
+                'mascac'          => $c->chuyentau?->hangtau?->mascac,
                 'sovoyage'        => $c->chuyentau?->sovoyage,
                 'thoigian_vaobai' => $c->thoigian_vaobai?->format('d/m/Y H:i'),
             ]);
@@ -355,8 +355,9 @@ class SoDoBaiController extends Controller
         $occupied = DB::table('lichsuvitri')
             ->join('obai',      'lichsuvitri.maobai',      '=', 'obai.maobai')
             ->join('container', 'lichsuvitri.macontainer', '=', 'container.macontainer')
+            ->join('chuyentau', 'container.machuyentau',   '=', 'chuyentau.machuyentau')
             ->whereNull('lichsuvitri.thoigian_roi')
-            ->select('obai.makhuvuc', 'container.mahangtau', 'container.machuyentau')
+            ->select('obai.makhuvuc', 'chuyentau.mahangtau', 'container.machuyentau')
             ->get();
 
         $blockHangTau = [];
@@ -365,9 +366,7 @@ class SoDoBaiController extends Controller
 
         foreach ($occupied as $r) {
             $blockHangTau[$r->makhuvuc][$r->mahangtau] = true;
-            if ($r->machuyentau) {
-                $blockChuyen[$r->makhuvuc][$r->machuyentau] = true;
-            }
+            $blockChuyen[$r->makhuvuc][$r->machuyentau] = true;
             $blockLoad[$r->makhuvuc] = ($blockLoad[$r->makhuvuc] ?? 0) + 1;
         }
 
@@ -380,8 +379,8 @@ class SoDoBaiController extends Controller
             $score = 0;
             $kv    = $o->makhuvuc;
 
-            if ($container->machuyentau && !empty($blockChuyen[$kv][$container->machuyentau])) $score += 30;
-            if (!empty($blockHangTau[$kv][$container->mahangtau])) $score += 20;
+            if (!empty($blockChuyen[$kv][$container->machuyentau])) $score += 30;
+            if (!empty($blockHangTau[$kv][$container->chuyentau?->mahangtau])) $score += 20;
             $score -= $o->tang * 10;
             $total  = $totalPerBlock[$kv] ?? 1;
             $score -= (int) round(($blockLoad[$kv] ?? 0) / $total * 20);

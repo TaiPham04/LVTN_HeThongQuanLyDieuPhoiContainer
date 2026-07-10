@@ -21,7 +21,7 @@ class User extends Authenticatable
         'email',
         'matkhau',
         'sodienthoai',
-        'tentochinhe',
+        'tentochuc',
         'trangthai',
     ];
 

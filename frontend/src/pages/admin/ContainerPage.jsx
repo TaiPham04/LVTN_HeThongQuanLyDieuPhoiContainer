@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
+import LoaiContainerSelect from '@/components/shared/LoaiContainerSelect';
 import { useContainerList, useThemContainer, useCapNhatContainer, useXoaContainer, useCapNhatHaiQuan } from '@/hooks/admin/useContainer';
 import useAuthStore from '@/store/authStore';
 import { useLoaiContainerList } from '@/hooks/admin/useLoaiContainer';
@@ -45,8 +46,7 @@ const selectStyle = (hasError) => ({
 
 const defaultValues = {
   socontainer: '',
-  maloai: '',
-  mahangtau: '',
+  loai_hinh: 'xuat',
   machuyentau: '',
   soniemchi: '',
   trongluong_kg: '',
@@ -67,6 +67,7 @@ export default function ContainerPage() {
   const [hqTT, setHqTT]                 = useState('');
   const [hqGhiChu, setHqGhiChu]         = useState('');
   const [serverErr, setServerErr]       = useState('');
+  const [maloaiChon, setMaloaiChon]     = useState('');
 
   const { isAdmin, isNhanVienBai } = useAuthStore();
   const { data, isLoading }     = useContainerList({ trang, search, trangthai: filterTT, mahangtau: filterHT, per_page: 15 });
@@ -78,11 +79,21 @@ export default function ContainerPage() {
   const xoa        = useXoaContainer();
   const capNhatHQ  = useCapNhatHaiQuan();
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ defaultValues });
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({ defaultValues });
 
   /* ── columns ── */
+  const loaiHinhBadge = (v) => (
+    <Badge variant={v === 'nhap' ? 'info' : 'warning'}>{v === 'nhap' ? 'Nhập khẩu' : 'Xuất khẩu'}</Badge>
+  );
+
   const columns = [
     { key: 'socontainer', label: 'Số container', width: 130 },
+    {
+      key: 'loai_hinh',
+      label: 'Loại hình',
+      align: 'center',
+      render: (v) => loaiHinhBadge(v),
+    },
     {
       key: 'maloai',
       label: 'Loại container',
@@ -94,11 +105,11 @@ export default function ContainerPage() {
       ),
     },
     {
-      key: 'mahangtau',
+      key: 'mascac',
       label: 'Hãng tàu',
       render: (_, row) => (
         <div>
-          <div style={{ fontWeight: 600, fontSize: 13 }}>{row.mascac}</div>
+          <div style={{ fontWeight: 600, fontSize: 13 }}>{row.mascac || '—'}</div>
           <div style={{ fontSize: 11, color: '#6b7280' }}>{row.tenhangtau}</div>
         </div>
       ),
@@ -153,16 +164,17 @@ export default function ContainerPage() {
   const openThem = () => {
     setEditRow(null);
     reset(defaultValues);
+    setMaloaiChon('');
     setServerErr('');
     setModalOpen(true);
   };
 
   const openSua = (row) => {
     setEditRow(row);
+    setMaloaiChon(row.maloai || '');
     reset({
       socontainer:   row.socontainer,
-      maloai:        String(row.maloai),
-      mahangtau:     String(row.mahangtau),
+      loai_hinh:     row.loai_hinh || 'xuat',
       machuyentau:   row.machuyentau ? String(row.machuyentau) : '',
       soniemchi:     row.soniemchi ?? '',
       trongluong_kg: row.trongluong_kg ?? '',
@@ -175,11 +187,11 @@ export default function ContainerPage() {
   /* ── submit ── */
   const onSubmit = async (values) => {
     setServerErr('');
+    if (!maloaiChon) { setServerErr('Vui lòng chọn loại và kích thước container.'); return; }
     const payload = {
       ...values,
-      maloai:        parseInt(values.maloai),
-      mahangtau:     parseInt(values.mahangtau),
-      machuyentau:   values.machuyentau ? parseInt(values.machuyentau) : null,
+      maloai:        parseInt(maloaiChon),
+      machuyentau:   parseInt(values.machuyentau),
       trongluong_kg: values.trongluong_kg ? parseFloat(values.trongluong_kg) : null,
     };
     try {
@@ -325,47 +337,54 @@ export default function ContainerPage() {
             />
           </div>
 
-          {/* Loại container + Hãng tàu */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Loại container <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select style={selectStyle(errors.maloai)} {...register('maloai', { required: 'Vui lòng chọn loại.' })}>
-                <option value="">— Chọn loại —</option>
-                {danhSachLoai.map(lc => (
-                  <option key={lc.maloai} value={lc.maloai}>{lc.maiso} — {lc.tenloai}</option>
-                ))}
-              </select>
-              {errors.maloai && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.maloai.message}</p>}
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Hãng tàu <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select style={selectStyle(errors.mahangtau)} {...register('mahangtau', { required: 'Vui lòng chọn hãng tàu.' })}>
-                <option value="">— Chọn hãng tàu —</option>
-                {danhSachHangTau.map(ht => (
-                  <option key={ht.mahangtau} value={ht.mahangtau}>{ht.mascac} — {ht.tenhangtau}</option>
-                ))}
-              </select>
-              {errors.mahangtau && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.mahangtau.message}</p>}
+          {/* Loại container */}
+          <div style={{ marginBottom: 12 }}>
+            <LoaiContainerSelect
+              loaiList={danhSachLoai}
+              value={maloaiChon}
+              onChange={setMaloaiChon}
+              error={serverErr && !maloaiChon ? 'Vui lòng chọn loại container.' : ''}
+            />
+          </div>
+
+          {/* Loại hình nhập/xuất */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
+              Loại hình <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[{ v: 'xuat', l: 'Xuất khẩu' }, { v: 'nhap', l: 'Nhập khẩu' }].map(({ v, l }) => {
+                const checked = watch('loai_hinh') === v;
+                return (
+                  <label key={v} style={{
+                    flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
+                    border: `2px solid ${checked ? '#0d6efd' : '#e2e8f0'}`,
+                    borderRadius: 8, cursor: 'pointer',
+                    background: checked ? '#eff6ff' : '#fff',
+                    fontSize: 14, fontWeight: checked ? 600 : 400,
+                  }}>
+                    <input type="radio" value={v} {...register('loai_hinh')} style={{ accentColor: '#0d6efd' }} />
+                    {l}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
-          {/* Chuyến tàu */}
+          {/* Chuyến tàu (bắt buộc) */}
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-              Chuyến tàu <span style={{ color: '#6b7280', fontWeight: 400 }}>(không bắt buộc)</span>
+              Chuyến tàu <span style={{ color: '#ef4444' }}>*</span>
             </label>
-            <select style={selectStyle(false)} {...register('machuyentau')}>
-              <option value="">— Chưa gán chuyến —</option>
+            <select style={selectStyle(errors.machuyentau)} {...register('machuyentau', { required: 'Vui lòng chọn chuyến tàu.' })}>
+              <option value="">— Chọn chuyến tàu —</option>
               {danhSachChuyen.map(ct => (
                 <option key={ct.machuyentau} value={ct.machuyentau}>
                   {ct.sovoyage} — {ct.tentau}
                 </option>
               ))}
             </select>
+            {errors.machuyentau && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.machuyentau.message}</p>}
           </div>
 
           {/* Số niêm chì + Trọng lượng */}

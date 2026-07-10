@@ -43,8 +43,8 @@ const selectStyle = (hasError) => ({
   borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff',
 });
 
-const defaultThem = { hoten: '', email: '', matkhau: '', mavaitro: '', sodienthoai: '', tentochinhe: '' };
-const defaultSua  = { hoten: '', mavaitro: '', sodienthoai: '', tentochinhe: '' };
+const defaultThem = { hoten: '', email: '', matkhau: '', mavaitro: '', sodienthoai: '', tentochuc: '' };
+const defaultSua  = { hoten: '', mavaitro: '', sodienthoai: '', tentochuc: '' };
 
 export default function TaiKhoanPage() {
   const [trang, setTrang]               = useState(1);
@@ -89,7 +89,7 @@ export default function TaiKhoanPage() {
       render: (_, row) => vaiTroBadge(row.mavaitro, row.tenvaitro),
     },
     {
-      key: 'tentochinhe',
+      key: 'tentochuc',
       label: 'Tổ chức / Công ty',
       render: (v) => v || <span style={{ color: '#cbd5e1' }}>—</span>,
     },
@@ -141,7 +141,7 @@ export default function TaiKhoanPage() {
       hoten:       row.hoten,
       mavaitro:    String(row.mavaitro),
       sodienthoai: row.sodienthoai ?? '',
-      tentochinhe: row.tentochinhe ?? '',
+      tentochuc: row.tentochuc ?? '',
     });
     setServerErr('');
     setModalOpen(true);
@@ -163,7 +163,7 @@ export default function TaiKhoanPage() {
           hoten:       values.hoten,
           mavaitro:    parseInt(values.mavaitro),
           sodienthoai: values.sodienthoai || null,
-          tentochinhe: values.tentochinhe || null,
+          tentochuc: values.tentochuc || null,
         });
       } else {
         await them.mutateAsync({
@@ -172,7 +172,7 @@ export default function TaiKhoanPage() {
           matkhau:     values.matkhau,
           mavaitro:    parseInt(values.mavaitro),
           sodienthoai: values.sodienthoai || null,
-          tentochinhe: values.tentochinhe || null,
+          tentochuc: values.tentochuc || null,
         });
       }
       setModalOpen(false);
@@ -372,8 +372,8 @@ export default function TaiKhoanPage() {
             <Input
               label="Tổ chức / Công ty"
               placeholder="VD: Cảng Cát Lái"
-              error={errors.tentochinhe?.message}
-              {...register('tentochinhe', { maxLength: { value: 255, message: 'Tối đa 255 ký tự.' } })}
+              error={errors.tentochuc?.message}
+              {...register('tentochuc', { maxLength: { value: 255, message: 'Tối đa 255 ký tự.' } })}
             />
           </div>
 

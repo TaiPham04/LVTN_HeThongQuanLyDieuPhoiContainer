@@ -23,8 +23,8 @@ export default function LoginPage() {
       if (role === 'admin')           navigate('/admin/dashboard');
       else if (role === 'nhanvien_cong') navigate('/nv/cong/cong');
       else if (role === 'nhanvien_bai')  navigate('/nv/bai/so-do-bai');
-      else if (role === 'khachhang')  navigate('/customer/containers');
-      else if (role === 'taixe')      navigate('/driver/trips');
+      else if (role === 'khachhang')  navigate('/kh/dashboard');
+      else if (role === 'taixe')      navigate('/driver/phieu-lay-hang');
       else navigate('/admin/dashboard');
     } else {
       setServerError(result.message);
@@ -35,10 +35,10 @@ export default function LoginPage() {
     setServerError('');
     if (data.matkhau !== data.xacnhanmatkhau) { setServerError('Mật khẩu xác nhận không khớp.'); return; }
     const result = await registerUser({
-      hoten: data.hoten, sodienthoai: data.sodienthoai, tentochinhe: data.tentochinhe,
+      hoten: data.hoten, sodienthoai: data.sodienthoai, tentochuc: data.tentochuc,
       email: data.email, password: data.matkhau, password_confirmation: data.xacnhanmatkhau,
     });
-    if (result.success) navigate('/customer/containers');
+    if (result.success) navigate('/kh/dashboard');
     else setServerError(result.message || 'Đăng ký thất bại.');
   };
 
@@ -122,9 +122,9 @@ export default function LoginPage() {
                     <Inp icon="phone"><input type="tel" placeholder="0901234567" style={inp(false)} {...register('sodienthoai')} /></Inp>
                   </Field>
                 </div>
-                <Field label="Tên công ty / Forwarder" error={errors.tentochinhe?.message}>
-                  <Inp icon="building"><input type="text" placeholder="Công ty Logistics ABC" style={inp(!!errors.tentochinhe)}
-                    {...register('tentochinhe',{required:'Vui lòng nhập tên công ty.'})} /></Inp>
+                <Field label="Tên công ty / Forwarder" error={errors.tentochuc?.message}>
+                  <Inp icon="building"><input type="text" placeholder="Công ty Logistics ABC" style={inp(!!errors.tentochuc)}
+                    {...register('tentochuc',{required:'Vui lòng nhập tên công ty.'})} /></Inp>
                 </Field>
                 <Field label="Email" error={errors.email?.message}>
                   <Inp icon="mail"><input type="email" placeholder="email@example.com" style={inp(!!errors.email)}

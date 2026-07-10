@@ -9,9 +9,10 @@ const MENU_CONG = [
 ];
 
 const MENU_BAI = [
-  { path: '/nv/bai/container', icon: 'ti-package',        label: 'Container' },
-  { path: '/nv/bai/lich-tau',  icon: 'ti-calendar-event', label: 'Lịch tàu' },
-  { path: '/nv/bai/so-do-bai', icon: 'ti-layout-grid',    label: 'Sơ đồ bãi' },
+  { path: '/nv/bai/tiep-nhan-nhap', icon: 'ti-ship',           label: 'Tiếp nhận nhập' },
+  { path: '/nv/bai/container',      icon: 'ti-package',        label: 'Container' },
+  { path: '/nv/bai/lich-tau',       icon: 'ti-calendar-event', label: 'Lịch tàu' },
+  { path: '/nv/bai/so-do-bai',      icon: 'ti-layout-grid',    label: 'Sơ đồ bãi' },
 ];
 
 const ROLE_LABEL = {

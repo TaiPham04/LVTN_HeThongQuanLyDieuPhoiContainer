@@ -16,7 +16,7 @@ class UserResource extends JsonResource
             'hoten'       => $this->hoten,
             'email'       => $this->email,
             'sodienthoai' => $this->sodienthoai,
-            'tentochinhe' => $this->tentochinhe,
+            'tentochuc' => $this->tentochuc,
             'trangthai'   => $this->trangthai,
             'created_at'  => $this->created_at?->format('d/m/Y H:i'),
         ];

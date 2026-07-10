@@ -23,11 +23,6 @@ class HangTau extends Model
         return $this->hasMany(ChuyenTau::class, 'mahangtau', 'mahangtau');
     }
 
-    public function containers()
-    {
-        return $this->hasMany(Container::class, 'mahangtau', 'mahangtau');
-    }
-
     // ─── Scopes ──────────────────────────────────────────────────
     public function scopeHoatDong($query)
     {
@@ -37,12 +32,8 @@ class HangTau extends Model
     // ─── Helpers ─────────────────────────────────────────────────
     public function dangDuocSuDung(): bool
     {
-        $coChuyenTauHoatDong = $this->chuyentau()
+        return $this->chuyentau()
             ->whereIn('trangthai', ['dalenlich', 'dadencang'])
             ->exists();
-        $coContainerHoatDong = $this->containers()
-            ->where('trangthai', '!=', 'khonghoatdong')
-            ->exists();
-        return $coChuyenTauHoatDong || $coContainerHoatDong;
     }
 }

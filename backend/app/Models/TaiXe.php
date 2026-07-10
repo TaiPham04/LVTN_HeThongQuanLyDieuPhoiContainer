@@ -13,19 +13,22 @@ class TaiXe extends Model
     protected $primaryKey = 'mataixe';
 
     protected $fillable = [
+        'mataikhoan',
         'makhachhang',
         'hoten',
         'sodienthoai',
-        'sobanglai',
-        'email',
-        'matkhau',
+        'cccd',
+        'biensoxe',
         'trangthai',
     ];
-
-    protected $hidden = ['matkhau'];
 
     public function khachhang()
     {
         return $this->belongsTo(User::class, 'makhachhang', 'mataikhoan');
+    }
+
+    public function taikhoan()
+    {
+        return $this->belongsTo(User::class, 'mataikhoan', 'mataikhoan');
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BaoCaoController;
+use App\Http\Controllers\Admin\ManifestController;
 use App\Http\Controllers\Admin\BienBanKTController;
 use App\Http\Controllers\Admin\ChuyenTauController;
 use App\Http\Controllers\Admin\ContainerController;
@@ -20,6 +21,12 @@ use App\Http\Controllers\NhanVien\Bai\LichTauBaiController;
 use App\Http\Controllers\NhanVien\Cong\LichTauController as NVLichTauController;
 use App\Http\Controllers\NhanVien\Cong\LogCongController as NVLogCongController;
 use App\Http\Controllers\NhanVien\Cong\PhieuLayHangController as NVPhieuLayHangController;
+use App\Http\Controllers\KhachHang\DashboardKHController;
+use App\Http\Controllers\KhachHang\BookingKHController;
+use App\Http\Controllers\KhachHang\ContainerKHController;
+use App\Http\Controllers\KhachHang\PhieuLayHangKHController;
+use App\Http\Controllers\KhachHang\TaiXeKHController;
+use App\Http\Controllers\TaiXe\PhieuLayHangTXController;
 use Illuminate\Support\Facades\Route;
 
 // ─── PUBLIC ──────────────────────────────────────────────────────────────────
@@ -43,6 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index']);
+
+        // Manifest nhập khẩu
+        Route::get('manifest/template',              [ManifestController::class, 'template']);
+        Route::post('manifest/import',               [ManifestController::class, 'import']);
+        Route::post('manifest/import-force',         [ManifestController::class, 'importForce']);
+        Route::get('manifest/danh-sach/{machuyentau}', [ManifestController::class, 'danhSach']);
 
         // Báo cáo
         Route::get('bao-cao/xuat-nhap', [BaoCaoController::class, 'xuatNhap']);
@@ -76,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Container
         Route::get('container',                                [ContainerController::class, 'index']);
         Route::get('container/lookup',                         [ContainerController::class, 'lookup']);
+        Route::get('container/tra-cuu',                        [ContainerController::class, 'traCuu']);
         Route::get('container/{container}',                    [ContainerController::class, 'show']);
         Route::post('container',                               [ContainerController::class, 'store']);
         Route::put('container/{container}',                    [ContainerController::class, 'update']);
@@ -169,9 +183,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── NHÂN VIÊN BÃI ───────────────────────────────────────────────────────
     Route::middleware('role:nhanvien_bai')->prefix('nv/bai')->group(function () {
 
-        // Container — chỉ xem
+        // Container — xem
         Route::get('container',             [ContainerBaiController::class, 'index']);
         Route::get('container/{container}', [ContainerBaiController::class, 'show']);
+
+        // Tally tiếp nhận container nhập từ tàu
+        Route::get('tally/{machuyentau}',                        [ContainerBaiController::class, 'danhSachTally']);
+        Route::patch('tally/{container}/xac-nhan',               [ContainerBaiController::class, 'xacNhan']);
+        Route::post('tally/{machuyentau}/xac-nhan-loat',         [ContainerBaiController::class, 'xacNhanLoat']);
+        Route::patch('tally/{container}/tinh-trang',             [ContainerBaiController::class, 'capNhatTinhTrang']);
 
         // Sơ đồ bãi — toàn bộ tính năng
         Route::get('so-do-bai',                           [NVSoDoBaiController::class, 'index']);
@@ -188,17 +208,48 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('lich-tau/{chuyentau}/xac-nhan-do-hang',      [LichTauBaiController::class, 'xacNhanDoHang']);
 
         // Lookups dùng chung
-        Route::get('hang-tau',  [HangTauController::class, 'index']);
-        Route::get('khu-vuc-bai', [KhuVucBaiController::class, 'index']);
+        Route::get('hang-tau',       [HangTauController::class, 'index']);
+        Route::get('khu-vuc-bai',    [KhuVucBaiController::class, 'index']);
+        Route::get('loai-container', [LoaiContainerController::class, 'index']);
     });
 
     // ─── KHÁCH HÀNG ──────────────────────────────────────────────────────────
     Route::middleware('role:khachhang')->prefix('kh')->group(function () {
-        // Booking, theo dõi... sẽ bổ sung ở đây
+
+        // Dashboard
+        Route::get('dashboard', [DashboardKHController::class, 'index']);
+
+        // E-Booking
+        Route::get('booking',                   [BookingKHController::class, 'index']);
+        Route::post('booking',                  [BookingKHController::class, 'store']);
+        Route::patch('booking/{container}/huy', [BookingKHController::class, 'huy']);
+        Route::get('lich-tau',                  [BookingKHController::class, 'lichTau']);
+
+        // Theo dõi container
+        Route::get('container',             [ContainerKHController::class, 'index']);
+        Route::get('container/{container}', [ContainerKHController::class, 'show']);
+
+        // Phiếu lấy hàng
+        Route::get('phieu-lay-hang',                      [PhieuLayHangKHController::class, 'index']);
+        Route::post('phieu-lay-hang',                     [PhieuLayHangKHController::class, 'store']);
+        Route::get('phieu-lay-hang/{phieu}',              [PhieuLayHangKHController::class, 'show']);
+        Route::patch('phieu-lay-hang/{phieu}/huy',        [PhieuLayHangKHController::class, 'huy']);
+        Route::get('container-trong-bai',                 [PhieuLayHangKHController::class, 'containerTrongBai']);
+
+        // Tài xế
+        Route::get('tai-xe',                             [TaiXeKHController::class, 'index']);
+        Route::post('tai-xe',                            [TaiXeKHController::class, 'store']);
+        Route::patch('tai-xe/{taixe}',                   [TaiXeKHController::class, 'update']);
+        Route::patch('tai-xe/{taixe}/mat-khau',          [TaiXeKHController::class, 'doiMatKhau']);
+        Route::delete('tai-xe/{taixe}',                  [TaiXeKHController::class, 'destroy']);
+
+        // Lookups
+        Route::get('loai-container', [LoaiContainerController::class, 'index']);
     });
 
     // ─── TÀI XẾ ──────────────────────────────────────────────────────────────
     Route::middleware('role:taixe')->prefix('tx')->group(function () {
-        // Chuyến, QR... sẽ bổ sung ở đây
+        Route::get('phieu-lay-hang',          [PhieuLayHangTXController::class, 'index']);
+        Route::get('phieu-lay-hang/{phieu}',  [PhieuLayHangTXController::class, 'show']);
     });
 });

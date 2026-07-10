@@ -18,7 +18,7 @@ class LogCongController extends Controller
     // ─── GET /api/nv/cong/cong ───────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = LogCong::with(['container.hangtau', 'chuyentau', 'taixe', 'nhanvien']);
+        $query = LogCong::with(['container.chuyentau.hangtau', 'chuyentau', 'taixe', 'nhanvien']);
 
         if ($request->kieu_xuatnhap) {
             $query->where('kieu_xuatnhap', $request->kieu_xuatnhap);
@@ -128,7 +128,7 @@ class LogCongController extends Controller
 
         return response()->json([
             'message' => "Ghi nhận {$label} container {$container->socontainer} thành công.",
-            'data'    => new LogCongResource($log->load(['container.hangtau', 'chuyentau', 'taixe', 'nhanvien'])),
+            'data'    => new LogCongResource($log->load(['container.chuyentau.hangtau', 'chuyentau', 'taixe', 'nhanvien'])),
         ], 201);
     }
 }

@@ -15,7 +15,7 @@ class BienBanKTController extends Controller
     // ─── GET /api/nv/cong/bien-ban-kt ────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = BienBanKT::with(['container.hangtau', 'nhanvien']);
+        $query = BienBanKT::with(['container.chuyentau.hangtau', 'nhanvien']);
 
         if ($request->loaiktd) {
             $query->where('loaiktd', $request->loaiktd);
@@ -89,7 +89,7 @@ class BienBanKTController extends Controller
 
         return response()->json([
             'message' => "Đã lập biên bản kiểm tra container {$container->socontainer}.",
-            'data'    => new BienBanKTResource($bienban->load(['container.hangtau', 'nhanvien'])),
+            'data'    => new BienBanKTResource($bienban->load(['container.chuyentau.hangtau', 'nhanvien'])),
         ], 201);
     }
 }
