@@ -62,6 +62,7 @@ class BienBanKTController extends Controller
             'macontainer'  => $container->macontainer,
             'manhanvien'   => $request->user()->mataikhoan,
             'loaiktd'      => $request->loaiktd,
+            'chu_ky'       => $request->chu_ky,
             'ketqua_ktd'   => $request->ketqua_ktd,
             'bi_hong'      => $request->bi_hong,
             'ketluan'      => $request->ketluan,

@@ -15,7 +15,8 @@ class LuuBienBan extends FormRequest
     {
         return [
             'socontainer'  => ['required', 'string', 'exists:container,socontainer'],
-            'loaiktd'      => ['required', 'in:nhapbai,xuatbai,thamdinh,haiquan'],
+            'loaiktd'      => ['required', 'in:nhapbai,xuatbai,thamdinh,haiquan,dinhky'],
+            'chu_ky'       => ['nullable', 'in:hang_thang,hang_quy,hang_nam'],
             'ketqua_ktd'   => ['required', 'string', 'max:2000'],
             'bi_hong'      => ['required', 'boolean'],
             'ketluan'      => ['required', 'in:datieu,khongdat,tamgiu'],

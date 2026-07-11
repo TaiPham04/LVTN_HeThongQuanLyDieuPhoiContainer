@@ -21,6 +21,7 @@ class BienBanKTResource extends JsonResource
             'manhanvien'     => $this->manhanvien,
             'hoten_nhanvien' => $this->nhanvien?->hoten,
             'loaiktd'        => $this->loaiktd,
+            'chu_ky'         => $this->chu_ky,
             'ketqua_ktd'     => $this->ketqua_ktd,
             'bi_hong'        => $this->bi_hong,
             'ketluan'        => $this->ketluan,

@@ -122,11 +122,14 @@ class PhieuLayHangController extends Controller
             'manhanvien'       => $request->user()->mataikhoan,
             'mataixe'          => $request->mataixe,
             'biensoxe'         => $request->biensoxe,
+            'bienso_romo'      => $request->bienso_romo,
             'vitri_snapshot'   => $vitriSnapshot,
             'ma_qr'            => Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)),
             'trangthai'        => 'cho_lay',
             'thoigian_xuat'    => $thoiGianXuat,
             'thoigian_het_han' => $thoiGianHetHan,
+            'eta_tu'           => $request->eta_tu,
+            'eta_den'          => $request->eta_den,
             'ghichu'           => $request->ghichu,
         ]);
 
@@ -223,6 +226,70 @@ class PhieuLayHangController extends Controller
         $phieu->update(['trangthai' => 'huy']);
 
         return response()->json(['message' => 'Đã hủy phiếu.']);
+    }
+
+    // GET /api/nv/cong/phieu-lay-hang/scan-qr?ma_qr=XXXX
+    public function scanQR(Request $request): JsonResponse
+    {
+        $request->validate(['ma_qr' => 'required|string|max:30']);
+
+        $phieu = PhieuLayHang::with(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
+            ->where('ma_qr', $request->ma_qr)
+            ->first();
+
+        if (!$phieu) {
+            return response()->json(['message' => 'Không tìm thấy phiếu với mã QR này.'], 404);
+        }
+
+        $this->capNhatHetHanNeuCan($phieu);
+
+        return response()->json([
+            'data' => new PhieuLayHangResource(
+                $phieu->fresh()->load(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
+            ),
+        ]);
+    }
+
+    // PATCH /api/nv/cong/phieu-lay-hang/{phieu}/vao-cong
+    public function vaoCong(Request $request, PhieuLayHang $phieu): JsonResponse
+    {
+        $request->validate([
+            'bienso_romo' => 'nullable|string|max:20',
+        ]);
+
+        $this->capNhatHetHanNeuCan($phieu);
+
+        if ($phieu->trangthai === 'het_han') {
+            return response()->json(['message' => 'Phiếu đã hết hạn, không thể cho vào cổng.'], 422);
+        }
+
+        if ($phieu->trangthai !== 'cho_lay') {
+            return response()->json(['message' => 'Phiếu không ở trạng thái hợp lệ.'], 422);
+        }
+
+        if ($phieu->thoigian_vao_cong) {
+            return response()->json(['message' => 'Xe này đã được ghi nhận vào cổng trước đó.'], 422);
+        }
+
+        if (!$phieu->mataixe || !$phieu->biensoxe) {
+            return response()->json([
+                'message' => 'Phiếu chưa có thông tin tài xế và biển số xe đầu kéo. Khách hàng cần cập nhật trước khi vào cổng.',
+            ], 422);
+        }
+
+        $update = ['thoigian_vao_cong' => now()];
+        if ($request->filled('bienso_romo')) {
+            $update['bienso_romo'] = $request->bienso_romo;
+        }
+
+        $phieu->update($update);
+
+        return response()->json([
+            'message' => 'Ghi nhận xe vào cổng thành công.',
+            'data'    => new PhieuLayHangResource(
+                $phieu->fresh()->load(['container.chuyentau.hangtau', 'nhanvien', 'taixe'])
+            ),
+        ]);
     }
 
     // ── helper: tự động chuyển sang het_han nếu quá thời hạn ─────

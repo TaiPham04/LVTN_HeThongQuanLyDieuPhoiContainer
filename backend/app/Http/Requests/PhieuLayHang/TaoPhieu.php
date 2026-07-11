@@ -16,7 +16,10 @@ class TaoPhieu extends FormRequest
         return [
             'socontainer' => 'required|string|max:20',
             'biensoxe'    => 'nullable|string|max:20',
+            'bienso_romo' => 'nullable|string|max:20',
             'mataixe'     => 'nullable|integer|exists:taixe,mataixe',
+            'eta_tu'      => 'nullable|date',
+            'eta_den'     => 'nullable|date',
             'ghichu'      => 'nullable|string|max:500',
         ];
     }

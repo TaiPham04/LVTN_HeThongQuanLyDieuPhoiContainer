@@ -93,11 +93,13 @@ function PhieuElectronic({ phieu, onClose }) {
 
             {/* Container info */}
             {[
-              ['Số container',  phieu.socontainer],
-              ['Hãng tàu',      `${phieu.mascac || ''} ${phieu.tenhangtau || ''}`.trim() || '—'],
-              ['Niêm chì',      phieu.soniemchi || '—'],
-              ['Tài xế',        phieu.hoten_taixe || '—'],
-              ['Biển số xe',    phieu.biensoxe || '—'],
+              ['Số container',     phieu.socontainer],
+              ['Hãng tàu',         `${phieu.mascac || ''} ${phieu.tenhangtau || ''}`.trim() || '—'],
+              ['Niêm chì',         phieu.soniemchi || '—'],
+              ['Tài xế',           phieu.hoten_taixe || '—'],
+              ['Biển số xe',       phieu.biensoxe || '—'],
+              ['Biển số rơ-moóc',  phieu.bienso_romo || '—'],
+              ['Khung giờ ETA',    (phieu.eta_tu && phieu.eta_den) ? `${phieu.eta_tu} – ${phieu.eta_den}` : '—'],
             ].map(([label, value]) => (
               <div key={label} style={ps.row}>
                 <span style={ps.label}>{label}</span>
@@ -192,11 +194,11 @@ export default function PhieuLayHangPage() {
   const huyPhieu            = useHuyPhieu();
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { socontainer: '', biensoxe: '', mataixe: '', ghichu: '' },
+    defaultValues: { socontainer: '', biensoxe: '', bienso_romo: '', mataixe: '', eta_tu: '', eta_den: '', ghichu: '' },
   });
 
   const openTao = () => {
-    reset({ socontainer: '', biensoxe: '', mataixe: '', ghichu: '' });
+    reset({ socontainer: '', biensoxe: '', bienso_romo: '', mataixe: '', eta_tu: '', eta_den: '', ghichu: '' });
     setServerErr('');
     setModalOpen(true);
   };
@@ -392,6 +394,33 @@ export default function PhieuLayHangPage() {
                   </option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <Input
+              label="Biển số rơ-moóc"
+              placeholder="VD: 51R-67890"
+              {...register('bienso_romo')}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={labelSt}>ETA từ</label>
+              <input
+                type="datetime-local"
+                style={selectFull}
+                {...register('eta_tu')}
+              />
+            </div>
+            <div>
+              <label style={labelSt}>ETA đến</label>
+              <input
+                type="datetime-local"
+                style={selectFull}
+                {...register('eta_den')}
+              />
             </div>
           </div>
 

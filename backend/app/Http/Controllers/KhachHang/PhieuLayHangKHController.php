@@ -61,6 +61,9 @@ class PhieuLayHangKHController extends Controller
             'macontainer' => 'required|integer|exists:container,macontainer',
             'mataixe'     => 'nullable|integer|exists:taixe,mataixe',
             'biensoxe'    => 'nullable|string|max:20',
+            'bienso_romo' => 'nullable|string|max:20',
+            'eta_tu'      => 'nullable|date',
+            'eta_den'     => 'nullable|date',
             'ghichu'      => 'nullable|string|max:500',
         ]);
 
@@ -120,11 +123,14 @@ class PhieuLayHangKHController extends Controller
             'manhanvien'       => null,
             'mataixe'          => $request->mataixe,
             'biensoxe'         => $request->biensoxe,
+            'bienso_romo'      => $request->bienso_romo,
             'vitri_snapshot'   => $vitriSnapshot,
             'ma_qr'            => Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)),
             'trangthai'        => 'cho_lay',
             'thoigian_xuat'    => $now,
             'thoigian_het_han' => $now->copy()->addHours(24),
+            'eta_tu'           => $request->eta_tu,
+            'eta_den'          => $request->eta_den,
             'ghichu'           => $request->ghichu,
         ]);
 

@@ -37,13 +37,19 @@ class PhieuLayHangResource extends JsonResource
             'hoten_taixe'      => $this->taixe?->hoten,
             'sdt_taixe'        => $this->taixe?->sodienthoai,
             'biensoxe'         => $this->biensoxe,
+            'bienso_romo'      => $this->bienso_romo,
             // Nhân viên xuất phiếu
             'manhanvien'       => $this->manhanvien,
             'hoten_nhanvien'   => $this->nhanvien?->hoten,
             // Thời gian
-            'thoigian_xuat'    => $this->thoigian_xuat?->format('d/m/Y H:i'),
-            'thoigian_het_han' => $this->thoigian_het_han?->format('d/m/Y H:i'),
-            'thoigian_lay'     => $this->thoigian_lay?->format('d/m/Y H:i'),
+            'thoigian_xuat'      => $this->thoigian_xuat?->format('d/m/Y H:i'),
+            'thoigian_het_han'   => $this->thoigian_het_han?->format('d/m/Y H:i'),
+            'thoigian_den_cang'  => $this->thoigian_den_cang?->format('d/m/Y H:i'),
+            'thoigian_vao_cong'  => $this->thoigian_vao_cong?->format('d/m/Y H:i'),
+            'thoigian_lay'       => $this->thoigian_lay?->format('d/m/Y H:i'),
+            // Khung giờ ETA
+            'eta_tu'             => $this->eta_tu?->format('d/m/Y H:i'),
+            'eta_den'            => $this->eta_den?->format('d/m/Y H:i'),
             // Khác
             'ghichu'           => $this->ghichu,
             'created_at'       => $this->created_at?->format('d/m/Y H:i'),

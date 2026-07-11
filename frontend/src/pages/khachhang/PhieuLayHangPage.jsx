@@ -41,12 +41,14 @@ function PhieuDetailModal({ maphieu, onClose }) {
     <div style={{ fontSize: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', marginBottom: 16 }}>
         {[
-          ['Số container', <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{p.socontainer}</span>],
-          ['Trạng thái',   trangThaiBadge(p.trangthai)],
-          ['Biển số xe',   p.biensoxe || '—'],
-          ['Tài xế',       p.hoten_taixe || '—'],
-          ['Xuất phiếu',   p.thoigian_xuat || '—'],
-          ['Hết hạn',      p.thoigian_het_han || '—'],
+          ['Số container',   <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{p.socontainer}</span>],
+          ['Trạng thái',     trangThaiBadge(p.trangthai)],
+          ['Biển số xe',     p.biensoxe || '—'],
+          ['Biển số rơ-moóc', p.bienso_romo || '—'],
+          ['Tài xế',         p.hoten_taixe || '—'],
+          ['Khung giờ ETA',  (p.eta_tu && p.eta_den) ? `${p.eta_tu} – ${p.eta_den}` : '—'],
+          ['Xuất phiếu',     p.thoigian_xuat || '—'],
+          ['Hết hạn',        p.thoigian_het_han || '—'],
         ].map(([label, val]) => (
           <div key={label}>
             <div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, textTransform: 'uppercase' }}>{label}</div>
@@ -74,7 +76,7 @@ function PhieuDetailModal({ maphieu, onClose }) {
   );
 }
 
-const defValues = { macontainer: '', mataixe: '', biensoxe: '', ghichu: '' };
+const defValues = { macontainer: '', mataixe: '', biensoxe: '', bienso_romo: '', eta_tu: '', eta_den: '', ghichu: '' };
 
 export default function PhieuLayHangKHPage() {
   const [trang, setTrang]             = useState(1);
@@ -93,7 +95,7 @@ export default function PhieuLayHangKHPage() {
   const createMut                = useCreatePhieuLayHangKH();
   const huyMut                   = useHuyPhieuLayHangKH();
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ defaultValues: defValues });
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({ defaultValues: defValues });
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg);
@@ -271,7 +273,16 @@ export default function PhieuLayHangKHPage() {
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
               Tài xế (không bắt buộc)
             </label>
-            <select style={selectStyle(false)} {...register('mataixe')}>
+            <select
+              style={selectStyle(false)}
+              {...register('mataixe')}
+              onChange={(e) => {
+                const val = e.target.value;
+                setValue('mataixe', val);
+                const driver = taixeList.find(tx => String(tx.mataixe) === val);
+                setValue('biensoxe', driver?.biensoxe || '');
+              }}
+            >
               <option value="">— Không chọn —</option>
               {taixeList.map(tx => (
                 <option key={tx.mataixe} value={tx.mataixe}>
@@ -287,6 +298,37 @@ export default function PhieuLayHangKHPage() {
               placeholder="VD: 51C-12345"
               {...register('biensoxe')}
             />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <Input
+              label="Biển số rơ-moóc (không bắt buộc)"
+              placeholder="VD: 51R-67890"
+              {...register('bienso_romo')}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
+                ETA từ
+              </label>
+              <input
+                type="datetime-local"
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                {...register('eta_tu')}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
+                ETA đến
+              </label>
+              <input
+                type="datetime-local"
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                {...register('eta_den')}
+              />
+            </div>
           </div>
 
           <div style={{ marginBottom: 12 }}>

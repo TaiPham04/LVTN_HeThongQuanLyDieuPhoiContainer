@@ -14,20 +14,29 @@ class PhieuLayHang extends Model
         'manhanvien',
         'mataixe',
         'biensoxe',
+        'bienso_romo',
         'vitri_snapshot',
         'ma_qr',
         'trangthai',
         'thoigian_xuat',
         'thoigian_het_han',
+        'thoigian_den_cang',
+        'thoigian_vao_cong',
         'thoigian_lay',
+        'eta_tu',
+        'eta_den',
         'ghichu',
     ];
 
     protected $casts = [
-        'vitri_snapshot'   => 'array',
-        'thoigian_xuat'    => 'datetime',
-        'thoigian_het_han' => 'datetime',
-        'thoigian_lay'     => 'datetime',
+        'vitri_snapshot'    => 'array',
+        'thoigian_xuat'     => 'datetime',
+        'thoigian_het_han'  => 'datetime',
+        'thoigian_den_cang'  => 'datetime',
+        'thoigian_vao_cong'  => 'datetime',
+        'thoigian_lay'       => 'datetime',
+        'eta_tu'             => 'datetime',
+        'eta_den'            => 'datetime',
     ];
 
     public function container()

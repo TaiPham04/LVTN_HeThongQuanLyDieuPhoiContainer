@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PageHeader from '@/components/shared/PageHeader';
 import Table from '@/components/ui/Table';
@@ -7,16 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import { useBienBanKTList, useLuuBienBan } from '@/hooks/admin/useBienBanKT';
-
-/* ── helpers ── */
-const LOAI_LABEL = {
-  nhapbai:  'Nhập bãi',
-  xuatbai:  'Xuất bãi',
-  thamdinh: 'Thẩm định',
-  haiquan:  'Hải quan',
-  dinhky:   'Định kỳ',
-};
+import { useBienBanKTBaiList, useLuuBienBanDinhKy } from '@/hooks/nhanvien/useBienBanKTBai';
 
 const CHU_KY_LABEL = {
   hang_thang: 'Hàng tháng',
@@ -24,15 +15,9 @@ const CHU_KY_LABEL = {
   hang_nam:   'Hàng năm',
 };
 
-const loaiBadge = (v) => {
-  const map = {
-    nhapbai:  'success',
-    xuatbai:  'warning',
-    thamdinh: 'info',
-    haiquan:  'secondary',
-    dinhky:   'purple',
-  };
-  return <Badge variant={map[v] || 'gray'}>{LOAI_LABEL[v] || v}</Badge>;
+const chuKyBadge = (v) => {
+  const map = { hang_thang: 'info', hang_quy: 'warning', hang_nam: 'secondary' };
+  return <Badge variant={map[v] || 'gray'}>{CHU_KY_LABEL[v] || v}</Badge>;
 };
 
 const ketluanBadge = (v) => {
@@ -51,27 +36,29 @@ const selectStyle = (hasError) => ({
   borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff',
 });
 
+const labelSt = { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 };
+
 const defaultValues = {
-  socontainer: '',
-  loaiktd:     'nhapbai',
-  ketqua_ktd:  '',
-  bi_hong:     false,
-  ketluan:     'datieu',
+  socontainer:  '',
+  chu_ky:       'hang_thang',
+  ketqua_ktd:   '',
+  bi_hong:      false,
+  ketluan:      'datieu',
   thoigian_ktd: new Date().toISOString().slice(0, 16),
 };
 
-export default function BienBanKTPage() {
+export default function BienBanKTBaiPage() {
   const [trang, setTrang]             = useState(1);
   const [search, setSearch]           = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [filterLoai, setFilterLoai]   = useState('');
   const [filterKL, setFilterKL]       = useState('');
+  const [filterCK, setFilterCK]       = useState('');
   const [modalOpen, setModalOpen]     = useState(false);
   const [detailRow, setDetailRow]     = useState(null);
   const [serverErr, setServerErr]     = useState('');
 
-  const { data, isLoading } = useBienBanKTList({ trang, search, loaiktd: filterLoai, ketluan: filterKL });
-  const luuBienBan          = useLuuBienBan();
+  const { data, isLoading } = useBienBanKTBaiList({ trang, search, ketluan: filterKL, chu_ky: filterCK });
+  const luuBienBan          = useLuuBienBanDinhKy();
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({ defaultValues });
 
@@ -96,7 +83,6 @@ export default function BienBanKTPage() {
     }
   };
 
-  /* ── columns ── */
   const columns = [
     {
       key: 'socontainer',
@@ -108,53 +94,19 @@ export default function BienBanKTPage() {
         </div>
       ),
     },
-    {
-      key: 'loaiktd',
-      label: 'Loại kiểm tra',
-      align: 'center',
-      render: (v) => loaiBadge(v),
-    },
+    { key: 'chu_ky', label: 'Chu kỳ', align: 'center', render: (v) => chuKyBadge(v) },
     {
       key: 'ketqua_ktd',
       label: 'Kết quả',
-      render: (v) => (
-        <span style={{ fontSize: 13, color: '#374151' }}>
-          {v?.length > 70 ? v.slice(0, 70) + '…' : v}
-        </span>
-      ),
+      render: (v) => <span style={{ fontSize: 13, color: '#374151' }}>{v?.length > 60 ? v.slice(0, 60) + '…' : v}</span>,
     },
+    { key: 'bi_hong', label: 'Hư hỏng', align: 'center', render: (v) => v ? <Badge variant="danger">Có</Badge> : <Badge variant="success">Không</Badge> },
+    { key: 'ketluan', label: 'Kết luận', align: 'center', render: (v) => ketluanBadge(v) },
+    { key: 'thoigian_ktd', label: 'Thời gian', render: (v) => <span style={{ fontSize: 13 }}>{v}</span> },
+    { key: 'hoten_nhanvien', label: 'Nhân viên', render: (v) => <span style={{ fontSize: 13 }}>{v}</span> },
     {
-      key: 'bi_hong',
-      label: 'Hư hỏng',
-      align: 'center',
-      render: (v) => v
-        ? <Badge variant="danger">Có hư hỏng</Badge>
-        : <Badge variant="success">Không</Badge>,
-    },
-    {
-      key: 'ketluan',
-      label: 'Kết luận',
-      align: 'center',
-      render: (v) => ketluanBadge(v),
-    },
-    {
-      key: 'thoigian_ktd',
-      label: 'Thời gian KTĐ',
-      render: (v) => <span style={{ fontSize: 13 }}>{v}</span>,
-    },
-    {
-      key: 'hoten_nhanvien',
-      label: 'Nhân viên',
-      render: (v) => <span style={{ fontSize: 13 }}>{v}</span>,
-    },
-    {
-      key: 'actions',
-      label: 'Chi tiết',
-      align: 'center',
-      width: 90,
-      render: (_, row) => (
-        <Button size="sm" variant="secondary" onClick={() => setDetailRow(row)}>Xem</Button>
-      ),
+      key: 'actions', label: '', align: 'center', width: 80,
+      render: (_, row) => <Button size="sm" variant="secondary" onClick={() => setDetailRow(row)}>Xem</Button>,
     },
   ];
 
@@ -164,12 +116,11 @@ export default function BienBanKTPage() {
   return (
     <div>
       <PageHeader
-        title="Biên bản kiểm tra định kỳ"
-        description="Lập và tra cứu biên bản kiểm tra container"
+        title="Kiểm tra định kỳ"
+        description="Lập biên bản kiểm tra container định kỳ trong bãi"
         action={<Button onClick={openThem}>+ Tạo biên bản</Button>}
       />
 
-      {/* Thanh lọc */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <form
           onSubmit={(e) => { e.preventDefault(); setSearch(searchInput.trim()); setTrang(1); }}
@@ -182,31 +133,19 @@ export default function BienBanKTPage() {
             style={{ flex: 1, maxWidth: 280, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none' }}
           />
           <Button type="submit" variant="secondary">Tìm</Button>
-          {search && (
-            <Button variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); setTrang(1); }}>
-              Xóa lọc
-            </Button>
-          )}
+          {search && <Button variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); setTrang(1); }}>Xóa</Button>}
         </form>
 
-        <select
-          value={filterLoai}
-          onChange={e => { setFilterLoai(e.target.value); setTrang(1); }}
-          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}
-        >
-          <option value="">Tất cả loại</option>
-          <option value="nhapbai">Nhập bãi</option>
-          <option value="xuatbai">Xuất bãi</option>
-          <option value="thamdinh">Thẩm định</option>
-          <option value="haiquan">Hải quan</option>
-          <option value="dinhky">Định kỳ</option>
+        <select value={filterCK} onChange={e => { setFilterCK(e.target.value); setTrang(1); }}
+          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}>
+          <option value="">Tất cả chu kỳ</option>
+          <option value="hang_thang">Hàng tháng</option>
+          <option value="hang_quy">Hàng quý</option>
+          <option value="hang_nam">Hàng năm</option>
         </select>
 
-        <select
-          value={filterKL}
-          onChange={e => { setFilterKL(e.target.value); setTrang(1); }}
-          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}
-        >
+        <select value={filterKL} onChange={e => { setFilterKL(e.target.value); setTrang(1); }}
+          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}>
           <option value="">Tất cả kết luận</option>
           <option value="datieu">Đạt tiêu chuẩn</option>
           <option value="khongdat">Không đạt</option>
@@ -214,15 +153,11 @@ export default function BienBanKTPage() {
         </select>
       </div>
 
-      <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có biên bản nào" />
-
-      <Pagination
-        meta={meta}
-        onChange={setTrang}
-      />
+      <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có biên bản định kỳ nào" />
+      <Pagination meta={meta} onChange={setTrang} />
 
       {/* ── Modal tạo biên bản ── */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Tạo biên bản kiểm tra" width={500}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Tạo biên bản kiểm tra định kỳ" width={500}>
         <form onSubmit={handleSubmit(onSubmit)}>
           {serverErr && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
@@ -231,34 +166,24 @@ export default function BienBanKTPage() {
           )}
 
           <div style={{ marginBottom: 12 }}>
-            <Input
-              label="Số container"
-              placeholder="VD: MSCU1234567"
-              error={errors.socontainer?.message}
+            <Input label="Số container" placeholder="VD: MSCU1234567" error={errors.socontainer?.message}
               {...register('socontainer', {
                 required: 'Số container là bắt buộc.',
                 onChange: (e) => { e.target.value = e.target.value.toUpperCase(); },
-              })}
-            />
+              })} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Loại kiểm tra <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select style={selectStyle(errors.loaiktd)} {...register('loaiktd', { required: true })}>
-                <option value="nhapbai">Nhập bãi</option>
-                <option value="xuatbai">Xuất bãi</option>
-                <option value="thamdinh">Thẩm định</option>
-                <option value="haiquan">Hải quan</option>
-                <option value="dinhky">Định kỳ</option>
+              <label style={labelSt}>Chu kỳ kiểm tra <span style={{ color: '#ef4444' }}>*</span></label>
+              <select style={selectStyle(errors.chu_ky)} {...register('chu_ky', { required: true })}>
+                <option value="hang_thang">Hàng tháng</option>
+                <option value="hang_quy">Hàng quý</option>
+                <option value="hang_nam">Hàng năm</option>
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Kết luận <span style={{ color: '#ef4444' }}>*</span>
-              </label>
+              <label style={labelSt}>Kết luận <span style={{ color: '#ef4444' }}>*</span></label>
               <select style={selectStyle(errors.ketluan)} {...register('ketluan', { required: true })}>
                 <option value="datieu">Đạt tiêu chuẩn</option>
                 <option value="khongdat">Không đạt</option>
@@ -268,37 +193,17 @@ export default function BienBanKTPage() {
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-              Thời gian kiểm tra <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="datetime-local"
-              style={selectStyle(errors.thoigian_ktd)}
-              {...register('thoigian_ktd', { required: 'Thời gian là bắt buộc.' })}
-            />
-            {errors.thoigian_ktd && (
-              <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.thoigian_ktd.message}</p>
-            )}
+            <label style={labelSt}>Thời gian kiểm tra <span style={{ color: '#ef4444' }}>*</span></label>
+            <input type="datetime-local" style={selectStyle(errors.thoigian_ktd)}
+              {...register('thoigian_ktd', { required: 'Thời gian là bắt buộc.' })} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-              Kết quả kiểm tra <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <textarea
-              rows={4}
-              placeholder="Mô tả chi tiết kết quả kiểm tra container…"
-              style={{
-                width: '100%', padding: '8px 12px',
-                border: `1px solid ${errors.ketqua_ktd ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: 8, fontSize: 14, outline: 'none',
-                resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
-              }}
-              {...register('ketqua_ktd', { required: 'Kết quả kiểm tra là bắt buộc.' })}
-            />
-            {errors.ketqua_ktd && (
-              <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.ketqua_ktd.message}</p>
-            )}
+            <label style={labelSt}>Kết quả kiểm tra <span style={{ color: '#ef4444' }}>*</span></label>
+            <textarea rows={4} placeholder="Mô tả tình trạng container: vỏ thùng, niêm chì, độ ẩm, côn trùng…"
+              style={{ width: '100%', padding: '8px 12px', border: `1px solid ${errors.ketqua_ktd ? '#ef4444' : '#e2e8f0'}`, borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              {...register('ketqua_ktd', { required: 'Kết quả kiểm tra là bắt buộc.' })} />
+            {errors.ketqua_ktd && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.ketqua_ktd.message}</p>}
           </div>
 
           <div style={{ marginBottom: 4 }}>
@@ -310,30 +215,22 @@ export default function BienBanKTPage() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Hủy</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Đang lưu…' : 'Lưu biên bản'}
-            </Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Đang lưu…' : 'Lưu biên bản'}</Button>
           </div>
         </form>
       </Modal>
 
       {/* ── Modal chi tiết ── */}
       {detailRow && (
-        <Modal
-          open={!!detailRow}
-          onClose={() => setDetailRow(null)}
-          title={`Biên bản — ${detailRow.socontainer}`}
-          width={480}
-        >
+        <Modal open={!!detailRow} onClose={() => setDetailRow(null)} title={`Biên bản định kỳ — ${detailRow.socontainer}`} width={480}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', fontSize: 14 }}>
             {[
               ['Số container',   detailRow.socontainer],
               ['Hãng tàu',       `${detailRow.mascac || ''} ${detailRow.tenhangtau || ''}`],
-              ['Loại kiểm tra',  loaiBadge(detailRow.loaiktd)],
-              ...(detailRow.chu_ky ? [['Chu kỳ', CHU_KY_LABEL[detailRow.chu_ky] || detailRow.chu_ky]] : []),
+              ['Chu kỳ',         chuKyBadge(detailRow.chu_ky)],
               ['Kết luận',       ketluanBadge(detailRow.ketluan)],
               ['Hư hỏng',        detailRow.bi_hong ? <Badge variant="danger">Có hư hỏng</Badge> : <Badge variant="success">Không</Badge>],
-              ['Thời gian KTĐ',  detailRow.thoigian_ktd],
+              ['Thời gian KT',   detailRow.thoigian_ktd],
               ['Nhân viên',      detailRow.hoten_nhanvien],
               ['Lập lúc',        detailRow.created_at],
             ].map(([label, value]) => (

@@ -41,3 +41,19 @@ export function useHuyPhieu() {
     },
   });
 }
+
+export function useScanQR() {
+  return useMutation({
+    mutationFn: (ma_qr) =>
+      api.get('/nv/cong/phieu-lay-hang/scan-qr', { params: { ma_qr } }).then(r => r.data),
+  });
+}
+
+export function useVaoCong() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ maphieu, bienso_romo }) =>
+      api.patch(`/nv/cong/phieu-lay-hang/${maphieu}/vao-cong`, { bienso_romo }).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  });
+}

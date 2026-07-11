@@ -13,6 +13,7 @@ class BienBanKT extends Model
         'macontainer',
         'manhanvien',
         'loaiktd',
+        'chu_ky',
         'ketqua_ktd',
         'bi_hong',
         'anhchup',

@@ -28,10 +28,12 @@ import LichTauCongPage from '@/pages/nhanvien/cong/LichTauPage';
 import CongXuatNhapNVPage from '@/pages/nhanvien/cong/CongXuatNhapPage';
 import BienBanKTCongPage from '@/pages/nhanvien/cong/BienBanKTPage';
 import PhieuLayHangPage from '@/pages/nhanvien/cong/PhieuLayHangPage';
+import ScanQRPage from '@/pages/nhanvien/cong/ScanQRPage';
 import ContainerBaiPage from '@/pages/nhanvien/bai/ContainerPage';
 import LichTauBaiPage from '@/pages/nhanvien/bai/LichTauPage';
 import SoDoBaiNVPage from '@/pages/nhanvien/bai/SoDoBaiPage';
 import TiepNhanNhapPage from '@/pages/nhanvien/bai/TiepNhanNhapPage';
+import BienBanKTBaiPage from '@/pages/nhanvien/bai/BienBanKTPage';
 
 // ── Tài xế layout + pages ────────────────────────────────────────
 import TaiXeLayout from '@/layouts/TaiXeLayout';
@@ -109,7 +111,8 @@ export default function App() {
               <NhanVienLayout />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="cong" replace />} />
+            <Route index element={<Navigate to="scan-qr" replace />} />
+            <Route path="scan-qr"        element={<ScanQRPage />} />
             <Route path="container"      element={<ContainerCongPage />} />
             <Route path="cong"           element={<CongXuatNhapNVPage />} />
             <Route path="phieu-lay-hang" element={<PhieuLayHangPage />} />
@@ -127,6 +130,7 @@ export default function App() {
             <Route path="tiep-nhan-nhap"  element={<TiepNhanNhapPage />} />
             <Route path="lich-tau"        element={<LichTauBaiPage />} />
             <Route path="so-do-bai"       element={<SoDoBaiNVPage />} />
+            <Route path="bien-ban-kt"     element={<BienBanKTBaiPage />} />
           </Route>
 
           {/* ── Khách hàng ── */}

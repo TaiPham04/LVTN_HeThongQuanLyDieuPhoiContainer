@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\NhanVien\Bai\ContainerBaiController;
 use App\Http\Controllers\NhanVien\Bai\SoDoBaiController as NVSoDoBaiController;
 use App\Http\Controllers\NhanVien\Cong\BienBanKTController as NVBienBanKTController;
+use App\Http\Controllers\NhanVien\Bai\BienBanKTController as NVBaiBienBanKTController;
 use App\Http\Controllers\NhanVien\Cong\ContainerCongController;
 use App\Http\Controllers\NhanVien\Bai\LichTauBaiController;
 use App\Http\Controllers\NhanVien\Cong\LichTauController as NVLichTauController;
@@ -161,10 +162,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('bien-ban-kt', [NVBienBanKTController::class, 'store']);
 
         // Phiếu lấy hàng
+        Route::get('phieu-lay-hang/scan-qr',                  [NVPhieuLayHangController::class, 'scanQR']);
         Route::get('phieu-lay-hang',                          [NVPhieuLayHangController::class, 'index']);
         Route::post('phieu-lay-hang',                         [NVPhieuLayHangController::class, 'store']);
         Route::get('phieu-lay-hang/{phieu}',                  [NVPhieuLayHangController::class, 'show']);
         Route::patch('phieu-lay-hang/{phieu}/xac-nhan',       [NVPhieuLayHangController::class, 'xacNhan']);
+        Route::patch('phieu-lay-hang/{phieu}/vao-cong',       [NVPhieuLayHangController::class, 'vaoCong']);
         Route::patch('phieu-lay-hang/{phieu}/huy',            [NVPhieuLayHangController::class, 'huy']);
 
         // Lookups dùng chung (hãng tàu, loại container, tài xế)
@@ -206,6 +209,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('lich-tau',                                    [LichTauBaiController::class, 'index']);
         Route::patch('lich-tau/{chuyentau}/trang-thai',           [LichTauBaiController::class, 'chuyenTrangThai']);
         Route::post('lich-tau/{chuyentau}/xac-nhan-do-hang',      [LichTauBaiController::class, 'xacNhanDoHang']);
+
+        // Biên bản kiểm tra định kỳ
+        Route::get('bien-ban-kt',  [NVBaiBienBanKTController::class, 'index']);
+        Route::post('bien-ban-kt', [NVBaiBienBanKTController::class, 'store']);
 
         // Lookups dùng chung
         Route::get('hang-tau',       [HangTauController::class, 'index']);
@@ -249,7 +256,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── TÀI XẾ ──────────────────────────────────────────────────────────────
     Route::middleware('role:taixe')->prefix('tx')->group(function () {
-        Route::get('phieu-lay-hang',          [PhieuLayHangTXController::class, 'index']);
-        Route::get('phieu-lay-hang/{phieu}',  [PhieuLayHangTXController::class, 'show']);
+        Route::get('phieu-lay-hang',                          [PhieuLayHangTXController::class, 'index']);
+        Route::get('phieu-lay-hang/{phieu}',                  [PhieuLayHangTXController::class, 'show']);
+        Route::patch('phieu-lay-hang/{phieu}/den-cang',       [PhieuLayHangTXController::class, 'denCang']);
+        Route::patch('phieu-lay-hang/{phieu}/lay-hang',       [PhieuLayHangTXController::class, 'layHang']);
     });
 });
