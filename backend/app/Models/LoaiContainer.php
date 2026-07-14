@@ -16,11 +16,7 @@ class LoaiContainer extends Model
         'chieudai_ft',
         'chieurong_ft',
         'chieucao_ft',
-        'taithong_kg',
-        'lalanh',
-        'lahangnguy',
-        'cho_phep_xep_chong',
-        'tang_toi_da',
+        'taitrong_kg',
         'gialuubai_ngay',
         'soNgayMienPhi',
         'trangthai',
@@ -30,12 +26,8 @@ class LoaiContainer extends Model
         'chieudai_ft'        => 'decimal:2',
         'chieurong_ft'       => 'decimal:2',
         'chieucao_ft'        => 'decimal:2',
-        'taithong_kg'        => 'decimal:2',
+        'taitrong_kg'        => 'decimal:2',
         'gialuubai_ngay'     => 'decimal:2',
-        'lalanh'             => 'boolean',
-        'lahangnguy'         => 'boolean',
-        'cho_phep_xep_chong' => 'boolean',
-        'tang_toi_da'        => 'integer',
     ];
 
     // ─── Relationships ───────────────────────────────────────────

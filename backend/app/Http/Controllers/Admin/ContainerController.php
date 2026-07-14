@@ -190,7 +190,7 @@ class ContainerController extends Controller
             'ghichu_haiquan'    => 'nullable|string|max:500',
         ]);
 
-        $labelMap = ['luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
+        $labelMap = ['chua_khai' => 'Chưa khai', 'luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
         $cu  = $container->trangthai_haiquan;
         $moi = $request->trangthai_haiquan;
 

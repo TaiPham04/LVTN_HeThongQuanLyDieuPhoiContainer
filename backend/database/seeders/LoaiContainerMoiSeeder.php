@@ -17,167 +17,123 @@ class LoaiContainerMoiSeeder extends Seeder
         $now = Carbon::now();
 
         // ── 1. Loại container mới ──────────────────────────────────────
-        // Cột mới: cho_phep_xep_chong, tang_toi_da
-        // Cột cũ đã có: maiso, tenloai, chieudai_ft, chieurong_ft, chieucao_ft,
-        //               taithong_kg, lalanh, lahangnguy, gialuubai_ngay, soNgayMienPhi, trangthai
-
         $loaiMoi = [
             // ── Open Top ──────────────────────────────────────────────
             [
-                'maiso'              => '20OT',
-                'tenloai'            => 'Open Top 20ft',
-                'chieudai_ft'        => 20.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 21770,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,   // không xếp chồng lên trên
-                'tang_toi_da'        => null,     // không giới hạn tầng
-                'gialuubai_ngay'     => 150000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '20OT',
+                'tenloai'        => 'Open Top 20ft',
+                'chieudai_ft'    => 20.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 21770,
+                'gialuubai_ngay' => 150000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'              => '40OT',
-                'tenloai'            => 'Open Top 40ft',
-                'chieudai_ft'        => 40.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 26300,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => null,
-                'gialuubai_ngay'     => 200000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '40OT',
+                'tenloai'        => 'Open Top 40ft',
+                'chieudai_ft'    => 40.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 26300,
+                'gialuubai_ngay' => 200000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── Flat Rack ─────────────────────────────────────────────
             [
-                'maiso'              => '20FR',
-                'tenloai'            => 'Flat Rack 20ft',
-                'chieudai_ft'        => 20.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 27900,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => 1,        // chỉ tầng 1
-                'gialuubai_ngay'     => 180000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '20FR',
+                'tenloai'        => 'Flat Rack 20ft',
+                'chieudai_ft'    => 20.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 27900,
+                'gialuubai_ngay' => 180000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'              => '40FR',
-                'tenloai'            => 'Flat Rack 40ft',
-                'chieudai_ft'        => 40.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 39700,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => 1,
-                'gialuubai_ngay'     => 250000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '40FR',
+                'tenloai'        => 'Flat Rack 40ft',
+                'chieudai_ft'    => 40.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 39700,
+                'gialuubai_ngay' => 250000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── Platform ──────────────────────────────────────────────
             [
-                'maiso'              => '20PF',
-                'tenloai'            => 'Platform 20ft',
-                'chieudai_ft'        => 20.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 1.5,
-                'taithong_kg'        => 29000,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => 1,
-                'gialuubai_ngay'     => 180000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '20PF',
+                'tenloai'        => 'Platform 20ft',
+                'chieudai_ft'    => 20.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 1.5,
+                'taitrong_kg'    => 29000,
+                'gialuubai_ngay' => 180000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'              => '40PF',
-                'tenloai'            => 'Platform 40ft',
-                'chieudai_ft'        => 40.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 1.5,
-                'taithong_kg'        => 40000,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => 1,
-                'gialuubai_ngay'     => 250000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '40PF',
+                'tenloai'        => 'Platform 40ft',
+                'chieudai_ft'    => 40.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 1.5,
+                'taitrong_kg'    => 40000,
+                'gialuubai_ngay' => 250000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── ISO Tank (hàng nguy hiểm) ─────────────────────────────
             [
-                'maiso'              => 'TK20',
-                'tenloai'            => 'ISO Tank 20ft',
-                'chieudai_ft'        => 20.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 21000,
-                'lalanh'             => false,
-                'lahangnguy'         => true,     // đây là hàng nguy hiểm
-                'cho_phep_xep_chong' => false,
-                'tang_toi_da'        => 1,
-                'gialuubai_ngay'     => 300000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => 'TK20',
+                'tenloai'        => 'ISO Tank 20ft',
+                'chieudai_ft'    => 20.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 21000,
+                'gialuubai_ngay' => 300000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── Ventilated (thông gió) ────────────────────────────────
             [
-                'maiso'              => '20VH',
-                'tenloai'            => 'Ventilated 20ft',
-                'chieudai_ft'        => 20.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 8.5,
-                'taithong_kg'        => 21600,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => true,
-                'tang_toi_da'        => null,
-                'gialuubai_ngay'     => 120000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '20VH',
+                'tenloai'        => 'Ventilated 20ft',
+                'chieudai_ft'    => 20.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 8.5,
+                'taitrong_kg'    => 21600,
+                'gialuubai_ngay' => 120000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── Reefer High Cube ──────────────────────────────────────
             [
-                'maiso'              => '40RH',
-                'tenloai'            => 'Reefer HC 40ft',
-                'chieudai_ft'        => 40.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 9.5,
-                'taithong_kg'        => 25400,
-                'lalanh'             => true,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => true,
-                'tang_toi_da'        => null,
-                'gialuubai_ngay'     => 500000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '40RH',
+                'tenloai'        => 'Reefer HC 40ft',
+                'chieudai_ft'    => 40.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 9.5,
+                'taitrong_kg'    => 25400,
+                'gialuubai_ngay' => 500000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
             // ── 45ft High Cube ────────────────────────────────────────
             [
-                'maiso'              => '45HC',
-                'tenloai'            => 'Dry HC 45ft',
-                'chieudai_ft'        => 45.0,
-                'chieurong_ft'       => 8.0,
-                'chieucao_ft'        => 9.5,
-                'taithong_kg'        => 29500,
-                'lalanh'             => false,
-                'lahangnguy'         => false,
-                'cho_phep_xep_chong' => true,
-                'tang_toi_da'        => null,
-                'gialuubai_ngay'     => 220000,
-                'soNgayMienPhi'      => 3,
-                'trangthai'          => 'hoatdong',
+                'maiso'          => '45HC',
+                'tenloai'        => 'Dry HC 45ft',
+                'chieudai_ft'    => 45.0,
+                'chieurong_ft'   => 8.0,
+                'chieucao_ft'    => 9.5,
+                'taitrong_kg'    => 29500,
+                'gialuubai_ngay' => 220000,
+                'soNgayMienPhi'  => 3,
+                'trangthai'      => 'hoatdong',
             ],
         ];
 
@@ -191,28 +147,11 @@ class LoaiContainerMoiSeeder extends Seeder
                 );
                 $maloaiMap[$row['maiso']] = $id;
             } else {
-                // Cập nhật 2 field mới nếu chưa có (chạy lại seeder)
-                DB::table('loaicontainer')->where('maiso', $row['maiso'])->update([
-                    'cho_phep_xep_chong' => $row['cho_phep_xep_chong'],
-                    'tang_toi_da'        => $row['tang_toi_da'],
-                    'updated_at'         => $now,
-                ]);
                 $maloaiMap[$row['maiso']] = $existing->maloai;
             }
         }
 
-        // ── 2. Cập nhật 5 loại container cũ (thêm field mới) ──────────
-        // Dry 20/40/40HC và Reefer 20/40 — mặc định cho_phep_xep_chong=true, tang_toi_da=null
-        // (migration đã set default, nhưng cập nhật rõ ràng cho chắc)
-        DB::table('loaicontainer')
-            ->whereIn('maiso', ['20DC', '40DC', '40HC', '20RF', '40RF'])
-            ->update([
-                'cho_phep_xep_chong' => true,
-                'tang_toi_da'        => null,
-                'updated_at'         => $now,
-            ]);
-
-        // ── 3. Block hàng nguy hiểm (Block G) ─────────────────────────
+        // ── 2. Block hàng nguy hiểm (Block G) ─────────────────────────
         $blockG = DB::table('khuvucbai')->where('tenblock', 'G')->first();
         if (!$blockG) {
             $makhuvucG = DB::table('khuvucbai')->insertGetId([
@@ -247,13 +186,11 @@ class LoaiContainerMoiSeeder extends Seeder
             DB::table('obai')->insert($obaiG);
         } else {
             $makhuvucG = $blockG->makhuvuc;
-            // Đảm bảo lablock_hangnguy được set đúng
             DB::table('khuvucbai')->where('makhuvuc', $makhuvucG)
                 ->update(['lablock_hangnguy' => true, 'updated_at' => $now]);
         }
 
-        // ── 4. Pivot loaicontainer_khuvuc cho loại mới ─────────────────
-        // Lấy makhuvuc của các block hiện có
+        // ── 3. Pivot loaicontainer_khuvuc cho loại mới ─────────────────
         $blocks = DB::table('khuvucbai')
             ->whereIn('tenblock', ['A', 'B', 'C', 'D', 'F', 'G'])
             ->pluck('makhuvuc', 'tenblock')

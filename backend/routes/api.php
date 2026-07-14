@@ -62,6 +62,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('bao-cao/xuat-nhap', [BaoCaoController::class, 'xuatNhap']);
         Route::get('bao-cao/container', [BaoCaoController::class, 'container']);
         Route::get('bao-cao/hang-tau',  [BaoCaoController::class, 'hangTau']);
+        Route::get('bao-cao/ton-bai',   [BaoCaoController::class, 'tonBai']);
+        Route::get('bao-cao/kpi',       [BaoCaoController::class, 'kpi']);
 
         // Loại container
         Route::get('loai-container',                              [LoaiContainerController::class, 'index']);

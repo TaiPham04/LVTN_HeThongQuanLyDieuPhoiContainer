@@ -33,11 +33,6 @@ class LoaiContainerController extends Controller
             });
         }
 
-        // Lọc theo loại lạnh
-        if ($request->has('lalanh')) {
-            $query->where('lalanh', $request->boolean('lalanh'));
-        }
-
         $data = $query->orderBy('maiso')->paginate($request->get('per_page', 15));
 
         return response()->json([

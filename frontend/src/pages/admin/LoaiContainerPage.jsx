@@ -36,7 +36,7 @@ export default function LoaiContainerPage() {
   const moModalThem = () => {
     setSelected(null); setServerErr('');
     reset({ maiso:'', tenloai:'', chieudai_ft:'', chieurong_ft:'', chieucao_ft:'',
-            taithong_kg:'', lalanh:false, lahangnguy:false, gialuubai_ngay:'', soNgayMienPhi:3 });
+            taitrong_kg:'', gialuubai_ngay:'', soNgayMienPhi:3 });
     setModalOpen(true);
   };
 
@@ -71,7 +71,7 @@ export default function LoaiContainerPage() {
     { key: 'tenloai', label: 'Tên loại' },
     { key: 'kich_thuoc', label: 'Kích thước (ft)',
       render: (_, r) => `${r.chieudai_ft} × ${r.chieurong_ft} × ${r.chieucao_ft}` },
-    { key: 'taithong_kg', label: 'Tải trọng (kg)', align: 'right',
+    { key: 'taitrong_kg', label: 'Tải trọng (kg)', align: 'right',
       render: (v) => Number(v).toLocaleString('vi-VN') },
     { key: 'gialuubai_ngay', label: 'Giá lưu bãi/ngày', align: 'right',
       render: (v) => `$${Number(v).toFixed(2)}` },
@@ -147,27 +147,15 @@ export default function LoaiContainerPage() {
               {...register('chieucao_ft', { required:'Bắt buộc.', min:{value:1,message:'Phải > 0'} })} />
           </div>
           <div style={s.twoCol}>
-            <Input label="Tải trọng (kg)" type="number" required error={errors.taithong_kg?.message}
-              {...register('taithong_kg', { required:'Bắt buộc.', min:{value:1,message:'Phải > 0'} })} />
+            <Input label="Tải trọng (kg)" type="number" required error={errors.taitrong_kg?.message}
+              {...register('taitrong_kg', { required:'Bắt buộc.', min:{value:1,message:'Phải > 0'} })} />
             <Input label="Giá lưu bãi/ngày (USD)" type="number" required
               error={errors.gialuubai_ngay?.message}
               {...register('gialuubai_ngay', { required:'Bắt buộc.', min:{value:0,message:'Không được âm.'} })} />
           </div>
-          <div style={s.twoCol}>
-            <Input label="Số ngày miễn phí" type="number" required
-              error={errors.soNgayMienPhi?.message}
-              {...register('soNgayMienPhi', { required:'Bắt buộc.', min:{value:0,message:'Không được âm.'} })} />
-            <div style={{ display:'flex', gap:20, alignItems:'center', paddingTop:24 }}>
-              <label style={s.checkLabel}>
-                <input type="checkbox" {...register('lalanh')} style={{ marginRight:6 }} />
-                Container lạnh
-              </label>
-              <label style={s.checkLabel}>
-                <input type="checkbox" {...register('lahangnguy')} style={{ marginRight:6 }} />
-                Hàng nguy hiểm
-              </label>
-            </div>
-          </div>
+          <Input label="Số ngày miễn phí" type="number" required
+            error={errors.soNgayMienPhi?.message}
+            {...register('soNgayMienPhi', { required:'Bắt buộc.', min:{value:0,message:'Không được âm.'} })} />
         </form>
       </Modal>
 

@@ -28,3 +28,19 @@ export function useBaoCaoHangTau(params) {
     staleTime: 30_000,
   });
 }
+
+export function useBaoCaoTonBai(params) {
+  return useQuery({
+    queryKey: [KEY, 'ton-bai', params],
+    queryFn: () => api.get('/admin/bao-cao/ton-bai', { params }).then(r => r.data),
+    staleTime: 30_000,
+  });
+}
+
+export function useBaoCaoKPI(params) {
+  return useQuery({
+    queryKey: [KEY, 'kpi', params],
+    queryFn: () => api.get('/admin/bao-cao/kpi', { params }).then(r => r.data),
+    staleTime: 30_000,
+  });
+}

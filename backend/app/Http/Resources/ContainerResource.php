@@ -16,7 +16,6 @@ class ContainerResource extends JsonResource
             'maloai'            => $this->maloai,
             'maiso'             => $this->loaicontainer?->maiso,
             'tenloai'           => $this->loaicontainer?->tenloai,
-            'lalanh'            => $this->loaicontainer?->lalanh ?? false,
             'machuyentau'       => $this->machuyentau,
             'sovoyage'          => $this->chuyentau?->sovoyage,
             'tentau'            => $this->chuyentau?->tentau,
