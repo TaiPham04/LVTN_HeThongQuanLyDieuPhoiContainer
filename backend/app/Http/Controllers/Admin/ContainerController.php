@@ -8,9 +8,11 @@ use App\Http\Requests\Container\XoaContainer;
 use App\Http\Resources\ContainerResource;
 use App\Models\Container;
 use App\Models\LichSuViTri;
+use App\Models\LogCong;
 use App\Models\LogXoa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ContainerController extends Controller
 {
@@ -62,6 +64,7 @@ class ContainerController extends Controller
                 'loai_hinh'         => $container->loai_hinh,
                 'trangthai'         => $container->trangthai,
                 'trangthai_haiquan' => $container->trangthai_haiquan,
+                'da_thong_quan'     => (bool) $container->da_thong_quan,
                 'sovoyage'          => $container->chuyentau?->sovoyage,
                 'tentau'            => $container->chuyentau?->tentau,
                 'mascac'            => $container->chuyentau?->hangtau?->mascac,
@@ -94,6 +97,7 @@ class ContainerController extends Controller
                 'soniemchi'         => $container->soniemchi,
                 'trangthai'         => $container->trangthai,
                 'trangthai_haiquan' => $container->trangthai_haiquan,
+                'da_thong_quan'     => (bool) $container->da_thong_quan,
             ],
         ]);
     }
@@ -145,16 +149,34 @@ class ContainerController extends Controller
     }
 
     // ─── POST /api/admin/container ────────────────────────────────
+    // Đăng ký container mới = xe đã có mặt tại cổng, nên ghi nhận nhập cổng luôn
+    // (đồng bộ với NhanVien\Cong\ContainerCongController::store())
     public function store(LuuContainer $request): JsonResponse
     {
-        $container = Container::create([
-            ...$request->validated(),
-            'trangthai'         => 'dangky',
-            'trangthai_haiquan' => 'chua_khai',
-        ]);
+        $container = DB::transaction(function () use ($request) {
+            $now = now();
+
+            $container = Container::create([
+                ...$request->validated(),
+                'trangthai'         => 'trongbai',
+                'trangthai_haiquan' => 'chua_khai',
+                'thoigian_vaobai'   => $now,
+            ]);
+
+            LogCong::create([
+                'macontainer'   => $container->macontainer,
+                'machuyentau'   => $container->machuyentau,
+                'manhanvien'    => $request->user()->mataikhoan,
+                'kieu_xuatnhap' => 'nhap',
+                'ghichu'        => 'Nhập cổng theo đăng ký container.',
+                'thoigian_xl'   => $now,
+            ]);
+
+            return $container;
+        });
 
         return response()->json([
-            'message' => "Đã đăng ký container {$container->socontainer} thành công.",
+            'message' => "Đã đăng ký và ghi nhận nhập cổng container {$container->socontainer} thành công.",
             'data'    => new ContainerResource($container->load(['loaicontainer', 'chuyentau.hangtau'])),
         ], 201);
     }
@@ -183,6 +205,9 @@ class ContainerController extends Controller
     }
 
     // ─── PATCH /api/admin/container/{container}/hai-quan ─────────
+    // Khai báo luồng phân loại (Xanh/Vàng/Đỏ) — chỉ thực hiện được 1 lần khi hệ thống
+    // hải quan trả kết quả phân luồng. Luồng là "nhãn" cố định, không đổi sau đó —
+    // luồng vàng/đỏ muốn được thông quan phải qua kiểm hóa (xem BienBanKTController).
     public function capNhatHaiQuan(Request $request, Container $container): JsonResponse
     {
         $request->validate([
@@ -190,22 +215,23 @@ class ContainerController extends Controller
             'ghichu_haiquan'    => 'nullable|string|max:500',
         ]);
 
-        $labelMap = ['chua_khai' => 'Chưa khai', 'luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
-        $cu  = $container->trangthai_haiquan;
-        $moi = $request->trangthai_haiquan;
-
-        // Container đã rời bãi (lên tàu hoặc xuất cổng) thì không thể chuyển về luồng đỏ/vàng
-        if (in_array($container->trangthai, ['dalenken', 'xuatcong']) && $moi !== 'luong_xanh') {
-            $trangthaiLabel = $container->trangthai === 'dalenken' ? 'đã lên tàu' : 'đã xuất cổng';
+        if ($container->trangthai_haiquan !== 'chua_khai') {
             return response()->json([
-                'message' => "Container {$container->socontainer} {$trangthaiLabel}. Chỉ có thể cập nhật thành Luồng xanh (để hiệu chỉnh hồ sơ).",
+                'message' => "Container {$container->socontainer} đã được phân luồng ({$container->trangthai_haiquan}) và không thể thay đổi. Nếu là luồng vàng/đỏ, hãy lập biên bản kiểm tra loại \"Hải quan\" để ghi nhận kết quả kiểm hóa.",
             ], 422);
         }
 
-        $container->update(['trangthai_haiquan' => $moi]);
+        $labelMap = ['luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
+        $moi = $request->trangthai_haiquan;
+
+        // Luồng xanh không cần kiểm hóa — được thông quan ngay
+        $container->update([
+            'trangthai_haiquan' => $moi,
+            'da_thong_quan'     => $moi === 'luong_xanh',
+        ]);
 
         return response()->json([
-            'message' => "Cập nhật hải quan {$container->socontainer}: {$labelMap[$cu]} → {$labelMap[$moi]}.",
+            'message' => "Đã phân {$labelMap[$moi]} cho container {$container->socontainer}.",
             'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'chuyentau.hangtau'])),
         ]);
     }

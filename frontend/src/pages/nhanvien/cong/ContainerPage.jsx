@@ -36,6 +36,11 @@ const haiquanBadge = (v) => {
   return <Badge variant={b.variant}>{b.label}</Badge>;
 };
 
+const thongQuanBadge = (daThongQuan) =>
+  daThongQuan
+    ? <Badge variant="success">Đã thông quan</Badge>
+    : <Badge variant="gray">Chưa thông quan</Badge>;
+
 const selectStyle = (hasError) => ({
   width: '100%', padding: '8px 12px',
   border: `1px solid ${hasError ? '#ef4444' : '#e2e8f0'}`,
@@ -137,7 +142,12 @@ export default function ContainerCongPage() {
       key: 'trangthai_haiquan',
       label: 'Hải quan',
       align: 'center',
-      render: (v) => v ? haiquanBadge(v) : <span style={{ color: '#cbd5e1' }}>—</span>,
+      render: (v, row) => v ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+          {haiquanBadge(v)}
+          {v !== 'chua_khai' && thongQuanBadge(row.da_thong_quan)}
+        </div>
+      ) : <span style={{ color: '#cbd5e1' }}>—</span>,
     },
     {
       key: 'thoigian_vaobai',
@@ -152,11 +162,11 @@ export default function ContainerCongPage() {
       render: (_, row) => (
         <Button
           size="sm"
-          variant={row.trangthai_haiquan === 'luong_xanh' ? 'secondary' : 'ghost'}
+          variant={row.trangthai_haiquan === 'chua_khai' ? 'ghost' : row.da_thong_quan ? 'secondary' : 'ghost'}
           onClick={() => { setHqRow(row); setHqTT(row.trangthai_haiquan); setHqGhiChu(''); }}
-          title="Cập nhật trạng thái hải quan"
+          title={row.trangthai_haiquan === 'chua_khai' ? 'Khai báo luồng hải quan' : 'Xem trạng thái hải quan'}
         >
-          Cập nhật HQ
+          {row.trangthai_haiquan === 'chua_khai' ? 'Khai báo HQ' : 'Xem HQ'}
         </Button>
       ),
     },

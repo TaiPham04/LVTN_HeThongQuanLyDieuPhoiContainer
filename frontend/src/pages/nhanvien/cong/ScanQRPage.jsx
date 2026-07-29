@@ -115,7 +115,7 @@ export default function ScanQRPage() {
       {/* ── Không tìm thấy ── */}
       {notFound && (
         <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 10, padding: '14px 18px', color: '#991b1b', fontWeight: 600, textAlign: 'center' }}>
-          <i className="ti ti-x-circle" style={{ marginRight: 8 }} />
+          <i className="ti ti-circle-x" style={{ marginRight: 8 }} />
           Không tìm thấy phiếu với mã QR này.
         </div>
       )}

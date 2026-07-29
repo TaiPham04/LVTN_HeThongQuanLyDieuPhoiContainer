@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import { usePhieuLayHangTX, useDenCangTX, useLayHangTX } from '@/hooks/taixe/usePhieuLayHangTX';
+import { usePhieuLayHangTX, useDenCangTX } from '@/hooks/taixe/usePhieuLayHangTX';
 
 const TRANGTHAI = {
   cho_lay: { label: 'Chờ lấy hàng', variant: 'warning' },
@@ -30,7 +30,6 @@ export default function PhieuLayHangPage() {
 
   const { data, isLoading } = usePhieuLayHangTX(filterTT);
   const denCangMut = useDenCangTX();
-  const layHangMut = useLayHangTX();
 
   const list  = data?.data  ?? [];
   const taixe = data?.taixe ?? {};
@@ -44,16 +43,6 @@ export default function PhieuLayHangPage() {
     try {
       await denCangMut.mutateAsync(selected.maphieu);
       setSelected(prev => ({ ...prev, thoigian_den_cang: '...' }));
-    } catch (e) {
-      setActionErr(e?.response?.data?.message || 'Đã có lỗi.');
-    }
-  };
-
-  const handleLayHang = async () => {
-    setActionErr('');
-    try {
-      await layHangMut.mutateAsync(selected.maphieu);
-      setSelected(null);
     } catch (e) {
       setActionErr(e?.response?.data?.message || 'Đã có lỗi.');
     }
@@ -252,34 +241,29 @@ export default function PhieuLayHangPage() {
                     {actionErr}
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {!daDenCang && (
-                    <button
-                      onClick={handleDenCang}
-                      disabled={denCangMut.isPending}
-                      style={{
-                        flex: 1, padding: '10px 0', borderRadius: 8, border: '1.5px solid #0d9488',
-                        background: '#ccfbf1', color: '#0d9488', fontWeight: 600, fontSize: 13,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      }}>
-                      <i className="ti ti-map-pin" />
-                      {denCangMut.isPending ? 'Đang ghi...' : 'Đã đến cảng'}
-                    </button>
-                  )}
-                  {daDenCang && (
-                    <button
-                      onClick={handleLayHang}
-                      disabled={layHangMut.isPending}
-                      style={{
-                        flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                        background: '#16a34a', color: '#fff', fontWeight: 600, fontSize: 13,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      }}>
-                      <i className="ti ti-circle-check" />
-                      {layHangMut.isPending ? 'Đang xác nhận...' : 'Xác nhận lấy hàng'}
-                    </button>
-                  )}
-                </div>
+                {!daDenCang && (
+                  <button
+                    onClick={handleDenCang}
+                    disabled={denCangMut.isPending}
+                    style={{
+                      width: '100%', padding: '10px 0', borderRadius: 8, border: '1.5px solid #0d9488',
+                      background: '#ccfbf1', color: '#0d9488', fontWeight: 600, fontSize: 13,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}>
+                    <i className="ti ti-map-pin" />
+                    {denCangMut.isPending ? 'Đang ghi...' : 'Đã đến cảng'}
+                  </button>
+                )}
+                {daDenCang && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: 8, background: '#f0f9ff',
+                    border: '1px solid #bae6fd', color: '#0369a1', fontSize: 12,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    <i className="ti ti-door-enter" />
+                    Vui lòng đến cổng để nhân viên xác nhận lấy hàng.
+                  </div>
+                )}
               </div>
             )}
           </div>

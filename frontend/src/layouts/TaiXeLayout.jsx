@@ -64,7 +64,11 @@ export default function TaiXeLayout() {
       <div style={s.main}>
         <header style={s.header}>
           <span style={s.breadcrumb}>{tenTrang}</span>
-          <div style={s.headerRight}>
+          <div
+            style={{ ...s.headerRight, cursor: 'pointer' }}
+            onClick={() => navigate('/driver/profile')}
+            title="Thông tin cá nhân"
+          >
             <div style={s.userInfo}>
               <div style={s.userName}>{user?.hoten || 'Tài xế'}</div>
               <div style={s.userRole}>Tài xế</div>

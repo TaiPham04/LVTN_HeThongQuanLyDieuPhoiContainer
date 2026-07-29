@@ -24,6 +24,7 @@ class Container extends Model
         'mota_hanghoa',
         'trangthai',
         'trangthai_haiquan',
+        'da_thong_quan',
         'bi_hong',
         'ghichu_hong',
         'thoigian_vaobai',
@@ -32,6 +33,7 @@ class Container extends Model
 
     protected $casts = [
         'bi_hong'        => 'boolean',
+        'da_thong_quan'  => 'boolean',
         'trongluong_kg'  => 'decimal:2',
         'thoigian_vaobai' => 'datetime',
         'thoigian_rabai'  => 'datetime',

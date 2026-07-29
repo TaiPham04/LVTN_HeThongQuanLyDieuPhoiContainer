@@ -318,11 +318,13 @@ class ContainerTestSeeder extends Seeder
             }
 
             DB::table('container')->insert(array_merge($c, [
-                'makhachhang' => null,
-                'ghichu_hong' => $c['ghichu_hong'] ?? null,
-                'deleted_at'  => null,
-                'created_at'  => $now,
-                'updated_at'  => $now,
+                'makhachhang'   => null,
+                'ghichu_hong'   => $c['ghichu_hong'] ?? null,
+                // Luồng xanh luôn tự động thông quan; vàng/đỏ mặc định chờ kiểm hóa
+                'da_thong_quan' => $c['trangthai_haiquan'] === 'luong_xanh',
+                'deleted_at'    => null,
+                'created_at'    => $now,
+                'updated_at'    => $now,
             ]));
             $inserted++;
         }

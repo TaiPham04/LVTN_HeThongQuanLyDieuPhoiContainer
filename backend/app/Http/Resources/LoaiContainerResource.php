@@ -20,6 +20,7 @@ class LoaiContainerResource extends JsonResource
         return [
             'maloai'         => $this->maloai,
             'maiso'          => $this->maiso,
+            'nhom'           => $this->nhom,
             'kieu_cont'      => $this->kieu_cont,
             'kichthuoc'      => $kichthuoc,
             'tenloai'        => $this->tenloai,

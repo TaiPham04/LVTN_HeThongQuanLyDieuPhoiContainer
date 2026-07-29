@@ -75,13 +75,10 @@ class BienBanKTController extends Controller
             $containerUpdate['bi_hong'] = true;
         }
 
+        // Kiểm hóa chỉ thay đổi trạng thái THÔNG QUAN, không đổi luồng đã phân —
+        // luồng (xanh/vàng/đỏ) là nhãn cố định gắn với tờ khai từ đầu.
         if ($request->loaiktd === 'haiquan') {
-            $containerUpdate['trangthai_haiquan'] = match ($request->ketluan) {
-                'datieu'   => 'luong_xanh',
-                'tamgiu'   => 'luong_do',
-                'khongdat' => 'luong_do',
-                default    => $container->trangthai_haiquan,
-            };
+            $containerUpdate['da_thong_quan'] = $request->ketluan === 'datieu';
         }
 
         if (!empty($containerUpdate)) {

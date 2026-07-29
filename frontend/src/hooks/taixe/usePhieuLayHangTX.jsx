@@ -28,12 +28,3 @@ export function useDenCangTX() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
-
-export function useLayHangTX() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (maphieu) =>
-      api.patch(`/tx/phieu-lay-hang/${maphieu}/lay-hang`).then(r => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
-  });
-}

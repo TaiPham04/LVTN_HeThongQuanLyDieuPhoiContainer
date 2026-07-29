@@ -261,6 +261,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('phieu-lay-hang',                          [PhieuLayHangTXController::class, 'index']);
         Route::get('phieu-lay-hang/{phieu}',                  [PhieuLayHangTXController::class, 'show']);
         Route::patch('phieu-lay-hang/{phieu}/den-cang',       [PhieuLayHangTXController::class, 'denCang']);
-        Route::patch('phieu-lay-hang/{phieu}/lay-hang',       [PhieuLayHangTXController::class, 'layHang']);
     });
 });

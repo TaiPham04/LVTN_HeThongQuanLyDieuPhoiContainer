@@ -16,14 +16,12 @@ class BienBanKT extends Model
         'chu_ky',
         'ketqua_ktd',
         'bi_hong',
-        'anhchup',
         'ketluan',
         'thoigian_ktd',
     ];
 
     protected $casts = [
         'bi_hong'      => 'boolean',
-        'anhchup'      => 'array',
         'thoigian_ktd' => 'datetime',
     ];
 

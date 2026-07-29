@@ -52,25 +52,37 @@ class TestDataSeeder extends Seeder
             ],
         ]);
 
-        // ── 2. Tài xế (5 người) ────────────────────────────────────
-        DB::table('taixe')->insert([
-            ['makhachhang' => 3, 'hoten' => 'Trần Văn Bình',   'sodienthoai' => '0901234567', 'sobanglai' => 'B2-TX001', 'email' => 'binhvantran@driver.com',  'matkhau' => Hash::make('123456'), 'trangthai' => 'hoatdong', 'created_at' => $now, 'updated_at' => $now],
-            ['makhachhang' => 3, 'hoten' => 'Lê Hoàng Nam',    'sodienthoai' => '0912345678', 'sobanglai' => 'B2-TX002', 'email' => 'namlehoang@driver.com',   'matkhau' => Hash::make('123456'), 'trangthai' => 'hoatdong', 'created_at' => $now, 'updated_at' => $now],
-            ['makhachhang' => 3, 'hoten' => 'Phạm Thị Lan',    'sodienthoai' => '0923456789', 'sobanglai' => 'B2-TX003', 'email' => 'lanphamthi@driver.com',   'matkhau' => Hash::make('123456'), 'trangthai' => 'hoatdong', 'created_at' => $now, 'updated_at' => $now],
-            ['makhachhang' => 3, 'hoten' => 'Nguyễn Minh Tuấn','sodienthoai' => '0934567890', 'sobanglai' => 'B2-TX004', 'email' => 'tuannguyenminh@driver.com','matkhau' => Hash::make('123456'), 'trangthai' => 'hoatdong', 'created_at' => $now, 'updated_at' => $now],
-            ['makhachhang' => 3, 'hoten' => 'Võ Văn Dũng',     'sodienthoai' => '0945678901', 'sobanglai' => 'B2-TX005', 'email' => 'dungvovan@driver.com',    'matkhau' => Hash::make('123456'), 'trangthai' => 'hoatdong', 'created_at' => $now, 'updated_at' => $now],
-        ]);
+        // ── 2. Tài xế (5 người) — mỗi tài xế cần 1 taikhoan (mavaitro=4) ─
+        $taiXeDefs = [
+            ['hoten' => 'Trần Văn Bình',    'sodienthoai' => '0901234567', 'email' => 'binhvantran@driver.com'],
+            ['hoten' => 'Lê Hoàng Nam',     'sodienthoai' => '0912345678', 'email' => 'namlehoang@driver.com'],
+            ['hoten' => 'Phạm Thị Lan',     'sodienthoai' => '0923456789', 'email' => 'lanphamthi@driver.com'],
+            ['hoten' => 'Nguyễn Minh Tuấn', 'sodienthoai' => '0934567890', 'email' => 'tuannguyenminh@driver.com'],
+            ['hoten' => 'Võ Văn Dũng',      'sodienthoai' => '0945678901', 'email' => 'dungvovan@driver.com'],
+        ];
 
-        // ── 3. Pivot loaicontainer_khuvuc ──────────────────────────
-        DB::table('loaicontainer_khuvuc')->insert([
-            ['makhuvuc' => 1, 'maloai' => 1], ['makhuvuc' => 1, 'maloai' => 2], ['makhuvuc' => 1, 'maloai' => 3],
-            ['makhuvuc' => 2, 'maloai' => 1], ['makhuvuc' => 2, 'maloai' => 2], ['makhuvuc' => 2, 'maloai' => 3],
-            ['makhuvuc' => 3, 'maloai' => 4], ['makhuvuc' => 3, 'maloai' => 5],
-            ['makhuvuc' => 4, 'maloai' => 1], ['makhuvuc' => 4, 'maloai' => 2], ['makhuvuc' => 4, 'maloai' => 3],
-            ['makhuvuc' => 5, 'maloai' => 1], ['makhuvuc' => 5, 'maloai' => 2], ['makhuvuc' => 5, 'maloai' => 3],
-        ]);
+        foreach ($taiXeDefs as $tx) {
+            $mataikhoan = DB::table('taikhoan')->insertGetId([
+                'mavaitro'    => 4,
+                'hoten'       => $tx['hoten'],
+                'email'       => $tx['email'],
+                'matkhau'     => Hash::make('123456'),
+                'sodienthoai' => $tx['sodienthoai'],
+                'trangthai'   => 'hoatdong',
+                'created_at'  => $now, 'updated_at' => $now,
+            ]);
 
-        // ── 4. Ô bãi cho Block A, B, C, D ──────────────────────────
+            DB::table('taixe')->insert([
+                'mataikhoan'  => $mataikhoan,
+                'makhachhang' => 3,
+                'hoten'       => $tx['hoten'],
+                'sodienthoai' => $tx['sodienthoai'],
+                'trangthai'   => 'hoatdong',
+                'created_at'  => $now, 'updated_at' => $now,
+            ]);
+        }
+
+        // ── 3. Ô bãi cho Block A, B, C, D ───────────────────────────
         $blockDefs = [
             ['makhuvuc' => 1, 'tenblock' => 'A', 'sokhoang' => 10, 'sohang' => 6, 'sotang' => 4],
             ['makhuvuc' => 2, 'tenblock' => 'B', 'sokhoang' => 10, 'sohang' => 6, 'sotang' => 4],
@@ -98,7 +110,7 @@ class TestDataSeeder extends Seeder
         }
         DB::table('obai')->insert($obaiData);
 
-        // ── 5. Lịch sử vị trí — gán container trongbai vào Block F ─
+        // ── 4. Lịch sử vị trí — gán container trongbai vào Block F ─
         // Block F (makhuvuc=5) đã có 160 ô, lấy 10 ô đầu
         $obaiF = DB::table('obai')
             ->where('makhuvuc', 5)
@@ -144,7 +156,7 @@ class TestDataSeeder extends Seeder
             ]);
         }
 
-        // ── 6. Log cổng xuất nhập ──────────────────────────────────
+        // ── 5. Log cổng xuất nhập ──────────────────────────────────
         $taixeIds = DB::table('taixe')->orderBy('mataixe')->limit(5)->pluck('mataixe')->toArray();
 
         DB::table('logcong')->insert([
@@ -161,14 +173,14 @@ class TestDataSeeder extends Seeder
             ['macontainer' => 15, 'machuyentau' => null, 'mataixe' => $taixeIds[3], 'manhanvien' => 2, 'kieu_xuatnhap' => 'xuat', 'biensoxe' => '51D-80001', 'niemchi_ktra' => 'NC00000015', 'niemchi_ok' => 1, 'haiquan_ok' => 1, 'thoigian_xl' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        // ── 7. Biên bản kiểm tra định kỳ ──────────────────────────
+        // ── 6. Biên bản kiểm tra định kỳ ──────────────────────────
         DB::table('bienbanktd')->insert([
-            ['macontainer' => 17, 'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Phát hiện móp góc phải hông, vết lõm ~5cm', 'bi_hong' => 1, 'anhchup' => json_encode([]), 'ketluan' => 'khongdat', 'thoigian_ktd' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
-            ['macontainer' => 1,  'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Tình trạng tốt, không có hư hỏng',           'bi_hong' => 0, 'anhchup' => json_encode([]), 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(20)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
-            ['macontainer' => 5,  'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Tình trạng tốt',                              'bi_hong' => 0, 'anhchup' => json_encode([]), 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(15)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
-            ['macontainer' => 9,  'manhanvien' => 2, 'loaiktd' => 'thamdinh', 'ketqua_ktd' => 'Vết trầy xước nhỏ bề mặt, không ảnh hưởng',  'bi_hong' => 0, 'anhchup' => json_encode([]), 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
-            ['macontainer' => 3,  'manhanvien' => 2, 'loaiktd' => 'xuatbai',  'ketqua_ktd' => 'Tình trạng tốt sau lưu bãi',                  'bi_hong' => 0, 'anhchup' => json_encode([]), 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
-            ['macontainer' => 15, 'manhanvien' => 2, 'loaiktd' => 'xuatbai',  'ketqua_ktd' => 'Tình trạng tốt',                              'bi_hong' => 0, 'anhchup' => json_encode([]), 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 17, 'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Phát hiện móp góc phải hông, vết lõm ~5cm', 'bi_hong' => 1, 'ketluan' => 'khongdat', 'thoigian_ktd' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 1,  'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Tình trạng tốt, không có hư hỏng',           'bi_hong' => 0, 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(20)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 5,  'manhanvien' => 2, 'loaiktd' => 'nhapbai',  'ketqua_ktd' => 'Tình trạng tốt',                              'bi_hong' => 0, 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(15)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 9,  'manhanvien' => 2, 'loaiktd' => 'thamdinh', 'ketqua_ktd' => 'Vết trầy xước nhỏ bề mặt, không ảnh hưởng',  'bi_hong' => 0, 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(10)->format('Y-m-d H:i:s'), 'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 3,  'manhanvien' => 2, 'loaiktd' => 'xuatbai',  'ketqua_ktd' => 'Tình trạng tốt sau lưu bãi',                  'bi_hong' => 0, 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(5)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
+            ['macontainer' => 15, 'manhanvien' => 2, 'loaiktd' => 'xuatbai',  'ketqua_ktd' => 'Tình trạng tốt',                              'bi_hong' => 0, 'ketluan' => 'datieu',    'thoigian_ktd' => $now->copy()->subDays(2)->format('Y-m-d H:i:s'),  'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

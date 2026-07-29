@@ -14,31 +14,14 @@ class KhuVucBai extends Model
         'sokhoang',
         'sohang',
         'sotang',
-        'lablock_lanh',
-        'lablock_hangnguy',
-        'soocamlanh',
+        'loai_nhom',
         'trangthai',
-    ];
-
-    protected $casts = [
-        'lablock_lanh'     => 'boolean',
-        'lablock_hangnguy' => 'boolean',
     ];
 
     // ─── Relationships ───────────────────────────────────────────
     public function obai()
     {
         return $this->hasMany(OBai::class, 'makhuvuc', 'makhuvuc');
-    }
-
-    public function loaicontainer()
-    {
-        return $this->belongsToMany(
-            LoaiContainer::class,
-            'loaicontainer_khuvuc',
-            'makhuvuc',
-            'maloai'
-        );
     }
 
     // ─── Scopes ──────────────────────────────────────────────────

@@ -20,7 +20,8 @@ class LoaiContainerMoiSeeder extends Seeder
         $loaiMoi = [
             // ── Open Top ──────────────────────────────────────────────
             [
-                'maiso'          => '20OT',
+                'maiso'          => '22U1',
+                'nhom'           => 'open_top',
                 'tenloai'        => 'Open Top 20ft',
                 'chieudai_ft'    => 20.0,
                 'chieurong_ft'   => 8.0,
@@ -31,7 +32,8 @@ class LoaiContainerMoiSeeder extends Seeder
                 'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'          => '40OT',
+                'maiso'          => '42U1',
+                'nhom'           => 'open_top',
                 'tenloai'        => 'Open Top 40ft',
                 'chieudai_ft'    => 40.0,
                 'chieurong_ft'   => 8.0,
@@ -43,7 +45,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── Flat Rack ─────────────────────────────────────────────
             [
-                'maiso'          => '20FR',
+                'maiso'          => '22P1',
+                'nhom'           => 'flat_rack',
                 'tenloai'        => 'Flat Rack 20ft',
                 'chieudai_ft'    => 20.0,
                 'chieurong_ft'   => 8.0,
@@ -54,7 +57,8 @@ class LoaiContainerMoiSeeder extends Seeder
                 'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'          => '40FR',
+                'maiso'          => '42P1',
+                'nhom'           => 'flat_rack',
                 'tenloai'        => 'Flat Rack 40ft',
                 'chieudai_ft'    => 40.0,
                 'chieurong_ft'   => 8.0,
@@ -66,7 +70,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── Platform ──────────────────────────────────────────────
             [
-                'maiso'          => '20PF',
+                'maiso'          => '22P3',
+                'nhom'           => 'platform',
                 'tenloai'        => 'Platform 20ft',
                 'chieudai_ft'    => 20.0,
                 'chieurong_ft'   => 8.0,
@@ -77,7 +82,8 @@ class LoaiContainerMoiSeeder extends Seeder
                 'trangthai'      => 'hoatdong',
             ],
             [
-                'maiso'          => '40PF',
+                'maiso'          => '42P3',
+                'nhom'           => 'platform',
                 'tenloai'        => 'Platform 40ft',
                 'chieudai_ft'    => 40.0,
                 'chieurong_ft'   => 8.0,
@@ -89,7 +95,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── ISO Tank (hàng nguy hiểm) ─────────────────────────────
             [
-                'maiso'          => 'TK20',
+                'maiso'          => '22T3',
+                'nhom'           => 'hazmat',
                 'tenloai'        => 'ISO Tank 20ft',
                 'chieudai_ft'    => 20.0,
                 'chieurong_ft'   => 8.0,
@@ -101,7 +108,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── Ventilated (thông gió) ────────────────────────────────
             [
-                'maiso'          => '20VH',
+                'maiso'          => '22V0',
+                'nhom'           => 'ventilated',
                 'tenloai'        => 'Ventilated 20ft',
                 'chieudai_ft'    => 20.0,
                 'chieurong_ft'   => 8.0,
@@ -113,7 +121,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── Reefer High Cube ──────────────────────────────────────
             [
-                'maiso'          => '40RH',
+                'maiso'          => '45R1',
+                'nhom'           => 'reefer',
                 'tenloai'        => 'Reefer HC 40ft',
                 'chieudai_ft'    => 40.0,
                 'chieurong_ft'   => 8.0,
@@ -125,7 +134,8 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
             // ── 45ft High Cube ────────────────────────────────────────
             [
-                'maiso'          => '45HC',
+                'maiso'          => 'L5G1',
+                'nhom'           => 'dry',
                 'tenloai'        => 'Dry HC 45ft',
                 'chieudai_ft'    => 45.0,
                 'chieurong_ft'   => 8.0,
@@ -137,17 +147,12 @@ class LoaiContainerMoiSeeder extends Seeder
             ],
         ];
 
-        $maloaiMap = []; // ['maiso' => maloai]
-
         foreach ($loaiMoi as $row) {
-            $existing = DB::table('loaicontainer')->where('maiso', $row['maiso'])->first();
+            $existing = DB::table('loaicontainer')->where('maiso', $row['maiso'])->exists();
             if (!$existing) {
-                $id = DB::table('loaicontainer')->insertGetId(
+                DB::table('loaicontainer')->insert(
                     array_merge($row, ['created_at' => $now, 'updated_at' => $now])
                 );
-                $maloaiMap[$row['maiso']] = $id;
-            } else {
-                $maloaiMap[$row['maiso']] = $existing->maloai;
             }
         }
 
@@ -155,16 +160,14 @@ class LoaiContainerMoiSeeder extends Seeder
         $blockG = DB::table('khuvucbai')->where('tenblock', 'G')->first();
         if (!$blockG) {
             $makhuvucG = DB::table('khuvucbai')->insertGetId([
-                'tenblock'         => 'G',
-                'sokhoang'         => 5,
-                'sohang'           => 3,
-                'sotang'           => 1,    // hàng nguy hiểm chỉ 1 tầng
-                'lablock_lanh'     => false,
-                'lablock_hangnguy' => true,
-                'soocamlanh'       => 0,
-                'trangthai'        => 'hoatdong',
-                'created_at'       => $now,
-                'updated_at'       => $now,
+                'tenblock'  => 'G',
+                'sokhoang'  => 5,
+                'sohang'    => 3,
+                'sotang'    => 1,
+                'loai_nhom' => 'hazmat',
+                'trangthai' => 'hoatdong',
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
             // Tạo ô bãi cho Block G (5 khoang × 3 hàng × 1 tầng = 15 ô)
@@ -187,42 +190,7 @@ class LoaiContainerMoiSeeder extends Seeder
         } else {
             $makhuvucG = $blockG->makhuvuc;
             DB::table('khuvucbai')->where('makhuvuc', $makhuvucG)
-                ->update(['lablock_hangnguy' => true, 'updated_at' => $now]);
-        }
-
-        // ── 3. Pivot loaicontainer_khuvuc cho loại mới ─────────────────
-        $blocks = DB::table('khuvucbai')
-            ->whereIn('tenblock', ['A', 'B', 'C', 'D', 'F', 'G'])
-            ->pluck('makhuvuc', 'tenblock')
-            ->toArray();
-
-        // Loại đặt ở block thường (A, B, D, F): OT, FR, PF, VH, 45HC
-        $loaiChoBlockThuong = array_filter($maloaiMap, fn($maiso) => in_array($maiso, ['20OT', '40OT', '20FR', '40FR', '20PF', '40PF', '20VH', '45HC']), ARRAY_FILTER_USE_KEY);
-        $blockThuongIds     = array_filter($blocks, fn($ten) => in_array($ten, ['A', 'B', 'D', 'F']), ARRAY_FILTER_USE_KEY);
-
-        foreach ($loaiChoBlockThuong as $maiso => $maloai) {
-            foreach ($blockThuongIds as $makhuvuc) {
-                DB::table('loaicontainer_khuvuc')->insertOrIgnore([
-                    'maloai'    => $maloai,
-                    'makhuvuc'  => $makhuvuc,
-                ]);
-            }
-        }
-
-        // Loại lạnh (40RH) → Block C
-        if (isset($maloaiMap['40RH']) && isset($blocks['C'])) {
-            DB::table('loaicontainer_khuvuc')->insertOrIgnore([
-                'maloai'   => $maloaiMap['40RH'],
-                'makhuvuc' => $blocks['C'],
-            ]);
-        }
-
-        // Loại hàng nguy hiểm (TK20) → Block G
-        if (isset($maloaiMap['TK20'])) {
-            DB::table('loaicontainer_khuvuc')->insertOrIgnore([
-                'maloai'   => $maloaiMap['TK20'],
-                'makhuvuc' => $makhuvucG,
-            ]);
+                ->update(['updated_at' => $now]);
         }
     }
 }

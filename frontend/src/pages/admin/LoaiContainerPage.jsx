@@ -17,6 +17,13 @@ import {
 } from '@/hooks/admin/useLoaiContainer';
 
 
+const NHOM_LABEL = {
+  dry:'Khô (Dry)', reefer:'Lạnh (Reefer)', open_top:'Open Top',
+  flat_rack:'Flat Rack', platform:'Platform', hazmat:'Hàng nguy hiểm', ventilated:'Thông gió',
+};
+
+const NHOM_OPTIONS = Object.entries(NHOM_LABEL).map(([value, label]) => ({ value, label }));
+
 export default function LoaiContainerPage() {
   const [trang, setTrang]           = useState(1);
   const [search, setSearch]         = useState('');
@@ -35,7 +42,7 @@ export default function LoaiContainerPage() {
 
   const moModalThem = () => {
     setSelected(null); setServerErr('');
-    reset({ maiso:'', tenloai:'', chieudai_ft:'', chieurong_ft:'', chieucao_ft:'',
+    reset({ maiso:'', nhom:'dry', tenloai:'', chieudai_ft:'', chieurong_ft:'', chieucao_ft:'',
             taitrong_kg:'', gialuubai_ngay:'', soNgayMienPhi:3 });
     setModalOpen(true);
   };
@@ -68,6 +75,12 @@ export default function LoaiContainerPage() {
 
   const columns = [
     { key: 'maiso',   label: 'Mã ISO',  width: 90 },
+    { key: 'nhom', label: 'Nhóm', align: 'center',
+      render: (v) => <span style={{ fontSize:12, fontWeight:600, color:'#475569',
+        background:'#f1f5f9', border:'1px solid #e2e8f0', borderRadius:4, padding:'2px 8px' }}>
+        {NHOM_LABEL[v] ?? v}
+      </span>
+    },
     { key: 'tenloai', label: 'Tên loại' },
     { key: 'kich_thuoc', label: 'Kích thước (ft)',
       render: (_, r) => `${r.chieudai_ft} × ${r.chieurong_ft} × ${r.chieucao_ft}` },
@@ -132,8 +145,21 @@ export default function LoaiContainerPage() {
         {serverErr && <div style={s.errBox}>{serverErr}</div>}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div style={s.twoCol}>
-            <Input label="Mã ISO" placeholder="VD: 22G1" required error={errors.maiso?.message}
+            <Input label="Mã ISO 6346" placeholder="VD: 22G1" required error={errors.maiso?.message}
               {...register('maiso', { required:'Vui lòng nhập mã ISO.', maxLength:{value:4,message:'Tối đa 4 ký tự.'} })} />
+            <div>
+              <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#374151', marginBottom:6 }}>
+                Nhóm container <span style={{color:'#ef4444'}}>*</span>
+              </label>
+              <select style={{ width:'100%', padding:'8px 12px', border:'1px solid #e5e7eb',
+                borderRadius:8, fontSize:14, background:'#fff', outline:'none', cursor:'pointer' }}
+                {...register('nhom', { required:'Vui lòng chọn nhóm.' })}>
+                {NHOM_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {errors.nhom && <p style={{color:'#dc2626',fontSize:12,marginTop:4}}>{errors.nhom.message}</p>}
+            </div>
+          </div>
+          <div>
             <Input label="Tên loại container" placeholder="VD: Container 20ft khô" required
               error={errors.tenloai?.message}
               {...register('tenloai', { required:'Vui lòng nhập tên loại.' })} />

@@ -105,6 +105,11 @@ export default function TraCuuContainerPage() {
               </span>
               <Badge variant={tt.variant}>{tt.label}</Badge>
               {cont.trangthai_haiquan && <Badge variant={hq.variant}>{hq.label}</Badge>}
+              {cont.trangthai_haiquan && cont.trangthai_haiquan !== 'chua_khai' && (
+                <Badge variant={cont.da_thong_quan ? 'success' : 'gray'}>
+                  {cont.da_thong_quan ? 'Đã thông quan' : 'Chưa thông quan'}
+                </Badge>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px 20px', fontSize: 13 }}>

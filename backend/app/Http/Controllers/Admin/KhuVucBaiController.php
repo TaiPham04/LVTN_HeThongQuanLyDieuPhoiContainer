@@ -30,8 +30,8 @@ class KhuVucBaiController extends Controller
             $query->where('tenblock', 'like', "%{$request->search}%");
         }
 
-        if ($request->has('lablock_lanh')) {
-            $query->where('lablock_lanh', $request->boolean('lablock_lanh'));
+        if ($request->loai_nhom) {
+            $query->where('loai_nhom', $request->loai_nhom);
         }
 
         $data = $query->orderBy('tenblock')->paginate($request->get('per_page', 10));
@@ -54,14 +54,16 @@ class KhuVucBaiController extends Controller
     }
 
     // ─── POST /api/admin/khu-vuc-bai ─────────────────────────────
-    // Tạo block mới + tự động tạo ô bãi theo Bay × Row × Tier
     public function store(LuuKhuVucBai $request): JsonResponse
     {
         DB::transaction(function () use ($request, &$khuvucbai) {
             $khuvucbai = KhuVucBai::create([
-                ...$request->validated(),
-                'soocamlanh' => $request->lablock_lanh ? $request->soocamlanh : 0,
-                'trangthai'  => 'hoatdong',
+                'tenblock'  => $request->tenblock,
+                'sokhoang'  => $request->sokhoang,
+                'sohang'    => $request->sohang,
+                'sotang'    => $request->sotang,
+                'loai_nhom' => $request->loai_nhom,
+                'trangthai' => 'hoatdong',
             ]);
 
             // Tự động tạo ô bãi theo sokhoang × sohang × sotang
@@ -87,10 +89,15 @@ class KhuVucBaiController extends Controller
         $soHangCu   = $khuvucbai->sohang;
         $soTangCu   = $khuvucbai->sotang;
 
-        $khuvucbai->update([
-            ...$request->validated(),
-            'soocamlanh' => $request->lablock_lanh ? $request->soocamlanh : 0,
-        ]);
+        DB::transaction(function () use ($request, $khuvucbai) {
+            $khuvucbai->update([
+                'tenblock'  => $request->tenblock,
+                'sokhoang'  => $request->sokhoang,
+                'sohang'    => $request->sohang,
+                'sotang'    => $request->sotang,
+                'loai_nhom' => $request->loai_nhom,
+            ]);
+        });
 
         $kichThuocThayDoi = $soKhoangCu !== $khuvucbai->sokhoang
             || $soHangCu !== $khuvucbai->sohang
@@ -98,7 +105,6 @@ class KhuVucBaiController extends Controller
 
         $canh_bao = null;
         if ($kichThuocThayDoi) {
-            // Tìm ô bãi nằm ngoài kích thước mới
             $oDu = OBai::where('makhuvuc', $khuvucbai->makhuvuc)
                 ->where(function ($q) use ($khuvucbai) {
                     $q->where('khoang', '>', $khuvucbai->sokhoang)
@@ -106,7 +112,6 @@ class KhuVucBaiController extends Controller
                       ->orWhere('tang',  '>', $khuvucbai->sotang);
                 });
 
-            // Không cho giảm kích thước nếu ô dư đang có container
             $soDangDung = (clone $oDu)->where('trangthai', 'dangsudung')->count();
             if ($soDangDung > 0) {
                 return response()->json([
@@ -114,22 +119,20 @@ class KhuVucBaiController extends Controller
                 ], 422);
             }
 
-            // Vô hiệu hóa ô dư (không có container) và tạo thêm ô mới nếu cần
             $oDu->update(['trangthai' => 'khonghoatdong']);
             $this->taoOBaiBoSung($khuvucbai);
             $canh_bao = 'Kích thước block đã cập nhật. Ô bãi dư đã được vô hiệu hóa, ô mới đã được tạo thêm nếu cần.';
         }
 
         return response()->json([
-            'message'   => 'Cập nhật khu vực bãi thành công.' . ($canh_bao ? " {$canh_bao}" : ''),
-            'data'      => new KhuVucBaiResource($khuvucbai->fresh()),
+            'message' => 'Cập nhật khu vực bãi thành công.' . ($canh_bao ? " {$canh_bao}" : ''),
+            'data'    => new KhuVucBaiResource($khuvucbai->fresh()),
         ]);
     }
 
     // ─── DELETE /api/admin/khu-vuc-bai/{khuvucbai} ───────────────
     public function destroy(XoaKhuVucBai $request, KhuVucBai $khuvucbai): JsonResponse
     {
-        // Kiểm tra có container đang trong block không
         if ($khuvucbai->dangCoContainer()) {
             $soContainer = $khuvucbai->soODangSuDung();
             return response()->json([
@@ -186,14 +189,14 @@ class KhuVucBaiController extends Controller
             for ($h = 1; $h <= $khuvucbai->sohang; $h++) {
                 for ($t = 1; $t <= $khuvucbai->sotang; $t++) {
                     $obaiData[] = [
-                        'makhuvuc'   => $khuvucbai->makhuvuc,
-                        'khoang'     => $k,
-                        'hang'       => $h,
-                        'tang'       => $t,
+                        'makhuvuc'    => $khuvucbai->makhuvuc,
+                        'khoang'      => $k,
+                        'hang'        => $h,
+                        'tang'        => $t,
                         'maobai_code' => sprintf('%s%02d-%02d-%d', $khuvucbai->tenblock, $k, $h, $t),
-                        'trangthai'  => 'trong',
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'trangthai'   => 'trong',
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
                     ];
                 }
             }

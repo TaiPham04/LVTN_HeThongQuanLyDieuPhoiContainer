@@ -11,6 +11,7 @@ class LoaiContainer extends Model
 
     protected $fillable = [
         'maiso',
+        'nhom',
         'kieu_cont',
         'tenloai',
         'chieudai_ft',
@@ -34,16 +35,6 @@ class LoaiContainer extends Model
     public function containers()
     {
         return $this->hasMany(Container::class, 'maloai', 'maloai');
-    }
-
-    public function khuvucbai()
-    {
-        return $this->belongsToMany(
-            KhuVucBai::class,
-            'loaicontainer_khuvuc',
-            'maloai',
-            'makhuvuc'
-        );
     }
 
     // ─── Scopes ──────────────────────────────────────────────────

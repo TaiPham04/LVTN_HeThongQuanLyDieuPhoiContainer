@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -39,7 +40,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Đăng nhập thành công.',
             'token'   => $token,
-            'user'    => new UserResource($user->load('vaitro')),
+            'user'    => new UserResource($user->load('vaitro', 'khachhang')),
         ]);
     }
 
@@ -47,22 +48,28 @@ class AuthController extends Controller
     // Chỉ dành cho Khách hàng / Forwarder tự đăng ký
     public function register(Register $request): JsonResponse
     {
-        $user = User::create([
-            'mavaitro'    => 3, // khachhang
-            'hoten'       => $request->hoten,
-            'email'       => $request->email,
-            'matkhau'     => Hash::make($request->password),
-            'sodienthoai' => $request->sodienthoai,
-            'tentochuc' => $request->tentochuc,
-            'trangthai'   => 'hoatdong',
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'mavaitro'    => 3, // khachhang
+                'hoten'       => $request->hoten,
+                'email'       => $request->email,
+                'matkhau'     => Hash::make($request->password),
+                'sodienthoai' => $request->sodienthoai,
+                'trangthai'   => 'hoatdong',
+            ]);
+
+            // UserObserver đã tạo dòng khachhang tương ứng — cập nhật tên tổ chức vào đó
+            $user->khachhang()->update(['tentochuc' => $request->tentochuc]);
+
+            return $user;
+        });
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Đăng ký tài khoản thành công.',
             'token'   => $token,
-            'user'    => new UserResource($user->load('vaitro')),
+            'user'    => new UserResource($user->load('vaitro', 'khachhang')),
         ], 201);
     }
 
@@ -80,7 +87,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => new UserResource($request->user()->load('vaitro')),
+            'user' => new UserResource($request->user()->load('vaitro', 'khachhang')),
         ]);
     }
 
@@ -90,15 +97,20 @@ class AuthController extends Controller
         $request->validate([
             'hoten'       => ['sometimes', 'string', 'max:100'],
             'sodienthoai' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'tentochuc' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'tentochuc'   => ['sometimes', 'nullable', 'string', 'max:255'],
         ]);
 
         $user = $request->user();
-        $user->update($request->only('hoten', 'sodienthoai', 'tentochuc'));
+        $user->update($request->only('hoten', 'sodienthoai'));
+
+        // tentochuc chỉ có ý nghĩa với khách hàng — cập nhật vào bảng khachhang
+        if ($request->has('tentochuc') && $user->mavaitro === 3) {
+            $user->khachhang()->update(['tentochuc' => $request->tentochuc]);
+        }
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công.',
-            'user'    => new UserResource($user->fresh()->load('vaitro')),
+            'user'    => new UserResource($user->fresh()->load('vaitro', 'khachhang')),
         ]);
     }
 

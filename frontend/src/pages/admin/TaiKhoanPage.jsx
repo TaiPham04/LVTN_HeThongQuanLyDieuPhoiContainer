@@ -19,7 +19,6 @@ import {
 /* ── static data ── */
 const VAI_TRO_LIST = [
   { mavaitro: 1, tenvaitro: 'Admin' },
-  { mavaitro: 2, tenvaitro: 'Nhân viên' },
   { mavaitro: 3, tenvaitro: 'Khách hàng' },
   { mavaitro: 4, tenvaitro: 'Tài xế' },
   { mavaitro: 5, tenvaitro: 'NV Cổng' },

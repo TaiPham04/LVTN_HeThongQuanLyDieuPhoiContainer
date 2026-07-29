@@ -94,7 +94,11 @@ export default function NhanVienLayout() {
         {/* Header */}
         <header style={s.header}>
           <span style={s.breadcrumb}>{tenTrang}</span>
-          <div style={s.headerRight}>
+          <div
+            style={{ ...s.headerRight, cursor: 'pointer' }}
+            onClick={() => navigate(`/nv/${user?.role === 'nhanvien_cong' ? 'cong' : 'bai'}/profile`)}
+            title="Thông tin cá nhân"
+          >
             <div style={s.userInfo}>
               <div style={s.userName}>{user?.hoten || 'Nhân viên'}</div>
               <div style={s.userRole}>{ROLE_LABEL[user?.role] || 'Nhân viên'}</div>

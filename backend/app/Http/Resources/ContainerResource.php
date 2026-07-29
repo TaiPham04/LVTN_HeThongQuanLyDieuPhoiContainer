@@ -29,6 +29,7 @@ class ContainerResource extends JsonResource
             'mota_hanghoa'      => $this->mota_hanghoa,
             'trangthai'         => $this->trangthai,
             'trangthai_haiquan' => $this->trangthai_haiquan,
+            'da_thong_quan'     => (bool) $this->da_thong_quan,
             'bi_hong'           => (bool) $this->bi_hong,
             'ghichu_hong'       => $this->ghichu_hong,
             'thoigian_vaobai'   => $this->thoigian_vaobai?->format('d/m/Y H:i'),

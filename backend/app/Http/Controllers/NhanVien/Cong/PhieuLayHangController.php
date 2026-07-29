@@ -8,6 +8,7 @@ use App\Http\Resources\PhieuLayHangResource;
 use App\Models\Container;
 use App\Models\LichSuViTri;
 use App\Models\LogCong;
+use App\Models\OBai;
 use App\Models\PhieuLayHang;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -154,7 +155,7 @@ class PhieuLayHangController extends Controller
     }
 
     // PATCH /api/nv/cong/phieu-lay-hang/{maphieu}/xac-nhan
-    public function xacNhan(PhieuLayHang $phieu): JsonResponse
+    public function xacNhan(Request $request, PhieuLayHang $phieu): JsonResponse
     {
         $this->capNhatHetHanNeuCan($phieu);
 
@@ -172,18 +173,20 @@ class PhieuLayHangController extends Controller
             return response()->json(['message' => 'Container không còn trong bãi, không thể xác nhận.'], 422);
         }
 
-        DB::transaction(function () use ($phieu, $container) {
+        DB::transaction(function () use ($request, $phieu, $container) {
             $now = now();
 
             LogCong::create([
                 'macontainer'   => $container->macontainer,
+                'maphieu'       => $phieu->maphieu,
                 'machuyentau'   => $container->machuyentau,
                 'mataixe'       => $phieu->mataixe,
-                'manhanvien'    => $phieu->manhanvien,
+                // Người đang xác nhận tại cổng — không phải người đã phát phiếu trước đó
+                'manhanvien'    => $request->user()->mataikhoan,
                 'kieu_xuatnhap' => 'xuat',
                 'biensoxe'      => $phieu->biensoxe,
                 'niemchi_ok'    => false,
-                'haiquan_ok'    => true,
+                'haiquan_ok'    => $container->da_thong_quan,
                 'ghichu'        => "Xuất theo phiếu lấy hàng #{$phieu->maphieu}",
                 'thoigian_xl'   => $now,
             ]);
@@ -192,6 +195,14 @@ class PhieuLayHangController extends Controller
                 'trangthai'      => 'xuatcong',
                 'thoigian_rabai' => $now,
             ]);
+
+            // Giải phóng ô bãi đang chiếm — nếu không, ô sẽ kẹt vĩnh viễn ở 'dangsudung'
+            $viTriHienTai = LichSuViTri::where('macontainer', $container->macontainer)
+                ->whereNull('thoigian_roi')
+                ->first();
+            if ($viTriHienTai) {
+                OBai::where('maobai', $viTriHienTai->maobai)->update(['trangthai' => 'trong']);
+            }
 
             LichSuViTri::where('macontainer', $container->macontainer)
                 ->whereNull('thoigian_roi')

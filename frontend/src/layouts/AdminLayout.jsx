@@ -85,7 +85,11 @@ export default function AdminLayout() {
         {/* Header */}
         <header style={s.header}>
           <span style={s.breadcrumb}>{tenTrang}</span>
-          <div style={s.headerRight}>
+          <div
+            style={{ ...s.headerRight, cursor: 'pointer' }}
+            onClick={() => navigate('/admin/profile')}
+            title="Thông tin cá nhân"
+          >
             <div style={s.userInfo}>
               <div style={s.userName}>{user?.hoten || 'Admin'}</div>
               <div style={s.userRole}>

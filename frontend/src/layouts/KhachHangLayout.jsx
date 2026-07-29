@@ -80,7 +80,11 @@ export default function KhachHangLayout() {
         {/* Header */}
         <header style={s.header}>
           <span style={s.breadcrumb}>{tenTrang}</span>
-          <div style={s.headerRight}>
+          <div
+            style={{ ...s.headerRight, cursor: 'pointer' }}
+            onClick={() => navigate('/kh/profile')}
+            title="Thông tin cá nhân"
+          >
             <div style={s.userInfo}>
               <div style={s.userName}>{user?.hoten || 'Khách hàng'}</div>
               <div style={s.userRole}>Khách hàng doanh nghiệp</div>

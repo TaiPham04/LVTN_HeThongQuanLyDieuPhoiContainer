@@ -17,44 +17,33 @@ class LuuKhuVucBai extends FormRequest
         $makhuvuc = $this->route('khuvucbai')?->makhuvuc;
 
         return [
-            'tenblock'    => [
+            'tenblock'  => [
                 'required',
                 'string',
                 'max:100',
                 Rule::unique('khuvucbai', 'tenblock')->ignore($makhuvuc, 'makhuvuc'),
             ],
-            'sokhoang'    => ['required', 'integer', 'min:1'],
-            'sohang'      => ['required', 'integer', 'min:1'],
-            'sotang'      => ['required', 'integer', 'min:1', 'max:10'],
-            'lablock_lanh'     => ['required', 'boolean'],
-            'lablock_hangnguy' => [
-                'required',
-                'boolean',
-                function ($attribute, $value, $fail) {
-                    if ($value && $this->boolean('lablock_lanh')) {
-                        $fail('Khu vực không thể vừa là block lạnh vừa là block hàng nguy hiểm.');
-                    }
-                },
-            ],
-            'soocamlanh'  => ['required_if:lablock_lanh,true', 'integer', 'min:0'],
+            'sokhoang'  => ['required', 'integer', 'min:1'],
+            'sohang'    => ['required', 'integer', 'min:1'],
+            'sotang'    => ['required', 'integer', 'min:1', 'max:10'],
+            'loai_nhom' => ['required', Rule::in(['dry','reefer','open_top','flat_rack','platform','hazmat','ventilated'])],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'tenblock.required'       => 'Vui lòng nhập tên khu vực.',
-            'tenblock.unique'         => 'Tên khu vực này đã tồn tại.',
-            'sokhoang.required'       => 'Vui lòng nhập số khoang.',
-            'sokhoang.min'            => 'Số khoang phải lớn hơn 0.',
-            'sohang.required'         => 'Vui lòng nhập số hàng.',
-            'sohang.min'              => 'Số hàng phải lớn hơn 0.',
-            'sotang.required'         => 'Vui lòng nhập số tầng.',
-            'sotang.min'              => 'Số tầng phải lớn hơn 0.',
-            'sotang.max'              => 'Số tầng tối đa là 10.',
-            'lablock_lanh.required'       => 'Vui lòng chọn loại khu vực lạnh.',
-            'lablock_hangnguy.required'   => 'Vui lòng chọn khu vực hàng nguy hiểm.',
-            'soocamlanh.required_if'      => 'Vui lòng nhập số ổ cắm lạnh cho khu vực lạnh.',
+            'tenblock.required'   => 'Vui lòng nhập tên khu vực.',
+            'tenblock.unique'     => 'Tên khu vực này đã tồn tại.',
+            'sokhoang.required'   => 'Vui lòng nhập số khoang.',
+            'sokhoang.min'        => 'Số khoang phải lớn hơn 0.',
+            'sohang.required'     => 'Vui lòng nhập số hàng.',
+            'sohang.min'          => 'Số hàng phải lớn hơn 0.',
+            'sotang.required'     => 'Vui lòng nhập số tầng.',
+            'sotang.min'          => 'Số tầng phải lớn hơn 0.',
+            'sotang.max'          => 'Số tầng tối đa là 10.',
+            'loai_nhom.required'  => 'Vui lòng chọn nhóm container cho khu vực này.',
+            'loai_nhom.in'        => 'Nhóm container không hợp lệ.',
         ];
     }
 }

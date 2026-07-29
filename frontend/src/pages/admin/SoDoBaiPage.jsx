@@ -235,7 +235,7 @@ export default function SoDoBaiPage() {
           <option value="">— Chọn khu vực bãi —</option>
           {blockList.map(b => (
             <option key={b.makhuvuc} value={b.makhuvuc}>
-              Block {b.tenblock}{b.lablock_lanh ? ' ❄' : ''}
+              Block {b.tenblock}{b.loai_nhom === 'reefer' ? ' ❄' : ''}
               {' '}({b.sokhoang}×{b.sohang}×{b.sotang})
             </option>
           ))}
@@ -247,7 +247,7 @@ export default function SoDoBaiPage() {
             <span style={{ color: '#16a34a', fontWeight: 600 }}>{soTrong} trống</span>
             &nbsp;·&nbsp;
             <span style={{ color: '#2563eb', fontWeight: 600 }}>{soDung} đang dùng</span>
-            {block.lablock_lanh && (
+            {block.loai_nhom === 'reefer' && (
               <span style={{ marginLeft: 10, color: '#0ea5e9', fontWeight: 600 }}>❄ Block lạnh</span>
             )}
           </span>

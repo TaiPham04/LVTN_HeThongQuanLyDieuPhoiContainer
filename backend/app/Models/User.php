@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,7 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes;
 
     protected $table = 'taikhoan';
     protected $primaryKey = 'mataikhoan';
@@ -21,18 +20,15 @@ class User extends Authenticatable
         'email',
         'matkhau',
         'sodienthoai',
-        'tentochuc',
         'trangthai',
     ];
 
     protected $hidden = [
         'matkhau',
-        'remember_token',
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'deleted_at'        => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // Laravel dùng 'password' để xác thực — map sang 'matkhau'
@@ -52,27 +48,17 @@ class User extends Authenticatable
         return $this->hasMany(TaiXe::class, 'makhachhang', 'mataikhoan');
     }
 
-    public function xe()
-    {
-        return $this->hasMany(Xe::class, 'makhachhang', 'mataikhoan');
-    }
-
     public function containers()
     {
         return $this->hasMany(Container::class, 'makhachhang', 'mataikhoan');
     }
 
-    public function ebookings()
+    public function khachhang()
     {
-        return $this->hasMany(EBooking::class, 'makhachhang', 'mataikhoan');
+        return $this->hasOne(KhachHang::class, 'makhachhang', 'mataikhoan');
     }
 
     // ─── Helpers ─────────────────────────────────────────────────
-    public function laNhanVien(): bool
-    {
-        return in_array($this->mavaitro, [1, 2]); // admin hoặc nhanvien
-    }
-
     public function laAdmin(): bool
     {
         return $this->mavaitro === 1;

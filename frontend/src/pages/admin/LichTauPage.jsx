@@ -109,9 +109,9 @@ export default function LichTauPage() {
       key: 'actions',
       label: 'Thao tác',
       align: 'center',
-      width: 200,
+      width: 240,
       render: (_, row) => (
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'nowrap' }}>
           {row.trangthai === 'dalenlich' && (
             <Button
               size="sm" variant="warning"

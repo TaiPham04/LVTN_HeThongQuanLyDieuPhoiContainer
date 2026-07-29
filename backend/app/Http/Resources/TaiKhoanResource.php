@@ -16,7 +16,7 @@ class TaiKhoanResource extends JsonResource
             'hoten'       => $this->hoten,
             'email'       => $this->email,
             'sodienthoai' => $this->sodienthoai,
-            'tentochuc' => $this->tentochuc,
+            'tentochuc'   => $this->khachhang?->tentochuc,
             'trangthai'   => $this->trangthai,
             'created_at'  => $this->created_at?->format('d/m/Y H:i'),
         ];

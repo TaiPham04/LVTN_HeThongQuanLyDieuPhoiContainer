@@ -17,6 +17,7 @@ class LogCongResource extends JsonResource
             'malogcong'        => $this->malogcong,
             'macontainer'      => $this->macontainer,
             'socontainer'      => $container?->socontainer,
+            'maphieu'          => $this->maphieu,
             'mascac'           => $hangtau?->mascac,
             'tenhangtau'       => $hangtau?->tenhangtau,
             'machuyentau'      => $this->machuyentau,

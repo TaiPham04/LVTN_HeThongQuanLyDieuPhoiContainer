@@ -10,8 +10,8 @@ class LogCong extends Model
     protected $primaryKey = 'malogcong';
 
     protected $fillable = [
-        'mabooking',
         'macontainer',
+        'maphieu',
         'machuyentau',
         'mataixe',
         'manhanvien',
@@ -33,6 +33,11 @@ class LogCong extends Model
     public function container()
     {
         return $this->belongsTo(Container::class, 'macontainer', 'macontainer');
+    }
+
+    public function phieu()
+    {
+        return $this->belongsTo(PhieuLayHang::class, 'maphieu', 'maphieu');
     }
 
     public function chuyentau()

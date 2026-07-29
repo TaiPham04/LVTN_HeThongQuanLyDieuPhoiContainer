@@ -9,6 +9,7 @@ use App\Http\Resources\TaiKhoanResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class TaiKhoanController extends Controller
@@ -16,7 +17,7 @@ class TaiKhoanController extends Controller
     // ─── GET /api/admin/tai-khoan ─────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = User::with('vaitro');
+        $query = User::with('vaitro', 'khachhang');
 
         if ($request->mavaitro) {
             $query->where('mavaitro', $request->mavaitro);
@@ -50,26 +51,42 @@ class TaiKhoanController extends Controller
     // ─── POST /api/admin/tai-khoan ────────────────────────────────
     public function store(LuuTaiKhoan $request): JsonResponse
     {
-        $user = User::create([
-            ...$request->only('hoten', 'email', 'mavaitro', 'sodienthoai', 'tentochuc'),
-            'matkhau'   => Hash::make($request->matkhau),
-            'trangthai' => 'hoatdong',
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            $user = User::create([
+                ...$request->only('hoten', 'email', 'mavaitro', 'sodienthoai'),
+                'matkhau'   => Hash::make($request->matkhau),
+                'trangthai' => 'hoatdong',
+            ]);
+
+            // tentochuc chỉ có ý nghĩa với khách hàng — UserObserver đã tạo dòng
+            // khachhang tương ứng nếu mavaitro=3, cập nhật tên tổ chức vào đó
+            if ((int) $request->mavaitro === 3) {
+                $user->khachhang()->update(['tentochuc' => $request->tentochuc]);
+            }
+
+            return $user;
+        });
 
         return response()->json([
             'message' => "Đã tạo tài khoản {$user->email} thành công.",
-            'data'    => new TaiKhoanResource($user->load('vaitro')),
+            'data'    => new TaiKhoanResource($user->load('vaitro', 'khachhang')),
         ], 201);
     }
 
     // ─── PUT /api/admin/tai-khoan/{user} ──────────────────────────
     public function update(LuuTaiKhoan $request, User $user): JsonResponse
     {
-        $user->update($request->only('hoten', 'mavaitro', 'sodienthoai', 'tentochuc'));
+        $user->update($request->only('hoten', 'mavaitro', 'sodienthoai'));
+
+        // tentochuc chỉ có ý nghĩa với khách hàng — UserObserver đã tạo dòng
+        // khachhang tương ứng nếu tài khoản vừa chuyển sang mavaitro=3
+        if ((int) $request->mavaitro === 3) {
+            $user->khachhang()->update(['tentochuc' => $request->tentochuc]);
+        }
 
         return response()->json([
             'message' => "Cập nhật tài khoản {$user->email} thành công.",
-            'data'    => new TaiKhoanResource($user->fresh()->load('vaitro')),
+            'data'    => new TaiKhoanResource($user->fresh()->load('vaitro', 'khachhang')),
         ]);
     }
 

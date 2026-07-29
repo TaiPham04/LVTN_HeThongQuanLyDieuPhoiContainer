@@ -86,7 +86,7 @@ function TabCong() {
 
   const canhBaoHaiQuan = kieuXuatNhap === 'xuat'
     && contInfo
-    && contInfo.trangthai_haiquan !== 'luong_xanh';
+    && !contInfo.da_thong_quan;
 
   // So khớp seal: so sánh số nhập với số trên chứng từ
   const sealMatch = contInfo?.soniemchi && niemchiVal
@@ -281,8 +281,13 @@ function TabCong() {
                     </strong>
                   </span>
                   <span>
-                    Hải quan: <strong style={{ color: contInfo.trangthai_haiquan === 'luong_xanh' ? '#16a34a' : contInfo.trangthai_haiquan === 'luong_do' ? '#dc2626' : '#d97706' }}>
-                      {contInfo.trangthai_haiquan === 'luong_xanh' ? 'Thông quan' : contInfo.trangthai_haiquan === 'luong_do' ? 'Luồng đỏ — chờ kiểm hóa' : 'Luồng vàng — nghi vấn'}
+                    Luồng: <strong style={{ color: contInfo.trangthai_haiquan === 'luong_xanh' ? '#16a34a' : contInfo.trangthai_haiquan === 'luong_do' ? '#dc2626' : contInfo.trangthai_haiquan === 'luong_vang' ? '#d97706' : '#6b7280' }}>
+                      {{ luong_xanh: 'Luồng xanh', luong_vang: 'Luồng vàng', luong_do: 'Luồng đỏ', chua_khai: 'Chưa khai' }[contInfo.trangthai_haiquan]}
+                    </strong>
+                  </span>
+                  <span>
+                    Thông quan: <strong style={{ color: contInfo.da_thong_quan ? '#16a34a' : '#dc2626' }}>
+                      {contInfo.da_thong_quan ? 'Đã thông quan' : 'Chưa thông quan'}
                     </strong>
                   </span>
                   {contInfo.soniemchi && (
@@ -296,8 +301,10 @@ function TabCong() {
                     borderRadius: 6, fontSize: 13, color: '#dc2626', fontWeight: 500,
                   }}>
                     {contInfo.trangthai_haiquan === 'luong_do'
-                      ? 'Container đang trong diện kiểm hóa (luồng đỏ) — bắt buộc chờ kết quả kiểm tra hải quan trước khi xuất bãi.'
-                      : 'Container chưa được thông quan (luồng vàng) — không thể xuất bãi.'
+                      ? 'Container luồng đỏ chưa được thông quan — cần lập biên bản kiểm hóa hải quan đạt yêu cầu trước khi xuất bãi.'
+                      : contInfo.trangthai_haiquan === 'luong_vang'
+                        ? 'Container luồng vàng chưa được thông quan — cần lập biên bản kiểm hóa hải quan đạt yêu cầu trước khi xuất bãi.'
+                        : 'Container chưa khai báo hải quan — không thể xuất bãi.'
                     }
                   </div>
                 )}

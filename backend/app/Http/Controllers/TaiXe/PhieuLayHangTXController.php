@@ -77,34 +77,6 @@ class PhieuLayHangTXController extends Controller
         ]);
     }
 
-    // PATCH /api/tx/phieu-lay-hang/{phieu}/lay-hang
-    public function layHang(Request $request, PhieuLayHang $phieu): JsonResponse
-    {
-        $taixe = $this->getTaiXe($request);
-
-        if (!$taixe || $phieu->mataixe !== $taixe->mataixe) {
-            return response()->json(['message' => 'Không có quyền thao tác.'], 403);
-        }
-
-        if ($phieu->trangthai !== 'cho_lay') {
-            return response()->json(['message' => 'Phiếu không còn hiệu lực.'], 422);
-        }
-
-        if (!$phieu->thoigian_den_cang) {
-            return response()->json(['message' => 'Vui lòng xác nhận đến cảng trước.'], 422);
-        }
-
-        $phieu->update([
-            'trangthai'    => 'da_lay',
-            'thoigian_lay' => now(),
-        ]);
-
-        return response()->json([
-            'message'      => 'Xác nhận lấy hàng thành công.',
-            'thoigian_lay' => $phieu->fresh()->thoigian_lay?->format('d/m/Y H:i'),
-        ]);
-    }
-
     // GET /api/tx/phieu-lay-hang/{maphieu}
     public function show(Request $request, PhieuLayHang $phieu): JsonResponse
     {

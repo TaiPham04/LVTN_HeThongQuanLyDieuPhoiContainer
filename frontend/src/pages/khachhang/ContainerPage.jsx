@@ -28,6 +28,11 @@ const haiquanBadge = (v) => {
   return <Badge variant={b.variant}>{b.label}</Badge>;
 };
 
+const thongQuanBadge = (daThongQuan) =>
+  daThongQuan
+    ? <Badge variant="success">Đã thông quan</Badge>
+    : <Badge variant="gray">Chưa thông quan</Badge>;
+
 const fmtVND = (n) =>
   n !== null && n !== undefined
     ? `$${Number(n).toFixed(2)}`
@@ -57,6 +62,7 @@ function ContainerDetailModal({ macontainer, onClose }) {
           ['Hãng tàu',     c.mascac || '—'],
           ['Trạng thái',   trangThaiBadge(c.trangthai)],
           ['Hải quan',     haiquanBadge(c.trangthai_haiquan)],
+          ['Thông quan',   c.trangthai_haiquan !== 'chua_khai' ? thongQuanBadge(c.da_thong_quan) : '—'],
           ['Vào bãi',      c.thoigian_vaobai || '—'],
           ['Số ngày lưu',  soNgay !== null ? `${soNgay} ngày` : '—'],
           ['Phí ước tính', fmtVND(phi)],

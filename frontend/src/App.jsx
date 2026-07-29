@@ -5,6 +5,9 @@ import useAuthStore from '@/store/authStore';
 // ── Auth ──────────────────────────────────────────────────────────
 import LoginPage from '@/pages/auth/LoginPage';
 
+// ── Shared ────────────────────────────────────────────────────────
+import ProfilePage from '@/pages/shared/ProfilePage';
+
 // ── Admin layout + pages ──────────────────────────────────────────
 import AdminLayout from '@/layouts/AdminLayout';
 import DashboardPage from '@/pages/admin/DashboardPage';
@@ -103,6 +106,7 @@ export default function App() {
             <Route path="bao-cao"        element={<BaoCaoPage />} />
             <Route path="manifest"       element={<ManifestPage />} />
             <Route path="tra-cuu"        element={<TraCuuContainerPage />} />
+            <Route path="profile"        element={<ProfilePage />} />
           </Route>
 
           {/* ── Nhân viên cổng ── */}
@@ -117,6 +121,7 @@ export default function App() {
             <Route path="cong"           element={<CongXuatNhapNVPage />} />
             <Route path="phieu-lay-hang" element={<PhieuLayHangPage />} />
             <Route path="bien-ban-kt"   element={<BienBanKTCongPage />} />
+            <Route path="profile"        element={<ProfilePage />} />
           </Route>
 
           {/* ── Nhân viên bãi ── */}
@@ -131,6 +136,7 @@ export default function App() {
             <Route path="lich-tau"        element={<LichTauBaiPage />} />
             <Route path="so-do-bai"       element={<SoDoBaiNVPage />} />
             <Route path="bien-ban-kt"     element={<BienBanKTBaiPage />} />
+            <Route path="profile"         element={<ProfilePage />} />
           </Route>
 
           {/* ── Khách hàng ── */}
@@ -145,6 +151,7 @@ export default function App() {
             <Route path="containers"     element={<ContainerKHPage />} />
             <Route path="phieu-lay-hang" element={<PhieuLayHangKHPage />} />
             <Route path="tai-xe"         element={<TaiXeKHPage />} />
+            <Route path="profile"        element={<ProfilePage />} />
           </Route>
 
           {/* ── Tài xế ── */}
@@ -155,6 +162,7 @@ export default function App() {
           }>
             <Route index element={<Navigate to="phieu-lay-hang" replace />} />
             <Route path="phieu-lay-hang" element={<PhieuLayHangTXPage />} />
+            <Route path="profile"        element={<ProfilePage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

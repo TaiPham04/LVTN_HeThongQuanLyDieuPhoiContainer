@@ -77,8 +77,8 @@ class PhieuLayHangKHController extends Controller
             return response()->json(['message' => 'Container không đang trong bãi, không thể tạo phiếu lấy hàng.'], 422);
         }
 
-        if ($container->trangthai_haiquan !== 'luong_xanh') {
-            return response()->json(['message' => 'Container chưa được thông quan (luồng xanh). Vui lòng hoàn tất thủ tục hải quan trước.'], 422);
+        if (!$container->da_thong_quan) {
+            return response()->json(['message' => 'Container chưa được thông quan. Vui lòng hoàn tất thủ tục hải quan trước.'], 422);
         }
 
         // Nếu chọn tài xế, kiểm tra thuộc về KH này
@@ -185,7 +185,7 @@ class PhieuLayHangKHController extends Controller
         $data = Container::with(['loaicontainer'])
             ->where('makhachhang', $makh)
             ->where('trangthai', 'trongbai')
-            ->where('trangthai_haiquan', 'luong_xanh')
+            ->where('da_thong_quan', true)
             ->whereDoesntHave('phieulayhangs', fn ($q) =>
                 $q->where('trangthai', 'cho_lay')->where('thoigian_het_han', '>', now())
             )
