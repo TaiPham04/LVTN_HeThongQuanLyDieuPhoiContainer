@@ -31,4 +31,9 @@ class TaiXe extends Model
     {
         return $this->belongsTo(User::class, 'mataikhoan', 'mataikhoan');
     }
+
+    public function phieulayhangs()
+    {
+        return $this->hasMany(PhieuLayHang::class, 'mataixe', 'mataixe');
+    }
 }
