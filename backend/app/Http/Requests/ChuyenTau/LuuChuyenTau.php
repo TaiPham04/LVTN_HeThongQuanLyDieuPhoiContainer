@@ -11,19 +11,24 @@ class LuuChuyenTau extends FormRequest
 
     public function rules(): array
     {
-        $machuyentau = $this->route('chuyentau')?->machuyentau;
+        $isUpdate = (bool) $this->route('chuyentau');
 
-        return [
+        $rules = [
             'mahangtau'         => ['required', 'exists:hangtau,mahangtau'],
             'tentau'            => ['required', 'string', 'max:255'],
-            'sovoyage'          => ['required', 'string', 'max:50',
-                                    Rule::unique('chuyentau', 'sovoyage')->ignore($machuyentau, 'machuyentau')],
             'cangxuatphat'      => ['required', 'string', 'max:5'],
             'cangdich'          => ['required', 'string', 'max:5'],
             'thoigiandukien'    => ['required', 'date'],
             'thoigianroiben'    => ['required', 'date', 'after:thoigiandukien'],
             'socontainerdukien' => ['nullable', 'integer', 'min:1'],
         ];
+
+        // Số voyage là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
+        if (!$isUpdate) {
+            $rules['sovoyage'] = ['required', 'string', 'max:50', Rule::unique('chuyentau', 'sovoyage')];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

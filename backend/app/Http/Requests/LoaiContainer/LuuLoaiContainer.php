@@ -14,16 +14,9 @@ class LuuLoaiContainer extends FormRequest
 
     public function rules(): array
     {
-        // Khi sửa thì bỏ qua unique của chính bản ghi đó
-        $maloai = $this->route('loaicontainer')?->maloai;
+        $isUpdate = (bool) $this->route('loaicontainer');
 
-        return [
-            'maiso'          => [
-                'required',
-                'string',
-                'max:4',
-                Rule::unique('loaicontainer', 'maiso')->ignore($maloai, 'maloai'),
-            ],
+        $rules = [
             'nhom'           => ['required', Rule::in(['dry','reefer','open_top','flat_rack','platform','hazmat','ventilated'])],
             'tenloai'        => ['required', 'string', 'max:100'],
             'chieudai_ft'    => ['required', 'numeric', 'min:1'],
@@ -33,6 +26,13 @@ class LuuLoaiContainer extends FormRequest
             'gialuubai_ngay'     => ['required', 'numeric', 'min:0'],
             'soNgayMienPhi'      => ['required', 'integer', 'min:0'],
         ];
+
+        // Mã ISO là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
+        if (!$isUpdate) {
+            $rules['maiso'] = ['required', 'string', 'max:4', Rule::unique('loaicontainer', 'maiso')];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

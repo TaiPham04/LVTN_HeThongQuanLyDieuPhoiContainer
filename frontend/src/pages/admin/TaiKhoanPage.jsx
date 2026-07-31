@@ -160,7 +160,6 @@ export default function TaiKhoanPage() {
         await capNhat.mutateAsync({
           mataikhoan:  editRow.mataikhoan,
           hoten:       values.hoten,
-          mavaitro:    parseInt(values.mavaitro),
           sodienthoai: values.sodienthoai || null,
           tentochuc: values.tentochuc || null,
         });
@@ -346,18 +345,29 @@ export default function TaiKhoanPage() {
             </>
           )}
 
-          {/* Vai trò */}
+          {/* Vai trò — chỉ chọn được lúc tạo mới, không đổi được sau khi đã tạo tài khoản */}
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-              Vai trò <span style={{ color: '#ef4444' }}>*</span>
+              Vai trò {!editRow && <span style={{ color: '#ef4444' }}>*</span>}
             </label>
-            <select style={selectStyle(errors.mavaitro)} {...register('mavaitro', { required: 'Vui lòng chọn vai trò.' })}>
-              <option value="">— Chọn vai trò —</option>
-              {VAI_TRO_LIST.map(vt => (
-                <option key={vt.mavaitro} value={vt.mavaitro}>{vt.tenvaitro}</option>
-              ))}
-            </select>
-            {errors.mavaitro && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.mavaitro.message}</p>}
+            {editRow ? (
+              <div style={{
+                padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8,
+                background: '#f8fafc', fontSize: 14, color: '#374151',
+              }}>
+                {VAI_TRO_LIST.find(vt => vt.mavaitro === editRow.mavaitro)?.tenvaitro || `Vai trò ${editRow.mavaitro}`}
+              </div>
+            ) : (
+              <>
+                <select style={selectStyle(errors.mavaitro)} {...register('mavaitro', { required: 'Vui lòng chọn vai trò.' })}>
+                  <option value="">— Chọn vai trò —</option>
+                  {VAI_TRO_LIST.map(vt => (
+                    <option key={vt.mavaitro} value={vt.mavaitro}>{vt.tenvaitro}</option>
+                  ))}
+                </select>
+                {errors.mavaitro && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.mavaitro.message}</p>}
+              </>
+            )}
           </div>
 
           {/* SĐT + Tổ chức */}

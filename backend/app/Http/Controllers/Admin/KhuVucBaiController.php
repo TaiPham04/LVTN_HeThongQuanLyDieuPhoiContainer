@@ -91,7 +91,6 @@ class KhuVucBaiController extends Controller
 
         DB::transaction(function () use ($request, $khuvucbai) {
             $khuvucbai->update([
-                'tenblock'  => $request->tenblock,
                 'sokhoang'  => $request->sokhoang,
                 'sohang'    => $request->sohang,
                 'sotang'    => $request->sotang,

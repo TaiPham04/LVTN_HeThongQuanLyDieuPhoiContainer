@@ -143,6 +143,7 @@ export default function HangTauPage() {
           <div style={s.twoCol}>
             <Input
               label="Mã SCAC" placeholder="VD: MAEU" required
+              disabled={!!selected}
               error={errors.mascac?.message}
               {...register('mascac', {
                 required: 'Vui lòng nhập mã SCAC.',

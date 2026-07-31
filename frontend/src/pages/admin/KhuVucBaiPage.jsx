@@ -272,6 +272,7 @@ export default function KhuVucBaiPage() {
             <Input
               label="Tên khu vực"
               placeholder="VD: Khu A — Dry container"
+              disabled={!!editRow}
               error={errors.tenblock?.message}
               {...register('tenblock', {
                 required: 'Bắt buộc',

@@ -17,14 +17,14 @@ class LuuTaiKhoan extends FormRequest
 
         $rules = [
             'hoten'       => ['required', 'string', 'max:100'],
-            'mavaitro'    => ['required', 'integer', 'exists:vaitro,mavaitro'],
             'sodienthoai' => ['nullable', 'string', 'max:20'],
             'tentochuc' => ['nullable', 'string', 'max:255'],
         ];
 
         if (!$isUpdate) {
-            $rules['email']   = ['required', 'email', 'max:255', 'unique:taikhoan,email'];
-            $rules['matkhau'] = ['required', 'string', 'min:8'];
+            $rules['mavaitro'] = ['required', 'integer', 'exists:vaitro,mavaitro'];
+            $rules['email']    = ['required', 'email', 'max:255', 'unique:taikhoan,email'];
+            $rules['matkhau']  = ['required', 'string', 'min:8'];
         }
 
         return $rules;

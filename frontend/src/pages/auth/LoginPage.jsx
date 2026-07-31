@@ -68,7 +68,7 @@ export default function LoginPage() {
             <div style={s.headline}>Quản lý cảng container<br /><span style={{color:'#e8920a'}}>thông minh & hiệu quả</span></div>
             <div style={s.desc}>Theo dõi toàn bộ vòng đời container — từ gate-in đến gate-out, gán vị trí bãi, đặt lịch vận chuyển và báo cáo thống kê thời gian thực.</div>
             <div style={s.statsRow}>
-              {[{num:'4',lbl:'Nhóm người dùng'},{num:'17',lbl:'Bảng dữ liệu'},{num:'24/7',lbl:'Theo dõi realtime'}].map((x)=>(
+              {[{num:'5',lbl:'Vai trò nghiệp vụ'},{num:'10+',lbl:'Chức năng nghiệp vụ'},{num:'24/7',lbl:'Theo dõi realtime'}].map((x)=>(
                 <div key={x.lbl} style={s.statBox}>
                   <div style={s.statNum}>{x.num}</div>
                   <div style={s.statLbl}>{x.lbl}</div>
@@ -106,7 +106,6 @@ export default function LoginPage() {
                       {...register('password',{required:'Vui lòng nhập mật khẩu.'})} />
                   </Inp>
                 </Field>
-                <div style={s.forgotRow}><a href="/forgot-password" style={s.forgotLink}>Quên mật khẩu?</a></div>
                 <button type="submit" style={s.btn} disabled={isLoading}>{isLoading?'Đang xử lý...':'Đăng nhập'}</button>
               </form>
             )}
@@ -212,7 +211,7 @@ const s={
   statLbl:{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:2},
   copy:{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:20},
   right:{width:420,background:'#f3f4f6',display:'flex',alignItems:'center',justifyContent:'center',padding:'32px 28px'},
-  formCard:{width:'100%',background:'#fff',borderRadius:14,padding:'36px 32px',boxShadow:'0 4px 24px rgba(0,0,0,0.08)'},
+  formCard:{width:'100%',minHeight:610,background:'#fff',borderRadius:14,padding:'36px 32px',boxShadow:'0 4px 24px rgba(0,0,0,0.08)',transition:'min-height .2s ease'},
   tabs:{display:'flex',borderBottom:'1px solid #e5e7eb',marginBottom:24},
   tab:{flex:1,padding:'10px 0',textAlign:'center',fontSize:14,fontWeight:500,color:'#6b7280',cursor:'pointer',border:'none',background:'none',borderBottom:'2px solid transparent',marginBottom:-1,fontFamily:'inherit',transition:'all .15s'},
   tabActive:{color:OR,borderBottomColor:OR},
@@ -221,8 +220,6 @@ const s={
   fieldErr:{fontSize:12,color:'#e24b4a',marginTop:4},
   ico:{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',width:16,height:16,pointerEvents:'none'},
   eyeBtn:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center',padding:0},
-  forgotRow:{display:'flex',justifyContent:'flex-end',marginTop:-8,marginBottom:20},
-  forgotLink:{fontSize:12,color:OR,textDecoration:'none'},
   btn:{width:'100%',padding:'11px 0',background:OR,color:'#fff',border:'none',borderRadius:8,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'},
   twoCol:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12},
 };

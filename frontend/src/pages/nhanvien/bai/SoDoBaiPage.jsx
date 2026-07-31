@@ -100,6 +100,13 @@ export default function SoDoBaiNVPage() {
   const soTrong    = obaiInTier.filter(o => o.trangthai === 'trong').length;
   const soDung     = obaiInTier.filter(o => o.trangthai === 'dangsudung').length;
 
+  /* ── Mặc định chọn Block A khi vào trang ── */
+  useEffect(() => {
+    if (selectedBlock || !blockList.length) return;
+    const blockA = blockList.find(b => b.tenblock === 'A') ?? blockList[0];
+    if (blockA) setSelectedBlock(String(blockA.makhuvuc));
+  }, [blockList]); // eslint-disable-line
+
   useEffect(() => {
     const items = ganCtx ? goiYGan?.data : daoCtx ? goiYDao?.data : null;
     if (!items?.length) return;

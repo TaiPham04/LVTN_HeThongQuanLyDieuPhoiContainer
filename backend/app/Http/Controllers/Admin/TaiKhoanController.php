@@ -76,11 +76,10 @@ class TaiKhoanController extends Controller
     // ─── PUT /api/admin/tai-khoan/{user} ──────────────────────────
     public function update(LuuTaiKhoan $request, User $user): JsonResponse
     {
-        $user->update($request->only('hoten', 'mavaitro', 'sodienthoai'));
+        $user->update($request->only('hoten', 'sodienthoai'));
 
-        // tentochuc chỉ có ý nghĩa với khách hàng — UserObserver đã tạo dòng
-        // khachhang tương ứng nếu tài khoản vừa chuyển sang mavaitro=3
-        if ((int) $request->mavaitro === 3) {
+        // Vai trò không đổi được qua đây — tentochuc dựa vào mavaitro hiện tại của tài khoản
+        if ((int) $user->mavaitro === 3) {
             $user->khachhang()->update(['tentochuc' => $request->tentochuc]);
         }
 

@@ -14,20 +14,21 @@ class LuuKhuVucBai extends FormRequest
 
     public function rules(): array
     {
-        $makhuvuc = $this->route('khuvucbai')?->makhuvuc;
+        $isUpdate = (bool) $this->route('khuvucbai');
 
-        return [
-            'tenblock'  => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('khuvucbai', 'tenblock')->ignore($makhuvuc, 'makhuvuc'),
-            ],
+        $rules = [
             'sokhoang'  => ['required', 'integer', 'min:1'],
             'sohang'    => ['required', 'integer', 'min:1'],
             'sotang'    => ['required', 'integer', 'min:1', 'max:10'],
             'loai_nhom' => ['required', Rule::in(['dry','reefer','open_top','flat_rack','platform','hazmat','ventilated'])],
         ];
+
+        // Tên khu vực là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
+        if (!$isUpdate) {
+            $rules['tenblock'] = ['required', 'string', 'max:100', Rule::unique('khuvucbai', 'tenblock')];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

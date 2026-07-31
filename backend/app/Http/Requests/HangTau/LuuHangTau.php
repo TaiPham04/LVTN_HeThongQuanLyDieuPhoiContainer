@@ -14,19 +14,20 @@ class LuuHangTau extends FormRequest
 
     public function rules(): array
     {
-        $mahangtau = $this->route('hangtau')?->mahangtau;
+        $isUpdate = (bool) $this->route('hangtau');
 
-        return [
-            'mascac'     => [
-                'required',
-                'string',
-                'size:4',
-                Rule::unique('hangtau', 'mascac')->ignore($mahangtau, 'mahangtau'),
-            ],
+        $rules = [
             'tenhangtau' => ['required', 'string', 'max:255'],
             'quocgia'    => ['nullable', 'string', 'max:100'],
             'email'      => ['nullable', 'email', 'max:100'],
         ];
+
+        // Mã SCAC là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
+        if (!$isUpdate) {
+            $rules['mascac'] = ['required', 'string', 'size:4', Rule::unique('hangtau', 'mascac')];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

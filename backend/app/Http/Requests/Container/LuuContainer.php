@@ -11,11 +11,9 @@ class LuuContainer extends FormRequest
 
     public function rules(): array
     {
-        $macontainer = $this->route('container')?->macontainer;
+        $isUpdate = (bool) $this->route('container');
 
-        return [
-            'socontainer'   => ['required', 'string', 'max:11', 'regex:/^[A-Z]{4}[0-9]{7}$/',
-                                Rule::unique('container', 'socontainer')->ignore($macontainer, 'macontainer')->whereNull('deleted_at')],
+        $rules = [
             'loai_hinh'     => ['required', 'in:nhap,xuat'],
             'maloai'        => ['required', 'exists:loaicontainer,maloai'],
             'machuyentau'   => ['required', 'exists:chuyentau,machuyentau'],
@@ -23,6 +21,14 @@ class LuuContainer extends FormRequest
             'trongluong_kg' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'mota_hanghoa'  => ['nullable', 'string', 'max:1000'],
         ];
+
+        // Số container là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
+        if (!$isUpdate) {
+            $rules['socontainer'] = ['required', 'string', 'max:11', 'regex:/^[A-Z]{4}[0-9]{7}$/',
+                                      Rule::unique('container', 'socontainer')->whereNull('deleted_at')];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

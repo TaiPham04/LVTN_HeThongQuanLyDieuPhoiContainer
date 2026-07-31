@@ -145,7 +145,7 @@ export default function LoaiContainerPage() {
         {serverErr && <div style={s.errBox}>{serverErr}</div>}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div style={s.twoCol}>
-            <Input label="Mã ISO 6346" placeholder="VD: 22G1" required error={errors.maiso?.message}
+            <Input label="Mã ISO 6346" placeholder="VD: 22G1" required disabled={!!selected} error={errors.maiso?.message}
               {...register('maiso', { required:'Vui lòng nhập mã ISO.', maxLength:{value:4,message:'Tối đa 4 ký tự.'} })} />
             <div>
               <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#374151', marginBottom:6 }}>
