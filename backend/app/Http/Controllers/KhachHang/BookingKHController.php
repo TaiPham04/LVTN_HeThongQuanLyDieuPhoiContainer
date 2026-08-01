@@ -48,10 +48,12 @@ class BookingKHController extends Controller
             'socontainer'   => 'required|string|min:11|max:11',
             'maloai'        => 'required|integer|exists:loaicontainer,maloai',
             'machuyentau'   => 'required|integer|exists:chuyentau,machuyentau',
-            'soniemchi'     => 'nullable|string|max:50',
+            'soniemchi'     => 'required|string|max:50',
             'trongluong_kg' => 'nullable|numeric|min:0',
             'mota_hanghoa'  => 'nullable|string|max:500',
             'ghichu'        => 'nullable|string|max:500',
+        ], [
+            'soniemchi.required' => 'Vui lòng nhập số niêm chì.',
         ]);
 
         $socontainer = strtoupper(trim($request->socontainer));

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\NhanVien\Cong;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChuyenTauResource;
 use App\Models\ChuyenTau;
+use App\Models\Container;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LichTauController extends Controller
 {
@@ -59,7 +61,33 @@ class LichTauController extends Controller
         }
 
         $trangThaiMoi = $buocTiep[$chuyentau->trangthai];
-        $chuyentau->update(['trangthai' => $trangThaiMoi]);
+
+        // Không cho tàu rời bến khi còn container nhập của chuyến chưa được dỡ khỏi tàu.
+        // Container xuất còn trong bãi không chặn — chúng sẽ tự chuyển "đã lên tàu" bên dưới.
+        if ($trangThaiMoi === 'daroi') {
+            $soConLai = Container::where('machuyentau', $chuyentau->machuyentau)
+                ->where('loai_hinh', 'nhap')
+                ->where('trangthai', 'choxacnhan')
+                ->count();
+
+            if ($soConLai > 0) {
+                return response()->json([
+                    'message' => "Không thể xác nhận tàu rời bến. Còn {$soConLai} container của chuyến này chưa được dỡ khỏi tàu.",
+                ], 422);
+            }
+        }
+
+        DB::transaction(function () use ($chuyentau, $trangThaiMoi) {
+            $chuyentau->update(['trangthai' => $trangThaiMoi]);
+
+            if ($trangThaiMoi === 'daroi') {
+                // Container xuất đăng ký cho chuyến này coi như đã lên tàu khi tàu rời bến
+                Container::where('machuyentau', $chuyentau->machuyentau)
+                    ->where('loai_hinh', 'xuat')
+                    ->where('trangthai', 'trongbai')
+                    ->update(['trangthai' => 'dalenken', 'thoigian_rabai' => now()]);
+            }
+        });
 
         $nhan = match($trangThaiMoi) {
             'dadencang' => 'đã đến cảng',

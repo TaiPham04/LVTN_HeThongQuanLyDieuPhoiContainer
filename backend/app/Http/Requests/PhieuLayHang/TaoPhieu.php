@@ -15,9 +15,9 @@ class TaoPhieu extends FormRequest
     {
         return [
             'socontainer' => 'required|string|max:20',
-            'biensoxe'    => 'nullable|string|max:20',
+            'biensoxe'    => ['required', 'string', 'max:20', 'regex:/^\d{2}[A-Z]-\d{4,5}$/'],
             'bienso_romo' => 'nullable|string|max:20',
-            'mataixe'     => 'nullable|integer|exists:taixe,mataixe',
+            'mataixe'     => 'required|integer|exists:taixe,mataixe',
             'eta_tu'      => 'nullable|date',
             'eta_den'     => 'nullable|date',
             'ghichu'      => 'nullable|string|max:500',
@@ -28,6 +28,9 @@ class TaoPhieu extends FormRequest
     {
         return [
             'socontainer.required' => 'Số container là bắt buộc.',
+            'mataixe.required'     => 'Vui lòng chọn tài xế.',
+            'biensoxe.required'    => 'Vui lòng nhập biển số xe.',
+            'biensoxe.regex'       => 'Biển số xe không đúng định dạng (VD: 51C-12345).',
         ];
     }
 }

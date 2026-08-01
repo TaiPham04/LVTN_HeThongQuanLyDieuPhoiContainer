@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ChuyenTauResource;
 use App\Models\ChuyenTau;
 use App\Models\Container;
-use App\Models\LogCong;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +64,8 @@ class LichTauBaiController extends Controller
 
         if ($trangThaiMoi === 'daroi') {
             $soChoDo = Container::where('machuyentau', $chuyentau->machuyentau)
-                ->where('trangthai', 'dangky')
+                ->where('loai_hinh', 'nhap')
+                ->where('trangthai', 'choxacnhan')
                 ->count();
 
             if ($soChoDo > 0) {
@@ -75,7 +75,17 @@ class LichTauBaiController extends Controller
             }
         }
 
-        $chuyentau->update(['trangthai' => $trangThaiMoi]);
+        DB::transaction(function () use ($chuyentau, $trangThaiMoi) {
+            $chuyentau->update(['trangthai' => $trangThaiMoi]);
+
+            if ($trangThaiMoi === 'daroi') {
+                // Container xuất đăng ký cho chuyến này coi như đã lên tàu khi tàu rời bến
+                Container::where('machuyentau', $chuyentau->machuyentau)
+                    ->where('loai_hinh', 'xuat')
+                    ->where('trangthai', 'trongbai')
+                    ->update(['trangthai' => 'dalenken', 'thoigian_rabai' => now()]);
+            }
+        });
 
         $nhan = match($trangThaiMoi) {
             'dadencang' => 'đã đến cảng',
@@ -86,54 +96,6 @@ class LichTauBaiController extends Controller
         return response()->json([
             'message' => "Chuyến tàu {$chuyentau->sovoyage} {$nhan}.",
             'data'    => new ChuyenTauResource($chuyentau->fresh()->load('hangtau')),
-        ]);
-    }
-
-    // ─── POST /api/nv/bai/lich-tau/{chuyentau}/xac-nhan-do-hang ─
-    public function xacNhanDoHang(Request $request, ChuyenTau $chuyentau): JsonResponse
-    {
-        if ($chuyentau->trangthai !== 'dadencang') {
-            return response()->json(['message' => 'Chỉ có thể xác nhận dỡ hàng khi tàu đang ở trạng thái "Đã đến cảng".'], 422);
-        }
-
-        $containers = Container::where('machuyentau', $chuyentau->machuyentau)
-            ->where('trangthai', 'dangky')
-            ->get();
-
-        if ($containers->isEmpty()) {
-            return response()->json(['message' => 'Không còn container nào chờ dỡ hàng cho chuyến này.'], 422);
-        }
-
-        $manhanvien = $request->user()->mataikhoan;
-        $now        = now();
-
-        DB::transaction(function () use ($chuyentau, $containers, $manhanvien, $now) {
-            foreach ($containers as $container) {
-                LogCong::create([
-                    'macontainer'   => $container->macontainer,
-                    'machuyentau'   => $chuyentau->machuyentau,
-                    'mataixe'       => null,
-                    'manhanvien'    => $manhanvien,
-                    'kieu_xuatnhap' => 'nhap',
-                    'biensoxe'      => null,
-                    'niemchi_ktra'  => null,
-                    'niemchi_ok'    => true,
-                    'haiquan_ok'    => false,
-                    'ghichu'        => "Dỡ hàng từ tàu — chuyến {$chuyentau->sovoyage}",
-                    'thoigian_xl'   => $now,
-                ]);
-
-                $container->update([
-                    'trangthai'       => 'trongbai',
-                    'thoigian_vaobai' => $now,
-                ]);
-            }
-        });
-
-        return response()->json([
-            'message'           => "Đã xác nhận dỡ hàng {$containers->count()} container từ chuyến {$chuyentau->sovoyage} vào bãi.",
-            'so_container_nhap' => $containers->count(),
-            'data'              => new ChuyenTauResource($chuyentau->fresh()->load('hangtau')),
         ]);
     }
 }

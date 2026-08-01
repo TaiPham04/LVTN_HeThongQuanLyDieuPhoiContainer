@@ -10,6 +10,7 @@ use App\Models\LichSuViTri;
 use App\Models\LogCong;
 use App\Models\OBai;
 use App\Models\PhieuLayHang;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,9 @@ use Illuminate\Support\Str;
 
 class PhieuLayHangController extends Controller
 {
+    // Phiếu do nhân viên cổng xuất có hiệu lực 4 giờ — khung ETA phải khớp đúng khoảng này
+    private const HIEU_LUC_GIO = 4;
+
     // GET /api/nv/cong/phieu-lay-hang
     public function index(Request $request): JsonResponse
     {
@@ -116,7 +120,22 @@ class PhieuLayHangController extends Controller
         ];
 
         $thoiGianXuat   = now();
-        $thoiGianHetHan = $thoiGianXuat->copy()->addHours(4);
+        $thoiGianHetHan = $thoiGianXuat->copy()->addHours(self::HIEU_LUC_GIO);
+
+        // Khung ETA phải khớp đúng thời hạn hiệu lực của phiếu (4h): chỉ cần nhân viên
+        // nhập 1 trong 2 mốc, mốc còn lại được hệ thống tự tính theo HIEU_LUC_GIO.
+        $etaTu  = $request->eta_tu  ? Carbon::parse($request->eta_tu)  : null;
+        $etaDen = $request->eta_den ? Carbon::parse($request->eta_den) : null;
+
+        if ($etaTu) {
+            $etaDen = $etaTu->copy()->addHours(self::HIEU_LUC_GIO);
+        } elseif ($etaDen) {
+            $etaTu = $etaDen->copy()->subHours(self::HIEU_LUC_GIO);
+        }
+
+        if ($etaTu && $etaTu->lt($thoiGianXuat)) {
+            return response()->json(['message' => 'Thời gian ETA không được ở trong quá khứ.'], 422);
+        }
 
         $phieu = PhieuLayHang::create([
             'macontainer'      => $container->macontainer,
@@ -129,8 +148,8 @@ class PhieuLayHangController extends Controller
             'trangthai'        => 'cho_lay',
             'thoigian_xuat'    => $thoiGianXuat,
             'thoigian_het_han' => $thoiGianHetHan,
-            'eta_tu'           => $request->eta_tu,
-            'eta_den'          => $request->eta_den,
+            'eta_tu'           => $etaTu,
+            'eta_den'          => $etaDen,
             'ghichu'           => $request->ghichu,
         ]);
 

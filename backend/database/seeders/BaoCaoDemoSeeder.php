@@ -74,7 +74,7 @@ class BaoCaoDemoSeeder extends Seeder
                 'machuyentau'       => $machuyentau,
                 'makhachhang'       => $loaiHinh === 'xuat' ? $pick($khachhangIds) : null,
                 'loai_hinh'         => $loaiHinh,
-                'soniemchi'         => mt_rand(0, 4) === 0 ? null : 'DM-' . mt_rand(10000, 99999),
+                'soniemchi'         => 'DM-' . mt_rand(10000, 99999),
                 'trongluong_kg'     => mt_rand(8000, 32000) + (mt_rand(0, 99) / 100),
                 'mota_hanghoa'      => $pick($hangHoa),
                 'trangthai'         => $trangthai,

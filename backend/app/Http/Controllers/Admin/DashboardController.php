@@ -21,6 +21,7 @@ class DashboardController extends Controller
                 SUM(trangthai = 'trongbai')                              AS trong_bai,
                 SUM(trangthai = 'dangky')                                AS dang_ky,
                 SUM(trangthai = 'xuatcong')                              AS xuat_cong,
+                SUM(trangthai = 'dalenken')                              AS xuat_cang,
                 SUM(bi_hong = 1)                                         AS bi_hong,
                 SUM(da_thong_quan = 0 AND trangthai_haiquan != 'chua_khai') AS cho_haiquan
             ")
@@ -98,6 +99,7 @@ class DashboardController extends Controller
                 ['trangthai' => 'dangky',   'nhan' => 'Chờ vào bãi',  'so_luong' => (int) ($cStats->dang_ky   ?? 0)],
                 ['trangthai' => 'trongbai', 'nhan' => 'Trong bãi',    'so_luong' => (int) ($cStats->trong_bai ?? 0)],
                 ['trangthai' => 'xuatcong', 'nhan' => 'Đã xuất cổng', 'so_luong' => (int) ($cStats->xuat_cong ?? 0)],
+                ['trangthai' => 'dalenken', 'nhan' => 'Xuất cảng',    'so_luong' => (int) ($cStats->xuat_cang ?? 0)],
             ],
             'lap_day_khu_vuc'    => $khuVuc,
             'chuyen_tau_sap_den' => $sapDen,

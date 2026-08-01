@@ -8,12 +8,16 @@ use App\Models\Container;
 use App\Models\LichSuViTri;
 use App\Models\PhieuLayHang;
 use App\Models\TaiXe;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class PhieuLayHangKHController extends Controller
 {
+    // Phiếu do khách hàng tạo có hiệu lực 24 giờ — khung ETA phải khớp đúng khoảng này
+    private const HIEU_LUC_GIO = 24;
+
     // GET /api/kh/phieu-lay-hang
     public function index(Request $request): JsonResponse
     {
@@ -59,12 +63,16 @@ class PhieuLayHangKHController extends Controller
 
         $request->validate([
             'macontainer' => 'required|integer|exists:container,macontainer',
-            'mataixe'     => 'nullable|integer|exists:taixe,mataixe',
-            'biensoxe'    => 'nullable|string|max:20',
+            'mataixe'     => 'required|integer|exists:taixe,mataixe',
+            'biensoxe'    => ['required', 'string', 'max:20', 'regex:/^\d{2}[A-Z]-\d{4,5}$/'],
             'bienso_romo' => 'nullable|string|max:20',
             'eta_tu'      => 'nullable|date',
             'eta_den'     => 'nullable|date',
             'ghichu'      => 'nullable|string|max:500',
+        ], [
+            'mataixe.required'  => 'Vui lòng chọn tài xế.',
+            'biensoxe.required' => 'Vui lòng nhập biển số xe.',
+            'biensoxe.regex'    => 'Biển số xe không đúng định dạng (VD: 51C-12345).',
         ]);
 
         $container = Container::findOrFail($request->macontainer);
@@ -108,6 +116,12 @@ class PhieuLayHangKHController extends Controller
             ->latest('thoigian_gan')
             ->first();
 
+        if (!$lichsu || !$lichsu->obai) {
+            return response()->json([
+                'message' => "Container {$container->socontainer} chưa được gán vị trí trong bãi. Vui lòng liên hệ nhân viên bãi.",
+            ], 422);
+        }
+
         $vitriSnapshot = $lichsu ? [
             'maobai'      => $lichsu->obai->maobai ?? null,
             'maobai_code' => $lichsu->obai->maobai_code ?? null,
@@ -118,6 +132,22 @@ class PhieuLayHangKHController extends Controller
         ] : null;
 
         $now = now();
+
+        // Khung ETA phải khớp đúng thời hạn hiệu lực của phiếu (24h): chỉ cần người
+        // dùng nhập 1 trong 2 mốc, mốc còn lại được hệ thống tự tính theo HIEU_LUC_GIO.
+        $etaTu  = $request->eta_tu  ? Carbon::parse($request->eta_tu)  : null;
+        $etaDen = $request->eta_den ? Carbon::parse($request->eta_den) : null;
+
+        if ($etaTu) {
+            $etaDen = $etaTu->copy()->addHours(self::HIEU_LUC_GIO);
+        } elseif ($etaDen) {
+            $etaTu = $etaDen->copy()->subHours(self::HIEU_LUC_GIO);
+        }
+
+        if ($etaTu && $etaTu->lt($now)) {
+            return response()->json(['message' => 'Thời gian ETA không được ở trong quá khứ.'], 422);
+        }
+
         $phieu = PhieuLayHang::create([
             'macontainer'      => $container->macontainer,
             'manhanvien'       => null,
@@ -128,9 +158,9 @@ class PhieuLayHangKHController extends Controller
             'ma_qr'            => Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)) . '-' . Str::upper(Str::random(8)),
             'trangthai'        => 'cho_lay',
             'thoigian_xuat'    => $now,
-            'thoigian_het_han' => $now->copy()->addHours(24),
-            'eta_tu'           => $request->eta_tu,
-            'eta_den'          => $request->eta_den,
+            'thoigian_het_han' => $now->copy()->addHours(self::HIEU_LUC_GIO),
+            'eta_tu'           => $etaTu,
+            'eta_den'          => $etaDen,
             'ghichu'           => $request->ghichu,
         ]);
 

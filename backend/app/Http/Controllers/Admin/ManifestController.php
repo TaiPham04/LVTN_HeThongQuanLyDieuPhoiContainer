@@ -223,10 +223,17 @@ class ManifestController extends Controller
                 continue;
             }
 
+            // ── Niêm chì — bắt buộc ─────────────────────────────────────────
+            $soniemchi = $this->extractCol($row, ['soniemchi', 'seal', 'seal_no', 'seal_number', 'niemchi']) ?: null;
+
+            if (!$soniemchi) {
+                $errors[] = "Dòng {$line}: {$socontainer} — thiếu số niêm chì, bỏ qua.";
+                continue;
+            }
+
             // ── Các trường tuỳ chọn ────────────────────────────────────────
             $soVanDon    = $this->extractCol($row, ['so_vandon', 'vandon', 'bl_no', 'b_l_no', 'bill_of_lading', 'bl', 'mbl', 'hbl']) ?: null;
             $consignee   = $this->extractCol($row, ['ten_consignee', 'consignee', 'nguoi_nhan', 'receiver', 'notify_party']) ?: null;
-            $soniemchi   = $this->extractCol($row, ['soniemchi', 'seal', 'seal_no', 'seal_number', 'niemchi']) ?: null;
             $trongluong  = $this->extractCol($row, ['trongluong_kg', 'gross_weight', 'gw', 'weight', 'gross_wt']);
             $trongluong  = is_numeric($trongluong) ? (float) $trongluong : null;
             $mota        = $this->extractCol($row, ['mota_hanghoa', 'description', 'commodity', 'cargo_desc', 'mo_ta', 'goods_description']) ?: null;
@@ -332,13 +339,14 @@ class ManifestController extends Controller
             'B' => ['size_type',     'Loại Size/Type *',          'CCE5FF'],
             'C' => ['so_vandon',     'Số Vận Đơn (B/L No.)',      'D5F5E3'],
             'D' => ['ten_consignee', 'Consignee (Người nhận)',     'D5F5E3'],
-            'E' => ['soniemchi',     'Niêm Chì (Seal No.)',        'FEF9E7'],
+            'E' => ['soniemchi',     'Niêm Chì (Seal No.) *',      'CCE5FF'],
             'F' => ['trongluong_kg', 'Trọng lượng (kg)',           'FEF9E7'],
             'G' => ['mota_hanghoa',  'Mô tả hàng hóa (Commodity)','FEF9E7'],
         ];
 
         foreach ($cols as $col => [$key, $label, $bg]) {
-            // Row 1: key (importer đọc dòng này làm header)
+            // Row 1: key (importer đọc dòng này làm header — CHỈ dòng này, không thêm dòng nhãn
+            // phụ nào nữa vì WithHeadingRow sẽ đọc mọi dòng sau đó thành dữ liệu thật)
             $sheet->setCellValue("{$col}1", $key);
             $sheet->getStyle("{$col}1")->applyFromArray([
                 'font'      => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '1A1A2E']],
@@ -347,17 +355,11 @@ class ManifestController extends Controller
                 'borders'   => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'AAAAAA']]],
             ]);
 
-            // Row 2: nhãn mô tả (gợi ý cho người dùng, không ảnh hưởng import)
-            $sheet->setCellValue("{$col}2", $label);
-            $sheet->getStyle("{$col}2")->applyFromArray([
-                'font'      => ['italic' => true, 'size' => 9, 'color' => ['rgb' => '555555']],
-                'fill'      => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8F9FA']],
-                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                'borders'   => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_HAIR, 'color' => ['rgb' => 'DDDDDD']]],
-            ]);
+            // Chú thích tên cột đặt ở comment ô, không chiếm 1 dòng dữ liệu riêng
+            $sheet->getComment("{$col}1")->getText()->createTextRun($label);
         }
 
-        // Row 3+: Dữ liệu ví dụ (xoá trước khi dùng thật)
+        // Row 2+: Dữ liệu ví dụ (xoá trước khi dùng thật)
         $examples = [
             ['MSCU1234560', '20DC', 'MSCUVN123456', 'CONG TY TNHH ABC VIET NAM',  'VN123456', 18500, 'Linh kien dien tu'],
             ['TCKU2345671', '40HC', 'MSCUVN234567', 'CONG TY CP XYZ TRADING',      'VN234567', 26000, 'Vai soi tong hop'],
@@ -368,7 +370,7 @@ class ManifestController extends Controller
 
         foreach ($examples as $r => $example) {
             foreach (array_values($example) as $c => $val) {
-                $cell = chr(65 + $c) . ($r + 3);
+                $cell = chr(65 + $c) . ($r + 2);
                 $sheet->setCellValue($cell, $val);
                 $sheet->getStyle($cell)->applyFromArray([
                     'borders'   => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_HAIR, 'color' => ['rgb' => 'DDDDDD']]],
@@ -378,8 +380,8 @@ class ManifestController extends Controller
         }
 
         // Ghi chú cuối
-        $noteRow = count($examples) + 4;
-        $sheet->setCellValue("A{$noteRow}", '* Bắt buộc. Dữ liệu từ dòng 3 (xoá các dòng ví dụ trên trước khi upload). Xem sheet "Ma Size-Type" để tra mã loại container.');
+        $noteRow = count($examples) + 3;
+        $sheet->setCellValue("A{$noteRow}", '* Bắt buộc. Dữ liệu từ dòng 2 (xoá các dòng ví dụ trên trước khi upload). Xem sheet "Ma Size-Type" để tra mã loại container. Trỏ chuột vào tiêu đề cột để xem chú thích.');
         $sheet->mergeCells("A{$noteRow}:G{$noteRow}");
         $sheet->getStyle("A{$noteRow}")->getFont()->setItalic(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF888888'));
 

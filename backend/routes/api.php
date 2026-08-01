@@ -195,7 +195,6 @@ Route::middleware('auth:sanctum')->group(function () {
         // Tally tiếp nhận container nhập từ tàu
         Route::get('tally/{machuyentau}',                        [ContainerBaiController::class, 'danhSachTally']);
         Route::patch('tally/{container}/xac-nhan',               [ContainerBaiController::class, 'xacNhan']);
-        Route::post('tally/{machuyentau}/xac-nhan-loat',         [ContainerBaiController::class, 'xacNhanLoat']);
         Route::patch('tally/{container}/tinh-trang',             [ContainerBaiController::class, 'capNhatTinhTrang']);
 
         // Sơ đồ bãi — toàn bộ tính năng
@@ -210,7 +209,6 @@ Route::middleware('auth:sanctum')->group(function () {
         // Lịch tàu — xem + cập nhật trạng thái + xác nhận dỡ hàng
         Route::get('lich-tau',                                    [LichTauBaiController::class, 'index']);
         Route::patch('lich-tau/{chuyentau}/trang-thai',           [LichTauBaiController::class, 'chuyenTrangThai']);
-        Route::post('lich-tau/{chuyentau}/xac-nhan-do-hang',      [LichTauBaiController::class, 'xacNhanDoHang']);
 
         // Biên bản kiểm tra định kỳ
         Route::get('bien-ban-kt',  [NVBaiBienBanKTController::class, 'index']);

@@ -66,6 +66,7 @@ class ContainerBaiController extends Controller
         $containers = Container::with('loaicontainer')
             ->where('machuyentau', $machuyentau)
             ->where('loai_hinh', 'nhap')
+            ->whereIn('trangthai', ['choxacnhan', 'trongbai'])
             ->orderBy('socontainer')
             ->get()
             ->map(fn ($c) => [
@@ -115,30 +116,6 @@ class ContainerBaiController extends Controller
         ]);
 
         return response()->json(['message' => "Đã xác nhận {$container->socontainer} vào bãi."]);
-    }
-
-    // ─── POST /api/nv/bai/tally/{machuyentau}/xac-nhan-loat ──────────────────
-    // Xác nhận toàn bộ container choxacnhan của chuyến tàu
-    public function xacNhanLoat(int $machuyentau): JsonResponse
-    {
-        $chuyen = ChuyenTau::findOrFail($machuyentau);
-
-        if ($chuyen->trangthai !== 'dadencang') {
-            return response()->json(['message' => 'Chuyến tàu phải đang ở trạng thái "Đã đến cảng".'], 422);
-        }
-
-        $soLuong = Container::where('machuyentau', $machuyentau)
-            ->where('loai_hinh', 'nhap')
-            ->where('trangthai', 'choxacnhan')
-            ->update([
-                'trangthai'      => 'trongbai',
-                'thoigian_vaobai' => now(),
-            ]);
-
-        return response()->json([
-            'message' => "Đã xác nhận {$soLuong} container vào bãi.",
-            'so_luong' => $soLuong,
-        ]);
     }
 
     // ─── PATCH /api/nv/bai/tally/{container}/tinh-trang ─────────────────────

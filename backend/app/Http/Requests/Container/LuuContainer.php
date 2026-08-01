@@ -17,7 +17,7 @@ class LuuContainer extends FormRequest
             'loai_hinh'     => ['required', 'in:nhap,xuat'],
             'maloai'        => ['required', 'exists:loaicontainer,maloai'],
             'machuyentau'   => ['required', 'exists:chuyentau,machuyentau'],
-            'soniemchi'     => ['nullable', 'string', 'max:50'],
+            'soniemchi'     => ['required', 'string', 'max:50'],
             'trongluong_kg' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'mota_hanghoa'  => ['nullable', 'string', 'max:1000'],
         ];
@@ -43,6 +43,7 @@ class LuuContainer extends FormRequest
             'maloai.exists'         => 'Loại container không hợp lệ.',
             'machuyentau.required'  => 'Vui lòng chọn chuyến tàu.',
             'machuyentau.exists'    => 'Chuyến tàu không hợp lệ.',
+            'soniemchi.required'   => 'Vui lòng nhập số niêm chì.',
             'trongluong_kg.numeric' => 'Trọng lượng phải là số.',
             'trongluong_kg.min'     => 'Trọng lượng không được âm.',
         ];
