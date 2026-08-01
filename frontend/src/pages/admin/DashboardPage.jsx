@@ -10,6 +10,7 @@ const PIE_COLORS = {
   dangky:   '#f59e0b',
   trongbai: '#3b82f6',
   xuatcong: '#22c55e',
+  dalenken: '#8b5cf6',
 };
 
 function Card({ title, children }) {
@@ -75,14 +76,14 @@ export default function DashboardPage() {
         </Card>
 
         <Card title="Phân bố trạng thái container">
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart margin={{ top: 20, right: 10, bottom: 0, left: 10 }}>
               <Pie
                 data={phan_bo_container}
                 dataKey="so_luong"
                 nameKey="nhan"
                 cx="50%"
-                cy="45%"
+                cy="50%"
                 outerRadius={80}
                 label={({ percent }) => percent > 0 ? `${(percent * 100).toFixed(0)}%` : ''}
                 labelLine={false}

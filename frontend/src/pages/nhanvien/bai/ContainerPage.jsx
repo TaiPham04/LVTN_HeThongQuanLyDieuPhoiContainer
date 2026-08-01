@@ -7,12 +7,14 @@ import Pagination from '@/components/ui/Pagination';
 import { useContainerBaiList } from '@/hooks/nhanvien/useContainerBai';
 
 /* ── helpers ── */
-const trangThaiBadge = (v) => {
+const trangThaiBadge = (v, row) => {
   const map = {
     dangky:        { label: 'Đăng ký',    variant: 'info' },
     trongbai:      { label: 'Trong bãi',  variant: 'success' },
-    xuatcong:      { label: 'Xuất cổng',  variant: 'warning' },
-    dalenken:      { label: 'Đã lên kẹn', variant: 'gray' },
+    // Container xuất rời bãi qua cổng thì gọi là "Xuất cảng" — "Xuất cổng" chỉ dùng
+    // cho container nhập được tài xế kéo ra sau khi nhân viên cổng xác nhận.
+    xuatcong:      { label: row?.loai_hinh === 'xuat' ? 'Xuất cảng' : 'Xuất cổng', variant: 'warning' },
+    dalenken:      { label: 'Xuất cảng',  variant: 'warning' },
     khonghoatdong: { label: 'Vô hiệu',    variant: 'danger' },
   };
   const b = map[v] || { label: v, variant: 'gray' };
@@ -62,7 +64,7 @@ export default function ContainerBaiPage() {
       key: 'trangthai',
       label: 'Trạng thái',
       align: 'center',
-      render: (v) => trangThaiBadge(v),
+      render: (v, row) => trangThaiBadge(v, row),
     },
     {
       key: 'trangthai_haiquan',
@@ -121,6 +123,7 @@ export default function ContainerBaiPage() {
           <option value="trongbai">Trong bãi</option>
           <option value="dangky">Đăng ký</option>
           <option value="xuatcong">Xuất cổng</option>
+          <option value="dalenken">Xuất cảng</option>
           <option value="">Tất cả</option>
         </select>
       </div>

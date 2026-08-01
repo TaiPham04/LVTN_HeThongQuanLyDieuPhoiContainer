@@ -20,12 +20,3 @@ export function useChuyenTrangThaiBai() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
-
-export function useXacNhanDoHang() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (machuyentau) =>
-      api.post(`/nv/bai/lich-tau/${machuyentau}/xac-nhan-do-hang`).then(r => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
-  });
-}

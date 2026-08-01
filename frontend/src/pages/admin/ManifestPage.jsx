@@ -186,9 +186,9 @@ export default function ManifestPage() {
 
       {/* Ghi chú cột Excel */}
       <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 16px', marginBottom: 16, fontSize: 12, color: '#78350f' }}>
-        <strong>Cột bắt buộc:</strong> <code>socontainer</code> (ISO 6346: 4 chữ + 7 số), <code>size_type</code> (20DC / 40HC / 20RF..., xem sheet "Mã Size-Type" trong file mẫu) &nbsp;·&nbsp;
+        <strong>Cột bắt buộc:</strong> <code>socontainer</code> (ISO 6346: 4 chữ + 7 số), <code>size_type</code> (20DC / 40HC / 20RF..., xem sheet "Mã Size-Type" trong file mẫu), <code>soniemchi</code> (số niêm chì) &nbsp;·&nbsp;
         <strong>Nên có:</strong> <code>so_vandon</code> (B/L No.), <code>ten_consignee</code> &nbsp;·&nbsp;
-        <strong>Tuỳ chọn:</strong> <code>soniemchi</code>, <code>trongluong_kg</code>, <code>mota_hanghoa</code>
+        <strong>Tuỳ chọn:</strong> <code>trongluong_kg</code>, <code>mota_hanghoa</code>
       </div>
 
       {/* ── Danh sách container đã import ── */}

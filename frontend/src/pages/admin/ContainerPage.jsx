@@ -16,12 +16,14 @@ import { useHangTauList } from '@/hooks/admin/useHangTau';
 import { useChuyenTauList } from '@/hooks/admin/useChuyenTau';
 
 /* ── helpers ── */
-const trangThaiBadge = (v) => {
+const trangThaiBadge = (v, row) => {
   const map = {
     dangky:         { label: 'Đăng ký',    variant: 'info' },
     trongbai:       { label: 'Trong bãi',  variant: 'success' },
-    xuatcong:       { label: 'Xuất cổng',  variant: 'warning' },
-    dalenken:       { label: 'Đã lên kẹn', variant: 'gray' },
+    // Container xuất rời bãi qua cổng thì gọi là "Xuất cảng" — "Xuất cổng" chỉ dùng
+    // cho container nhập được tài xế kéo ra sau khi nhân viên cổng xác nhận.
+    xuatcong:       { label: row?.loai_hinh === 'xuat' ? 'Xuất cảng' : 'Xuất cổng', variant: 'warning' },
+    dalenken:       { label: 'Xuất cảng',  variant: 'warning' },
     khonghoatdong:  { label: 'Vô hiệu',    variant: 'danger' },
   };
   const b = map[v] || { label: v, variant: 'gray' };
@@ -130,7 +132,7 @@ export default function ContainerPage() {
       key: 'trangthai',
       label: 'Trạng thái',
       align: 'center',
-      render: (v) => trangThaiBadge(v),
+      render: (v, row) => trangThaiBadge(v, row),
     },
     {
       key: 'trangthai_haiquan',
@@ -298,7 +300,7 @@ export default function ContainerPage() {
           <option value="dangky">Đăng ký</option>
           <option value="trongbai">Trong bãi</option>
           <option value="xuatcong">Xuất cổng</option>
-          <option value="dalenken">Đã lên kẹn</option>
+          <option value="dalenken">Xuất cảng</option>
           <option value="khonghoatdong">Vô hiệu</option>
         </select>
       </div>
@@ -401,9 +403,13 @@ export default function ContainerPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 4 }}>
             <Input
               label="Số niêm chì"
+              required
               placeholder="VD: SL123456"
               error={errors.soniemchi?.message}
-              {...register('soniemchi', { maxLength: { value: 50, message: 'Tối đa 50 ký tự' } })}
+              {...register('soniemchi', {
+                required: 'Vui lòng nhập số niêm chì.',
+                maxLength: { value: 50, message: 'Tối đa 50 ký tự' },
+              })}
             />
             <Input
               label="Trọng lượng (kg)"
@@ -459,7 +465,7 @@ export default function ContainerPage() {
               ['Chuyến tàu',     detailRow.sovoyage || '—'],
               ['Số niêm chì',    detailRow.soniemchi || '—'],
               ['Trọng lượng',    detailRow.trongluong_kg ? `${detailRow.trongluong_kg} kg` : '—'],
-              ['Trạng thái',     trangThaiBadge(detailRow.trangthai)],
+              ['Trạng thái',     trangThaiBadge(detailRow.trangthai, detailRow)],
               ['Hải quan',       haiquanBadge(detailRow.trangthai_haiquan)],
               ['Thông quan',     detailRow.trangthai_haiquan !== 'chua_khai' ? thongQuanBadge(detailRow.da_thong_quan) : '—'],
               ['Ngày vào bãi',   detailRow.thoigian_vaobai || '—'],

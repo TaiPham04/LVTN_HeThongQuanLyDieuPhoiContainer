@@ -29,6 +29,14 @@ const trangThaiBadge = (v) => {
   return <Badge variant={c.variant}>{c.label}</Badge>;
 };
 
+// Phiếu do nhân viên cổng xuất có hiệu lực 4 giờ — ETA từ/đến phải khớp đúng khoảng này
+const ETA_HIEU_LUC_GIO = 4;
+
+const toLocalInputValue = (date) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const vitriText = (p) => {
   if (!p?.tenblock) return '—';
   return `${p.tenblock} — K${p.khoang} / H${p.hang} / T${p.tang}`;
@@ -193,7 +201,7 @@ export default function PhieuLayHangPage() {
   const xacNhan             = useXacNhanDaLay();
   const huyPhieu            = useHuyPhieu();
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
     defaultValues: { socontainer: '', biensoxe: '', bienso_romo: '', mataixe: '', eta_tu: '', eta_den: '', ghichu: '' },
   });
 
@@ -380,20 +388,29 @@ export default function PhieuLayHangPage() {
             <div>
               <Input
                 label="Biển số xe"
+                required
                 placeholder="VD: 51C-12345"
-                {...register('biensoxe')}
+                error={errors.biensoxe?.message}
+                {...register('biensoxe', {
+                  required: 'Vui lòng nhập biển số xe.',
+                  pattern: { value: /^\d{2}[A-Z]-\d{4,5}$/, message: 'Định dạng không đúng (VD: 51C-12345).' },
+                })}
               />
             </div>
             <div>
-              <label style={labelSt}>Tài xế</label>
-              <select style={selectFull} {...register('mataixe')}>
-                <option value="">— Không chọn —</option>
+              <label style={labelSt}>Tài xế <span style={{ color: '#ef4444' }}>*</span></label>
+              <select
+                style={{ ...selectFull, borderColor: errors.mataixe ? '#dc2626' : '#e2e8f0' }}
+                {...register('mataixe', { required: 'Vui lòng chọn tài xế.' })}
+              >
+                <option value="">— Chọn tài xế —</option>
                 {taixeOptions.map(tx => (
                   <option key={tx.mataixe} value={tx.mataixe}>
                     {tx.hoten} ({tx.sodienthoai})
                   </option>
                 ))}
               </select>
+              {errors.mataixe && <span style={{ fontSize: 12, color: '#ef4444' }}>{errors.mataixe.message}</span>}
             </div>
           </div>
 
@@ -412,6 +429,15 @@ export default function PhieuLayHangPage() {
                 type="datetime-local"
                 style={selectFull}
                 {...register('eta_tu')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('eta_tu', val);
+                  if (val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() + ETA_HIEU_LUC_GIO);
+                    setValue('eta_den', toLocalInputValue(d));
+                  }
+                }}
               />
             </div>
             <div>
@@ -420,9 +446,21 @@ export default function PhieuLayHangPage() {
                 type="datetime-local"
                 style={selectFull}
                 {...register('eta_den')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('eta_den', val);
+                  if (val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() - ETA_HIEU_LUC_GIO);
+                    setValue('eta_tu', toLocalInputValue(d));
+                  }
+                }}
               />
             </div>
           </div>
+          <p style={{ fontSize: 12, color: '#9ca3af', marginTop: -8, marginBottom: 12 }}>
+            Chỉ cần chọn 1 trong 2 mốc — mốc còn lại tự động khớp đúng {ETA_HIEU_LUC_GIO}h hiệu lực của phiếu.
+          </p>
 
           <div style={{ marginBottom: 4 }}>
             <label style={labelSt}>Ghi chú</label>

@@ -30,6 +30,14 @@ const selectStyle = (hasErr) => ({
   borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff',
 });
 
+// Phiếu do khách hàng tạo có hiệu lực 24 giờ — ETA từ/đến phải khớp đúng khoảng này
+const ETA_HIEU_LUC_GIO = 24;
+
+const toLocalInputValue = (date) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 function PhieuDetailModal({ maphieu, onClose }) {
   const { data, isLoading } = usePhieuLayHangKHDetail(maphieu);
   const p = data?.data;
@@ -271,11 +279,11 @@ export default function PhieuLayHangKHPage() {
 
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-              Tài xế (không bắt buộc)
+              Tài xế <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <select
-              style={selectStyle(false)}
-              {...register('mataixe')}
+              style={selectStyle(!!errors.mataixe)}
+              {...register('mataixe', { required: 'Vui lòng chọn tài xế.' })}
               onChange={(e) => {
                 const val = e.target.value;
                 setValue('mataixe', val);
@@ -283,20 +291,26 @@ export default function PhieuLayHangKHPage() {
                 setValue('biensoxe', driver?.biensoxe || '');
               }}
             >
-              <option value="">— Không chọn —</option>
+              <option value="">— Chọn tài xế —</option>
               {taixeList.map(tx => (
                 <option key={tx.mataixe} value={tx.mataixe}>
                   {tx.hoten} — {tx.sodienthoai}
                 </option>
               ))}
             </select>
+            {errors.mataixe && <span style={{ fontSize: 12, color: '#ef4444' }}>{errors.mataixe.message}</span>}
           </div>
 
           <div style={{ marginBottom: 12 }}>
             <Input
-              label="Biển số xe (không bắt buộc)"
+              label="Biển số xe"
+              required
               placeholder="VD: 51C-12345"
-              {...register('biensoxe')}
+              error={errors.biensoxe?.message}
+              {...register('biensoxe', {
+                required: 'Vui lòng nhập biển số xe.',
+                pattern: { value: /^\d{2}[A-Z]-\d{4,5}$/, message: 'Định dạng không đúng (VD: 51C-12345).' },
+              })}
             />
           </div>
 
@@ -317,6 +331,15 @@ export default function PhieuLayHangKHPage() {
                 type="datetime-local"
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                 {...register('eta_tu')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('eta_tu', val);
+                  if (val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() + ETA_HIEU_LUC_GIO);
+                    setValue('eta_den', toLocalInputValue(d));
+                  }
+                }}
               />
             </div>
             <div>
@@ -327,9 +350,21 @@ export default function PhieuLayHangKHPage() {
                 type="datetime-local"
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
                 {...register('eta_den')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('eta_den', val);
+                  if (val) {
+                    const d = new Date(val);
+                    d.setHours(d.getHours() - ETA_HIEU_LUC_GIO);
+                    setValue('eta_tu', toLocalInputValue(d));
+                  }
+                }}
               />
             </div>
           </div>
+          <p style={{ fontSize: 12, color: '#9ca3af', marginTop: -8, marginBottom: 12 }}>
+            Chỉ cần chọn 1 trong 2 mốc — mốc còn lại tự động khớp đúng {ETA_HIEU_LUC_GIO}h hiệu lực của phiếu.
+          </p>
 
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>

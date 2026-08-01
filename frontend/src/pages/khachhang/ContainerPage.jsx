@@ -7,11 +7,14 @@ import Modal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
 import { useContainerKHList, useContainerKHDetail } from '@/hooks/khachhang/useContainerKH';
 
-const trangThaiBadge = (v) => {
+const trangThaiBadge = (v, row) => {
   const map = {
     dangky:   { label: 'Đăng ký',   variant: 'info' },
     trongbai: { label: 'Trong bãi', variant: 'success' },
-    xuatcong: { label: 'Xuất cổng', variant: 'warning' },
+    // Container xuất rời bãi qua cổng thì gọi là "Xuất cảng" — "Xuất cổng" chỉ dùng
+    // cho container nhập được tài xế kéo ra sau khi nhân viên cổng xác nhận.
+    xuatcong: { label: row?.loai_hinh === 'xuat' ? 'Xuất cảng' : 'Xuất cổng', variant: 'warning' },
+    dalenken: { label: 'Xuất cảng', variant: 'warning' },
   };
   const b = map[v] || { label: v, variant: 'gray' };
   return <Badge variant={b.variant}>{b.label}</Badge>;
@@ -60,7 +63,7 @@ function ContainerDetailModal({ macontainer, onClose }) {
           ['Loại',         c.tenloai || '—'],
           ['Voyage',       c.sovoyage || '—'],
           ['Hãng tàu',     c.mascac || '—'],
-          ['Trạng thái',   trangThaiBadge(c.trangthai)],
+          ['Trạng thái',   trangThaiBadge(c.trangthai, c)],
           ['Hải quan',     haiquanBadge(c.trangthai_haiquan)],
           ['Thông quan',   c.trangthai_haiquan !== 'chua_khai' ? thongQuanBadge(c.da_thong_quan) : '—'],
           ['Vào bãi',      c.thoigian_vaobai || '—'],
@@ -141,7 +144,7 @@ export default function ContainerKHPage() {
       key: 'trangthai',
       label: 'Trạng thái',
       align: 'center',
-      render: (v) => trangThaiBadge(v),
+      render: (v, row) => trangThaiBadge(v, row),
     },
     {
       key: 'trangthai_haiquan',
@@ -202,6 +205,7 @@ export default function ContainerKHPage() {
           <option value="dangky">Đăng ký</option>
           <option value="trongbai">Trong bãi</option>
           <option value="xuatcong">Xuất cổng</option>
+          <option value="dalenken">Xuất cảng</option>
         </select>
       </div>
 

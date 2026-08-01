@@ -2,18 +2,17 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import Modal from '@/components/ui/Modal';
 import { useLichTauBaiList } from '@/hooks/nhanvien/useLichTauBai';
 import {
   useTallyDanhSach,
   useTallyXacNhan,
-  useTallyXacNhanLoat,
 } from '@/hooks/nhanvien/useContainerBai';
 
 /* ── helpers ── */
 const tinhTrangBadge = (trangthai) => {
-  if (trangthai === 'trongbai') return <Badge variant="success">Đã tiếp nhận</Badge>;
-  return <Badge variant="info">Chờ xác nhận</Badge>;
+  if (trangthai === 'trongbai')   return <Badge variant="success">Đã tiếp nhận</Badge>;
+  if (trangthai === 'choxacnhan') return <Badge variant="info">Chờ xác nhận</Badge>;
+  return <Badge variant="gray">{trangthai}</Badge>;
 };
 
 export default function TiepNhanNhapPage() {
@@ -24,13 +23,11 @@ export default function TiepNhanNhapPage() {
   const [selectedMaCT, setSelectedMaCT] = useState(navChuyen?.machuyentau ?? '');
   const [search, setSearch]             = useState('');
   const [msg, setMsg]                   = useState({ type: '', text: '' });
-  const [xacNhanTatCaModal, setXacNhanTatCaModal] = useState(false);
 
   const { data: lichData } = useLichTauBaiList({ trangthai: 'dadencang', per_page: 100 });
   const { data: tallyData, isLoading } = useTallyDanhSach(selectedMaCT || null);
 
   const xacNhanMut  = useTallyXacNhan();
-  const xacNhanLoat = useTallyXacNhanLoat();
 
   const toast = (text, type = 'success') => {
     setMsg({ type, text });
@@ -44,14 +41,6 @@ export default function TiepNhanNhapPage() {
     } catch (e) { toast(e?.response?.data?.message || 'Lỗi.', 'error'); }
   };
 
-  const handleXacNhanLoat = async () => {
-    setXacNhanTatCaModal(false);
-    try {
-      const res = await xacNhanLoat.mutateAsync(selectedMaCT);
-      toast(res.message);
-    } catch (e) { toast(e?.response?.data?.message || 'Lỗi.', 'error'); }
-  };
-
   const chuyenList = lichData?.data ?? [];
   const selectedChuyen = navChuyen?.machuyentau === Number(selectedMaCT)
     ? navChuyen
@@ -59,7 +48,6 @@ export default function TiepNhanNhapPage() {
 
   const danhSach = tallyData?.data ?? [];
   const stats    = tallyData?.stats ?? {};
-  const chuaXN   = stats.choxacnhan ?? 0;
 
   const filtered = search.trim()
     ? danhSach.filter(c => c.socontainer.includes(search.trim().toUpperCase()))
@@ -135,16 +123,6 @@ export default function TiepNhanNhapPage() {
             </span>
             <span style={{ fontSize: 14, color: '#64748b', marginLeft: 4 }}>Đã được xác nhận</span>
           </div>
-          {chuaXN > 0 && (
-            <Button
-              style={{ background: '#16a34a', color: '#fff', border: 'none', flexShrink: 0 }}
-              onClick={() => setXacNhanTatCaModal(true)}
-              disabled={xacNhanLoat.isPending}
-            >
-              <i className="ti ti-checks" style={{ marginRight: 6 }} />
-              Xác nhận tất cả ({chuaXN})
-            </Button>
-          )}
         </div>
       )}
 
@@ -189,7 +167,7 @@ export default function TiepNhanNhapPage() {
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                   {['Số container', 'Loại', 'Niêm chì', 'T.lượng (kg)', 'Mô tả hàng', 'Tình trạng', ''].filter(Boolean).map(h => (
-                    <th key={h} style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#374151', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    <th key={h} style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#374151', textAlign: h === 'T.lượng (kg)' ? 'center' : 'left', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
                   ))}
@@ -203,7 +181,7 @@ export default function TiepNhanNhapPage() {
                     </td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151', whiteSpace: 'nowrap' }}>{row.tenloai}</td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280' }}>{row.soniemchi || '—'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151', textAlign: 'right' }}>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151', textAlign: 'center' }}>
                       {row.trongluong_kg ? Number(row.trongluong_kg).toLocaleString() : '—'}
                     </td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#6b7280', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -229,31 +207,6 @@ export default function TiepNhanNhapPage() {
         )
       )}
 
-      {/* ── Modal: xác nhận tất cả ── */}
-      <Modal
-        isOpen={xacNhanTatCaModal}
-        onClose={() => setXacNhanTatCaModal(false)}
-        title="Xác nhận toàn bộ container"
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button variant="secondary" onClick={() => setXacNhanTatCaModal(false)}>Hủy</Button>
-            <Button
-              style={{ background: '#16a34a', color: '#fff', border: 'none' }}
-              onClick={handleXacNhanLoat}
-              disabled={xacNhanLoat.isPending}
-            >
-              {xacNhanLoat.isPending ? 'Đang xử lý…' : `Xác nhận ${chuaXN} container`}
-            </Button>
-          </div>
-        }
-      >
-        <p style={{ fontSize: 14 }}>
-          Xác nhận toàn bộ <strong>{chuaXN} container</strong> đang chờ đã được tiếp nhận vào bãi?
-        </p>
-        <p style={{ fontSize: 13, color: '#6b7280' }}>
-          Tất cả container "Chờ xác nhận" sẽ chuyển sang "Trong bãi".
-        </p>
-      </Modal>
     </div>
   );
 }

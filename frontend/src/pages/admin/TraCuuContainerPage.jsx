@@ -8,7 +8,7 @@ const TRANGTHAI = {
   dangky:        { label: 'Đăng ký',        variant: 'gray'    },
   trongbai:      { label: 'Trong bãi',      variant: 'success' },
   xuatcong:      { label: 'Xuất cổng',      variant: 'purple'  },
-  dalenken:      { label: 'Đã lên tàu',    variant: 'info'    },
+  dalenken:      { label: 'Xuất cảng',     variant: 'warning' },
   khonghoatdong: { label: 'Vô hiệu hóa',   variant: 'danger'  },
 };
 
@@ -50,7 +50,10 @@ export default function TraCuuContainerPage() {
 
   const cont    = result?.container;
   const lichSu  = result?.lich_su ?? [];
-  const tt      = TRANGTHAI[cont?.trangthai]  ?? { label: cont?.trangthai,         variant: 'gray' };
+  // Container xuất rời bãi qua cổng thì gọi là "Xuất cảng" — "Xuất cổng" chỉ dùng
+  // cho container nhập được tài xế kéo ra sau khi nhân viên cổng xác nhận.
+  let tt        = TRANGTHAI[cont?.trangthai]  ?? { label: cont?.trangthai,         variant: 'gray' };
+  if (cont?.trangthai === 'xuatcong' && cont?.loai_hinh === 'xuat') tt = { ...tt, label: 'Xuất cảng' };
   const hq      = HAIQUAN[cont?.trangthai_haiquan] ?? { label: cont?.trangthai_haiquan, variant: 'gray' };
 
   return (
@@ -155,7 +158,8 @@ export default function TraCuuContainerPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {lichSu.map((row, idx) => {
-                  const kieu     = KIEU[row.kieudichchuyen] ?? { label: row.kieudichchuyen, icon: 'ti-point', color: '#64748b', bg: '#f8fafc' };
+                  let kieu = KIEU[row.kieudichchuyen] ?? { label: row.kieudichchuyen, icon: 'ti-point', color: '#64748b', bg: '#f8fafc' };
+                  if (row.kieudichchuyen === 'xuatcong' && cont?.loai_hinh === 'xuat') kieu = { ...kieu, label: 'Xuất cảng' };
                   const isLast   = row.la_hien_tai;
 
                   return (

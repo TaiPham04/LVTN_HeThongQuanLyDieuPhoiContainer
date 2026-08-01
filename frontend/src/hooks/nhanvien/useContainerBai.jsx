@@ -30,17 +30,6 @@ export function useTallyXacNhan() {
   });
 }
 
-export function useTallyXacNhanLoat() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (machuyentau) => api.post(`/nv/bai/tally/${machuyentau}/xac-nhan-loat`).then(r => r.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [KEY_TALLY] });
-      qc.invalidateQueries({ queryKey: ['nv-bai-lichtau'] });
-    },
-  });
-}
-
 export function useTallyCapNhatTinhTrang() {
   const qc = useQueryClient();
   return useMutation({
