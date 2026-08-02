@@ -19,6 +19,7 @@ class KhuVucBaiResource extends JsonResource
             'sohang'         => $this->sohang,
             'sotang'         => $this->sotang,
             'loai_nhom'      => $this->loai_nhom,
+            'loai_hinh_uutien' => $this->loai_hinh_uutien,
             'trangthai'      => $this->trangthai,
             'tong_so_o'      => $tongSoO,
             'so_o_dang_dung' => $soODangDung,

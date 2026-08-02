@@ -7,7 +7,6 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import Input from '@/components/ui/Input';
-import Pagination from '@/components/ui/Pagination';
 import {
   useKhuVucBaiList,
   useThemKhuVucBai,
@@ -45,9 +44,21 @@ const NHOM_VARIANT = {
 
 const nhomLabel = (v) => NHOM_OPTIONS.find(o => o.value === v)?.label ?? v;
 
+const LUONG_OPTIONS = [
+  { value: 'xuat', label: 'Xuất' },
+  { value: 'nhap', label: 'Nhập' },
+];
+
+/* ── Nhóm khu vực bãi theo luồng ưu tiên — mỗi khu vực chuyên biệt 1 area ── */
+const AREA_GROUPS = [
+  { key: 'xuat', title: 'Khu vực Xuất', color: '#c2410c' },
+  { key: 'nhap', title: 'Khu vực Nhập', color: '#0369a1' },
+];
+
 /* ── form mặc định ── */
 const defaultValues = {
   tenblock: '',
+  loai_hinh_uutien: 'xuat',
   sokhoang: '',
   sohang: '',
   sotang: '',
@@ -55,7 +66,6 @@ const defaultValues = {
 };
 
 export default function KhuVucBaiPage() {
-  const [trang, setTrang] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -63,15 +73,19 @@ export default function KhuVucBaiPage() {
   const [deleteRow, setDeleteRow] = useState(null);
   const [serverErr, setServerErr] = useState('');
 
-  const { data, isLoading } = useKhuVucBaiList({ trang, search, per_page: 10 });
+  // Số khu vực bãi luôn ít (dữ liệu cấu hình, không phải giao dịch) nên lấy hết 1 lần
+  // để nhóm hiển thị theo area — không cần phân trang.
+  const { data, isLoading } = useKhuVucBaiList({ search, per_page: 100 });
   const them    = useThemKhuVucBai();
   const capNhat = useCapNhatKhuVucBai();
   const xoa     = useXoaKhuVucBai();
 
   const {
-    register, handleSubmit, reset,
+    register, handleSubmit, reset, watch,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues });
+
+  const watchLuong = watch('loai_hinh_uutien');
 
   /* ── columns ── */
   const columns = [
@@ -164,6 +178,7 @@ export default function KhuVucBaiPage() {
     setEditRow(row);
     reset({
       tenblock:  row.tenblock,
+      loai_hinh_uutien: row.loai_hinh_uutien ?? 'xuat',
       sokhoang:  row.sokhoang,
       sohang:    row.sohang,
       sotang:    row.sotang,
@@ -185,6 +200,7 @@ export default function KhuVucBaiPage() {
       sohang:     parseInt(values.sohang),
       sotang:     parseInt(values.sotang),
       loai_nhom:  values.loai_nhom,
+      loai_hinh_uutien: values.loai_hinh_uutien,
     };
     try {
       if (editRow) {
@@ -215,18 +231,16 @@ export default function KhuVucBaiPage() {
   const handleSearch = (e) => {
     e.preventDefault();
     setSearch(searchInput.trim());
-    setTrang(1);
   };
 
   const list = data?.data ?? [];
-  const meta = data?.meta ?? {};
 
   /* ─────────── RENDER ─────────── */
   return (
     <div>
       <PageHeader
         title="Khu vực bãi"
-        description="Quản lý các khu vực lưu trữ container trong cảng"
+        description="Quản lý các khu vực lưu trữ container — mỗi khu vực chuyên biệt cho 1 luồng Xuất hoặc Nhập"
         action={<Button onClick={openThem}>+ Thêm khu vực</Button>}
       />
 
@@ -243,14 +257,43 @@ export default function KhuVucBaiPage() {
         />
         <Button type="submit" variant="secondary">Tìm</Button>
         {search && (
-          <Button variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); setTrang(1); }}>
+          <Button variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); }}>
             Xóa lọc
           </Button>
         )}
       </form>
 
-      <Table columns={columns} data={list} loading={isLoading} />
-      <Pagination meta={meta} onChange={setTrang} />
+      {isLoading && (
+        <div style={{ textAlign: 'center', padding: 48, color: '#6b7280', fontSize: 14 }}>
+          Đang tải…
+        </div>
+      )}
+
+      {!isLoading && list.length === 0 && (
+        <div style={{
+          textAlign: 'center', padding: '48px 0', color: '#9ca3af', fontSize: 14,
+          background: '#f8fafc', borderRadius: 12, border: '2px dashed #e2e8f0',
+        }}>
+          Không tìm thấy khu vực bãi nào
+        </div>
+      )}
+
+      {!isLoading && list.length > 0 && AREA_GROUPS.map(g => {
+        const rows = list.filter(r => r.loai_hinh_uutien === g.key);
+        if (rows.length === 0) return null;
+        return (
+          <div key={g.key} style={{ marginBottom: 24 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+              fontSize: 14, fontWeight: 700, color: g.color,
+            }}>
+              {g.title}
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af' }}>({rows.length})</span>
+            </div>
+            <Table columns={columns} data={rows} />
+          </div>
+        );
+      })}
 
       {/* ── Modal Thêm / Sửa ── */}
       <Modal
@@ -279,6 +322,53 @@ export default function KhuVucBaiPage() {
                 maxLength: { value: 100, message: 'Tối đa 100 ký tự' },
               })}
             />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+              Luồng (khu vực) <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {LUONG_OPTIONS.map(o => {
+                const checked = watchLuong === o.value;
+                return (
+                  <label key={o.value} style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    padding: '9px 12px', border: `2px solid ${checked ? '#0d6efd' : '#e2e8f0'}`,
+                    borderRadius: 8, cursor: 'pointer',
+                    background: checked ? '#eff6ff' : '#fff',
+                    fontSize: 14, fontWeight: checked ? 600 : 400,
+                  }}>
+                    <input type="radio" value={o.value} {...register('loai_hinh_uutien', { required: 'Bắt buộc' })} style={{ accentColor: '#0d6efd' }} />
+                    {o.label}
+                  </label>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
+              Mỗi khu vực bãi chuyên biệt cho đúng 1 luồng — container sai luồng sẽ không được gán/gợi ý vào đây.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+              Nhóm container <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <select
+              style={{
+                width: '100%', padding: '8px 12px',
+                border: `1px solid ${errors.loai_nhom ? '#ef4444' : '#e2e8f0'}`,
+                borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none', cursor: 'pointer',
+              }}
+              {...register('loai_nhom', { required: 'Bắt buộc' })}
+            >
+              {NHOM_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            {errors.loai_nhom && (
+              <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.loai_nhom.message}</p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 4 }}>
@@ -315,27 +405,6 @@ export default function KhuVucBaiPage() {
               <span>Sẽ tạo tự động <strong>{tongOPreview.toLocaleString()}</strong> ô bãi</span>
             </div>
           )}
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
-              Nhóm container <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <select
-              style={{
-                width: '100%', padding: '8px 12px',
-                border: `1px solid ${errors.loai_nhom ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: 8, fontSize: 14, background: '#fff', outline: 'none', cursor: 'pointer',
-              }}
-              {...register('loai_nhom', { required: 'Bắt buộc' })}
-            >
-              {NHOM_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-            {errors.loai_nhom && (
-              <p style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{errors.loai_nhom.message}</p>
-            )}
-          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Hủy</Button>

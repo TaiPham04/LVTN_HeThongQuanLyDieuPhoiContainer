@@ -250,7 +250,7 @@ class ManifestController extends Controller
                 'trongluong_kg'     => $trongluong,
                 'mota_hanghoa'      => $mota,
                 'trangthai'         => 'choxacnhan',
-                'trangthai_haiquan' => 'chua_khai',
+                ...Container::phanLuongNgauNhien(),
                 'created_at'        => now(),
                 'updated_at'        => now(),
             ];

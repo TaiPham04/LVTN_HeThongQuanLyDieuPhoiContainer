@@ -8,10 +8,9 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import LoaiContainerSelect from '@/components/shared/LoaiContainerSelect';
-import { useContainerCongList, useDangKyContainer, useCapNhatHaiQuanCong } from '@/hooks/nhanvien/useContainerCong';
+import { useContainerCongList, useDangKyContainer } from '@/hooks/nhanvien/useContainerCong';
 import { useLoaiContainerList } from '@/hooks/admin/useLoaiContainer';
 import { useChuyenTauList } from '@/hooks/admin/useChuyenTau';
-import { HaiQuanModal } from '@/pages/admin/ContainerPage';
 
 /* ── helpers ── */
 const trangThaiBadge = (v, row) => {
@@ -65,16 +64,12 @@ export default function ContainerCongPage() {
   const [filterTT, setFilterTT]       = useState('');
   const [modalOpen, setModalOpen]     = useState(false);
   const [serverErr, setServerErr]     = useState('');
-  const [hqRow, setHqRow]             = useState(null);
-  const [hqTT, setHqTT]               = useState('');
-  const [hqGhiChu, setHqGhiChu]       = useState('');
   const [maloaiChon, setMaloaiChon]   = useState('');
 
   const { data, isLoading }    = useContainerCongList({ trang, search, trangthai: filterTT });
   const { data: loaiData }     = useLoaiContainerList({ per_page: 100 });
   const { data: ctData }       = useChuyenTauList({ per_page: 100 });
   const dangKy                 = useDangKyContainer();
-  const capNhatHQ              = useCapNhatHaiQuanCong();
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({ defaultValues });
 
@@ -147,7 +142,7 @@ export default function ContainerCongPage() {
       render: (v, row) => v ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
           {haiquanBadge(v)}
-          {v !== 'chua_khai' && thongQuanBadge(row.da_thong_quan)}
+          {thongQuanBadge(row.da_thong_quan)}
         </div>
       ) : <span style={{ color: '#cbd5e1' }}>—</span>,
     },
@@ -155,22 +150,6 @@ export default function ContainerCongPage() {
       key: 'thoigian_vaobai',
       label: 'Vào bãi',
       render: (v) => <span style={{ fontSize: 13 }}>{v || '—'}</span>,
-    },
-    {
-      key: 'actions',
-      label: 'Thao tác',
-      align: 'center',
-      width: 110,
-      render: (_, row) => (
-        <Button
-          size="sm"
-          variant={row.trangthai_haiquan === 'chua_khai' ? 'ghost' : row.da_thong_quan ? 'secondary' : 'ghost'}
-          onClick={() => { setHqRow(row); setHqTT(row.trangthai_haiquan); setHqGhiChu(''); }}
-          title={row.trangthai_haiquan === 'chua_khai' ? 'Khai báo luồng hải quan' : 'Xem trạng thái hải quan'}
-        >
-          {row.trangthai_haiquan === 'chua_khai' ? 'Khai báo HQ' : 'Xem HQ'}
-        </Button>
-      ),
     },
   ];
 
@@ -221,30 +200,6 @@ export default function ContainerCongPage() {
 
       <Table columns={columns} data={list} loading={isLoading} emptyText="Chưa có container nào" />
       <Pagination meta={meta} onChange={setTrang} />
-
-      {/* ── Modal Cập nhật hải quan ── */}
-      {hqRow && (
-        <Modal
-          open={!!hqRow}
-          onClose={() => setHqRow(null)}
-          title={`Cập nhật hải quan — ${hqRow.socontainer}`}
-          width={420}
-        >
-          <HaiQuanModal
-            row={hqRow}
-            value={hqTT}
-            onChange={setHqTT}
-            ghichu={hqGhiChu}
-            onGhichuChange={setHqGhiChu}
-            loading={capNhatHQ.isPending}
-            onSubmit={async () => {
-              await capNhatHQ.mutateAsync({ macontainer: hqRow.macontainer, trangthai_haiquan: hqTT, ghichu_haiquan: hqGhiChu });
-              setHqRow(null);
-            }}
-            onClose={() => setHqRow(null)}
-          />
-        </Modal>
-      )}
 
       {/* ── Modal đăng ký ── */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Đăng ký container mới" width={520}>

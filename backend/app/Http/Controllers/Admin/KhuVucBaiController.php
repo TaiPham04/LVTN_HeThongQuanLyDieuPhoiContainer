@@ -58,12 +58,13 @@ class KhuVucBaiController extends Controller
     {
         DB::transaction(function () use ($request, &$khuvucbai) {
             $khuvucbai = KhuVucBai::create([
-                'tenblock'  => $request->tenblock,
-                'sokhoang'  => $request->sokhoang,
-                'sohang'    => $request->sohang,
-                'sotang'    => $request->sotang,
-                'loai_nhom' => $request->loai_nhom,
-                'trangthai' => 'hoatdong',
+                'tenblock'         => $request->tenblock,
+                'sokhoang'         => $request->sokhoang,
+                'sohang'           => $request->sohang,
+                'sotang'           => $request->sotang,
+                'loai_nhom'        => $request->loai_nhom,
+                'loai_hinh_uutien' => $request->loai_hinh_uutien,
+                'trangthai'        => 'hoatdong',
             ]);
 
             // Tự động tạo ô bãi theo sokhoang × sohang × sotang
@@ -91,10 +92,11 @@ class KhuVucBaiController extends Controller
 
         DB::transaction(function () use ($request, $khuvucbai) {
             $khuvucbai->update([
-                'sokhoang'  => $request->sokhoang,
-                'sohang'    => $request->sohang,
-                'sotang'    => $request->sotang,
-                'loai_nhom' => $request->loai_nhom,
+                'sokhoang'         => $request->sokhoang,
+                'sohang'           => $request->sohang,
+                'sotang'           => $request->sotang,
+                'loai_nhom'        => $request->loai_nhom,
+                'loai_hinh_uutien' => $request->loai_hinh_uutien,
             ]);
         });
 

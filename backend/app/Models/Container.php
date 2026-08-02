@@ -60,4 +60,18 @@ class Container extends Model
     {
         return $this->trangthai === 'trongbai';
     }
+
+    // Phân luồng hải quan ngẫu nhiên ngay khi container vào hệ thống — mô phỏng
+    // kết quả phân luồng VNACCS (tiêu chí đánh giá thật nằm ngoài phạm vi hệ thống này).
+    // Tỉ lệ: xanh 70% / vàng 25% / đỏ 5%.
+    public static function phanLuongNgauNhien(): array
+    {
+        $r = mt_rand(1, 100);
+        $luong = $r <= 70 ? 'luong_xanh' : ($r <= 95 ? 'luong_vang' : 'luong_do');
+
+        return [
+            'trangthai_haiquan' => $luong,
+            'da_thong_quan'     => $luong === 'luong_xanh',
+        ];
+    }
 }

@@ -83,38 +83,6 @@ class ContainerCongController extends Controller
         ]);
     }
 
-    // ─── PATCH /api/nv/cong/container/{container}/hai-quan ───────
-    // Khai báo luồng phân loại (Xanh/Vàng/Đỏ) — chỉ thực hiện được 1 lần khi hệ thống
-    // hải quan trả kết quả phân luồng. Luồng là "nhãn" cố định, không đổi sau đó —
-    // luồng vàng/đỏ muốn được thông quan phải qua kiểm hóa (xem BienBanKTController).
-    public function capNhatHaiQuan(Request $request, Container $container): JsonResponse
-    {
-        $request->validate([
-            'trangthai_haiquan' => 'required|in:luong_xanh,luong_vang,luong_do',
-            'ghichu_haiquan'    => 'nullable|string|max:500',
-        ]);
-
-        if ($container->trangthai_haiquan !== 'chua_khai') {
-            return response()->json([
-                'message' => "Container {$container->socontainer} đã được phân luồng ({$container->trangthai_haiquan}) và không thể thay đổi. Nếu là luồng vàng/đỏ, hãy lập biên bản kiểm tra loại \"Hải quan\" để ghi nhận kết quả kiểm hóa.",
-            ], 422);
-        }
-
-        $labelMap = ['luong_xanh' => 'Luồng xanh', 'luong_vang' => 'Luồng vàng', 'luong_do' => 'Luồng đỏ'];
-        $moi = $request->trangthai_haiquan;
-
-        // Luồng xanh không cần kiểm hóa — được thông quan ngay
-        $container->update([
-            'trangthai_haiquan' => $moi,
-            'da_thong_quan'     => $moi === 'luong_xanh',
-        ]);
-
-        return response()->json([
-            'message' => "Đã phân {$labelMap[$moi]} cho container {$container->socontainer}.",
-            'data'    => new ContainerResource($container->fresh()->load(['loaicontainer', 'chuyentau.hangtau'])),
-        ]);
-    }
-
     // ─── POST /api/nv/cong/container ─────────────────────────────
     // Đăng ký container mới = xe đã có mặt tại cổng, nên ghi nhận nhập cổng luôn
     public function store(LuuContainer $request): JsonResponse
@@ -124,8 +92,8 @@ class ContainerCongController extends Controller
 
             $container = Container::create([
                 ...$request->validated(),
+                ...Container::phanLuongNgauNhien(),
                 'trangthai'         => 'trongbai',
-                'trangthai_haiquan' => 'chua_khai',
                 'thoigian_vaobai'   => $now,
             ]);
 

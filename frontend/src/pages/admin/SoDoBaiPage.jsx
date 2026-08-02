@@ -48,6 +48,37 @@ function PopupRow({ label, value }) {
   );
 }
 
+/* ── Nhãn nhóm loại container (đồng bộ với LoaiContainerPage) ──── */
+const NHOM_LABEL = {
+  dry: 'Khô', reefer: 'Lạnh', open_top: 'Open Top',
+  flat_rack: 'Flat Rack', platform: 'Platform', hazmat: 'Nguy hiểm', ventilated: 'Thông gió',
+};
+
+/* ── Nhóm danh sách khu vực bãi theo area (luồng ưu tiên) cho dropdown ── */
+const AREA_LABEL = { xuat: 'Khu vực Xuất', nhap: 'Khu vực Nhập' };
+
+function groupBlockListTheoArea(blockList) {
+  const order = ['xuat', 'nhap'];
+  return order
+    .map(key => ({ key, label: AREA_LABEL[key], items: blockList.filter(b => b.loai_hinh_uutien === key) }))
+    .filter(g => g.items.length > 0);
+}
+
+/* ── Nhóm danh sách chờ gán theo block phù hợp ──────────────────── */
+function groupChoGanTheoBlock(list) {
+  const map = new Map();
+  for (const c of list) {
+    const key = c.block_phuhop || '';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(c);
+  }
+  return [...map.entries()].sort(([a], [b]) => {
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b);
+  });
+}
+
 /* ── Toast đơn giản ─────────────────────────────────────────────── */
 function Toast({ msg, type }) {
   if (!msg) return null;
@@ -240,11 +271,15 @@ export default function SoDoBaiPage() {
           }}
         >
           <option value="">— Chọn khu vực bãi —</option>
-          {blockList.map(b => (
-            <option key={b.makhuvuc} value={b.makhuvuc}>
-              Block {b.tenblock}{b.loai_nhom === 'reefer' ? ' ❄' : ''}
-              {' '}({b.sokhoang}×{b.sohang}×{b.sotang})
-            </option>
+          {groupBlockListTheoArea(blockList).map(g => (
+            <optgroup key={g.key} label={g.label}>
+              {g.items.map(b => (
+                <option key={b.makhuvuc} value={b.makhuvuc}>
+                  Block {b.tenblock}{b.loai_nhom === 'reefer' ? ' ❄' : ''}
+                  {' '}({b.sokhoang}×{b.sohang}×{b.sotang})
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         {block && (
@@ -257,6 +292,12 @@ export default function SoDoBaiPage() {
             {block.loai_nhom === 'reefer' && (
               <span style={{ marginLeft: 10, color: '#0ea5e9', fontWeight: 600 }}>❄ Block lạnh</span>
             )}
+            <span style={{
+              marginLeft: 10, fontWeight: 600,
+              color: block.loai_hinh_uutien === 'nhap' ? '#0369a1' : '#c2410c',
+            }}>
+              {block.loai_hinh_uutien === 'nhap' ? '📥 Khu Nhập' : '📤 Khu Xuất'}
+            </span>
           </span>
         )}
       </div>
@@ -303,13 +344,13 @@ export default function SoDoBaiPage() {
         </div>
       )}
 
-      {/* ── Panel: Containers chờ gán vị trí ── */}
+      {/* ── Panel: Containers chờ gán vị trí (nhóm theo block phù hợp) ── */}
       {choGanList.length > 0 && !daoCtx && (
         <div style={{
           background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10,
           padding: '14px 16px', marginBottom: 16,
         }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 14 }}>
             Chờ gán vị trí
             <span style={{
               marginLeft: 8, background: '#ef4444', color: '#fff',
@@ -318,31 +359,53 @@ export default function SoDoBaiPage() {
               {choGanList.length}
             </span>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {choGanList.map(c => (
-              <div
-                key={c.macontainer}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  border: `2px solid ${ganCtx?.macontainer === c.macontainer ? '#2563eb' : '#e2e8f0'}`,
-                  borderRadius: 8, padding: '7px 12px', background: '#f8fafc',
-                  cursor: 'pointer', transition: 'border-color .15s',
-                }}
-                onClick={() => handleChonGan(c)}
-              >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', letterSpacing: 1 }}>
-                    {c.socontainer}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#6b7280' }}>
-                    {c.mascac ?? '—'} {c.sovoyage ? `· ${c.sovoyage}` : ''}
-                    {c.thoigian_vaobai ? ` · ${c.thoigian_vaobai}` : ''}
-                  </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {groupChoGanTheoBlock(choGanList).map(([blockKey, items]) => (
+              <div key={blockKey || '_none'}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                  fontSize: 12, fontWeight: 700, color: blockKey ? '#2563eb' : '#dc2626',
+                }}>
+                  {blockKey ? `Block ${blockKey}` : 'Chưa có bãi phù hợp'}
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af' }}>({items.length})</span>
                 </div>
-                {ganCtx?.macontainer === c.macontainer
-                  ? <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 600 }}>Đang chọn</span>
-                  : <span style={{ fontSize: 11, color: '#9ca3af' }}>Chọn →</span>
-                }
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: 8,
+                }}>
+                  {items.map(c => (
+                    <div
+                      key={c.macontainer}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: 4,
+                        border: `2px solid ${ganCtx?.macontainer === c.macontainer ? '#2563eb' : '#e2e8f0'}`,
+                        borderRadius: 8, padding: '8px 12px', background: '#f8fafc',
+                        cursor: 'pointer', transition: 'border-color .15s',
+                      }}
+                      onClick={() => handleChonGan(c)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', letterSpacing: 1 }}>
+                          {c.socontainer}
+                        </span>
+                        <span style={{ fontSize: 10, color: '#9ca3af', flexShrink: 0 }}>
+                          {NHOM_LABEL[c.nhom] ?? c.nhom ?? '—'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>
+                        {c.mascac ?? '—'}{c.sovoyage ? ` · ${c.sovoyage}` : ''}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#9ca3af', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{c.thoigian_vaobai ?? ''}</span>
+                        {ganCtx?.macontainer === c.macontainer && (
+                          <span style={{ color: '#2563eb', fontWeight: 700 }}>Đang chọn</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -389,7 +452,7 @@ export default function SoDoBaiPage() {
                       </div>
                     </div>
                     <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 4 }}>
-                      điểm {s.score}
+                      {['Phù hợp nhất', 'Phù hợp nhì', 'Phù hợp ba'][i] ?? `Hạng ${i + 1}`}
                     </span>
                   </div>
                 ))}

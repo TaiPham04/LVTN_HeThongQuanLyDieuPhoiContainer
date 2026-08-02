@@ -97,7 +97,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('container',                               [ContainerController::class, 'store']);
         Route::put('container/{container}',                    [ContainerController::class, 'update']);
         Route::delete('container/{container}',                 [ContainerController::class, 'destroy']);
-        Route::patch('container/{container}/hai-quan',         [ContainerController::class, 'capNhatHaiQuan']);
 
         // Lịch tàu
         Route::get('lich-tau',                           [ChuyenTauController::class, 'index']);
@@ -150,7 +149,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('container/lookup',                     [ContainerCongController::class, 'lookup']);
         Route::get('container/{container}',                [ContainerCongController::class, 'show']);
         Route::post('container',                           [ContainerCongController::class, 'store']);
-        Route::patch('container/{container}/hai-quan',     [ContainerCongController::class, 'capNhatHaiQuan']);
 
         // Lịch tàu — chỉ xem (CongXuatNhapPage cần để lấy danh sách tàu đang cập cảng)
         Route::get('lich-tau', [NVLichTauController::class, 'index']);

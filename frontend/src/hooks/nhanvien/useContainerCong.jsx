@@ -29,12 +29,3 @@ export function useDangKyContainer() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
-
-export function useCapNhatHaiQuanCong() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ macontainer, ...payload }) =>
-      api.patch(`/nv/cong/container/${macontainer}/hai-quan`, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
-  });
-}

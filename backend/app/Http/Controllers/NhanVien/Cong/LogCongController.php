@@ -61,6 +61,12 @@ class LogCongController extends Controller
             if ($container->trangthai === 'khonghoatdong') {
                 return response()->json(['message' => "Container {$container->socontainer} đã bị vô hiệu hóa."], 422);
             }
+
+            // Khung thời gian hạ bãi — chỉ áp dụng cho hàng xuất (hàng nhập vào bãi
+            // qua module Tally sau khi tàu cập cảng, không qua cổng theo lịch đặt chỗ).
+            if ($container->loai_hinh === 'xuat' && $container->chuyentau && !$container->chuyentau->trongKhungHaBai()) {
+                return response()->json(['message' => $container->chuyentau->thongBaoNgoaiKhungHaBai()], 422);
+            }
         } else {
             if ($container->trangthai !== 'trongbai') {
                 return response()->json([

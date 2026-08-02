@@ -15,6 +15,7 @@ class KhuVucBai extends Model
         'sohang',
         'sotang',
         'loai_nhom',
+        'loai_hinh_uutien',
         'trangthai',
     ];
 

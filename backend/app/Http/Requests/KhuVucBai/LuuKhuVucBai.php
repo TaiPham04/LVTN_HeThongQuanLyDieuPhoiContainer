@@ -21,6 +21,7 @@ class LuuKhuVucBai extends FormRequest
             'sohang'    => ['required', 'integer', 'min:1'],
             'sotang'    => ['required', 'integer', 'min:1', 'max:10'],
             'loai_nhom' => ['required', Rule::in(['dry','reefer','open_top','flat_rack','platform','hazmat','ventilated'])],
+            'loai_hinh_uutien' => ['required', Rule::in(['nhap','xuat'])],
         ];
 
         // Tên khu vực là khóa định danh — chỉ đặt được lúc tạo mới, không đổi được sau đó
@@ -45,6 +46,8 @@ class LuuKhuVucBai extends FormRequest
             'sotang.max'          => 'Số tầng tối đa là 10.',
             'loai_nhom.required'  => 'Vui lòng chọn nhóm container cho khu vực này.',
             'loai_nhom.in'        => 'Nhóm container không hợp lệ.',
+            'loai_hinh_uutien.required' => 'Vui lòng chọn luồng ưu tiên cho khu vực này.',
+            'loai_hinh_uutien.in'       => 'Luồng ưu tiên không hợp lệ.',
         ];
     }
 }

@@ -19,7 +19,7 @@ class SoDoBaiController extends Controller
     {
         $blocks = KhuVucBai::hoatDong()
             ->orderBy('tenblock')
-            ->get(['makhuvuc', 'tenblock', 'sokhoang', 'sohang', 'sotang', 'loai_nhom']);
+            ->get(['makhuvuc', 'tenblock', 'sokhoang', 'sohang', 'sotang', 'loai_nhom', 'loai_hinh_uutien']);
 
         return response()->json(['data' => $blocks]);
     }
@@ -59,6 +59,7 @@ class SoDoBaiController extends Controller
                 'sohang'       => $khuvucbai->sohang,
                 'sotang'       => $khuvucbai->sotang,
                 'loai_nhom'    => $khuvucbai->loai_nhom,
+                'loai_hinh_uutien' => $khuvucbai->loai_hinh_uutien,
             ],
             'obai' => $obaiList,
         ]);
@@ -70,18 +71,31 @@ class SoDoBaiController extends Controller
     {
         $assigned = LichSuViTri::whereNull('thoigian_roi')->pluck('macontainer')->toArray();
 
+        // Danh sách block đang hoạt động — dùng để suy ra block phù hợp cho từng
+        // container theo cả nhóm loại container LẪN luồng nhập/xuất.
+        $blocks = KhuVucBai::hoatDong()->get(['tenblock', 'loai_nhom', 'loai_hinh_uutien']);
+
         $containers = Container::where('trangthai', 'trongbai')
             ->whereNotIn('macontainer', $assigned)
-            ->with(['chuyentau.hangtau'])
+            ->with(['chuyentau.hangtau', 'loaicontainer'])
             ->orderBy('thoigian_vaobai')
             ->get()
-            ->map(fn ($c) => [
-                'macontainer'     => $c->macontainer,
-                'socontainer'     => $c->socontainer,
-                'mascac'          => $c->chuyentau?->hangtau?->mascac,
-                'sovoyage'        => $c->chuyentau?->sovoyage,
-                'thoigian_vaobai' => $c->thoigian_vaobai?->format('d/m/Y H:i'),
-            ]);
+            ->map(function ($c) use ($blocks) {
+                $nhom = $c->loaicontainer?->nhom;
+                $blockPhuHop = $blocks
+                    ->filter(fn ($b) => $b->loai_nhom === $nhom && $b->loai_hinh_uutien === $c->loai_hinh)
+                    ->pluck('tenblock')->sort()->implode(', ');
+
+                return [
+                    'macontainer'     => $c->macontainer,
+                    'socontainer'     => $c->socontainer,
+                    'mascac'          => $c->chuyentau?->hangtau?->mascac,
+                    'sovoyage'        => $c->chuyentau?->sovoyage,
+                    'thoigian_vaobai' => $c->thoigian_vaobai?->format('d/m/Y H:i'),
+                    'nhom'            => $nhom,
+                    'block_phuhop'    => $blockPhuHop ?: null,
+                ];
+            });
 
         return response()->json(['data' => $containers]);
     }
@@ -102,10 +116,12 @@ class SoDoBaiController extends Controller
 
         try {
             [$container, $obai] = DB::transaction(function () use ($request) {
-                // Khóa cả 2 bản ghi trước khi kiểm tra — tránh 2 request đồng thời
-                // cùng đọc "còn trống" rồi cùng gán vào 1 ô / cùng 1 container.
-                $obai      = OBai::with('khuvucbai')->where('maobai', $request->maobai)->lockForUpdate()->firstOrFail();
-                $container = Container::with('loaicontainer')->where('macontainer', $request->macontainer)->lockForUpdate()->firstOrFail();
+                $obai = OBai::with('khuvucbai')->where('maobai', $request->maobai)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                $container = Container::with('loaicontainer')->where('macontainer', $request->macontainer)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 if ($obai->trangthai !== 'trong') {
                     throw new GanViTriException('Ô bãi này đã được sử dụng.');
@@ -121,6 +137,10 @@ class SoDoBaiController extends Controller
 
                 if ($loai?->nhom !== $obai->khuvucbai?->loai_nhom) {
                     throw new GanViTriException('Loại container này không phù hợp với khu vực bãi đã chọn.');
+                }
+
+                if (!$this->phuHopLuong($obai->khuvucbai, $container->loai_hinh)) {
+                    throw new GanViTriException($this->thongBaoSaiLuong($obai->khuvucbai, $container->loai_hinh));
                 }
 
                 // Kiểm tra vật lý: tầng > 1 phải có container ở tầng bên dưới
@@ -165,6 +185,8 @@ class SoDoBaiController extends Controller
             ->with('container')
             ->first();
 
+        //Nếu container của ng dùng đang thực hiện đảo chuyển đã bị ng khác thực hiên
+        //thì hệ thống sẽ báo lỗi 
         if (!$lichSu) {
             return response()->json(['message' => 'Ô này không có container.'], 422);
         }
@@ -222,6 +244,10 @@ class SoDoBaiController extends Controller
                     throw new GanViTriException('Loại container này không phù hợp với khu vực bãi đích.');
                 }
 
+                if (!$this->phuHopLuong($obaiMoi->khuvucbai, $lichSuCu->container->loai_hinh)) {
+                    throw new GanViTriException($this->thongBaoSaiLuong($obaiMoi->khuvucbai, $lichSuCu->container->loai_hinh));
+                }
+
                 // Kiểm tra vật lý: tầng > 1 phải có container ở tầng bên dưới
                 if ($obaiMoi->tang > 1) {
                     $obaiDuoi = OBai::where('makhuvuc', $obaiMoi->makhuvuc)
@@ -260,6 +286,22 @@ class SoDoBaiController extends Controller
         ]);
     }
 
+    // ─── Kiểm tra khu vực bãi có phù hợp luồng nhập/xuất của container không ──
+    // Mỗi khu vực bãi chuyên biệt đúng 1 luồng — không có khái niệm "dùng chung".
+    private function phuHopLuong(?KhuVucBai $khuvucbai, ?string $loaiHinh): bool
+    {
+        return $khuvucbai?->loai_hinh_uutien === $loaiHinh;
+    }
+
+    private function thongBaoSaiLuong(?KhuVucBai $khuvucbai, ?string $loaiHinh): string
+    {
+        $label = ['nhap' => 'Nhập', 'xuat' => 'Xuất'];
+        $uutienLabel  = $label[$khuvucbai?->loai_hinh_uutien] ?? $khuvucbai?->loai_hinh_uutien;
+        $loaiHinhLabel = $label[$loaiHinh] ?? $loaiHinh;
+
+        return "Khu vực bãi {$khuvucbai?->tenblock} chỉ ưu tiên cho luồng {$uutienLabel}, không phù hợp với container luồng {$loaiHinhLabel}.";
+    }
+
     // ─── Kiểm tra có container xếp trên ô này không ──────────────
     private function coContTrenDau(OBai $obai): bool
     {
@@ -280,69 +322,109 @@ class SoDoBaiController extends Controller
         $loai = $container->loaicontainer;
         $nhom = $loai?->nhom;
 
-        $query = OBai::where('trangthai', 'trong')->with('khuvucbai');
-        if ($excludeObai) $query->where('maobai', '!=', $excludeObai);
-        if ($maxTang !== null) $query->where('tang', '<=', $maxTang);
+        // Sắp xếp cố định (tầng → block → khoang → hàng) để khi nhiều ô đồng điểm,
+        // thứ tự tie-break luôn xác định và tái lập được — không phụ thuộc thứ tự
+        // vật lý ngẫu nhiên MySQL trả về.
+        $query = OBai::where('trangthai', 'trong')
+            ->with('khuvucbai')
+            ->orderBy('tang') //Khóa sắp xếp chính
+            ->orderBy('makhuvuc')
+            ->orderBy('khoang')
+            ->orderBy('hang');
 
+        if ($excludeObai) $query->where('maobai', '!=', $excludeObai); //Điều kiện gợi ý là phải khác ô hiện tại
+        if ($maxTang !== null) $query->where('tang', '<=', $maxTang);  //Điều kiện gợi ý nhỏ hơn hoặc bằng số tầng hiện tại
+
+        //Hiển thị các ô đang được sử dụng 
         $occupiedKeys = OBai::where('trangthai', 'dangsudung')
             ->get(['makhuvuc', 'khoang', 'hang', 'tang'])
             ->mapWithKeys(fn ($o) => ["{$o->makhuvuc}-{$o->khoang}-{$o->hang}-{$o->tang}" => true])
             ->all();
 
-        $emptySlots = $query->get()->filter(function ($o) use ($nhom, $occupiedKeys) {
+        //Chọn ra ô ứng viên phù hợp
+        $emptySlots = $query->get()->filter(function ($o) use ($nhom, $container, $occupiedKeys) {
+            
+            //Kiểm tra nhóm container có đúng với loại nhóm của khu vực bãi đó kh
             if ($o->khuvucbai?->loai_nhom !== $nhom) return false;
+
+            //Kiểm tra loại hình container (xuất/nhập) có phù hợp với loại hình ưu tiên của khu vực đó kh
+            if (!$this->phuHopLuong($o->khuvucbai, $container->loai_hinh)) return false;
+
+            //Kiểm tra trường hợp tầng lớn hơn 1:
             if ($o->tang > 1) {
+
+                //thì lấy vị trí ngay taij ô phía dưới của ô đó(cùng khu vực cùng khoang cùng hàng nhưng tầng dưới)
                 $belowKey = "{$o->makhuvuc}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1);
+
+                //Nếu kh tồn tại container phía dưới hay tầng dưới rỗng sẽ trả về false
                 if (!isset($occupiedKeys[$belowKey])) return false;
             }
             return true;
         });
 
+        //Nếu vị trí rỗng thì có thể đặt được
         if ($emptySlots->isEmpty()) {
-            return collect();
+            return collect(); //Trả về collection rỗng nếu kh có ô nào hợp lệ
         }
 
-        // Thống kê block từ các container đang chiếm ô
+        // Thống kê block từ các container đang chiếm ô: block chứa container của
+        // những chuyến tàu nào. KHÔNG còn thống kê theo hãng tàu — tiêu chí "cùng
+        // hãng tàu" đã bị loại bỏ (xem diemGoiYXuat): 2 container cùng hãng nhưng
+        // khác chuyến/khác ngày rời bến vẫn có lịch bốc dỡ hoàn toàn độc lập, gom
+        // chung chỉ làm tăng nguy cơ đảo chuyển thừa mà không mang lại lợi ích gì —
+        // "cùng chuyến" (+40) và "đúng thứ tự ngày rời bến" (±30) đã đủ để gom nhóm
+        // đúng nghĩa (theo lịch bốc dỡ thực tế), không cần thêm tiêu chí phụ này.
         $occupied = DB::table('lichsuvitri')
             ->join('obai',      'lichsuvitri.maobai',      '=', 'obai.maobai')
             ->join('container', 'lichsuvitri.macontainer', '=', 'container.macontainer')
             ->join('chuyentau', 'container.machuyentau',   '=', 'chuyentau.machuyentau')
+
+            //Lấy các container còn nằm trong bãi
             ->whereNull('lichsuvitri.thoigian_roi')
-            ->select('obai.makhuvuc', 'chuyentau.mahangtau', 'container.machuyentau')
+            ->select(
+                'obai.makhuvuc', 'obai.khoang', 'obai.hang', 'obai.tang',
+                'container.machuyentau', 'chuyentau.thoigianroiben'
+            )
             ->get();
 
-        $blockHangTau = [];
-        $blockChuyen  = [];
-        $blockLoad    = [];
+        $blockChuyen     = [];
+        $blockLoad       = [];
+        $roiBenTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => ngày rời bến của container đang ở đúng ô đó
+        $chuyenTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => machuyentau của container đang ở đúng ô đó
 
         foreach ($occupied as $r) {
-            $blockHangTau[$r->makhuvuc][$r->mahangtau] = true;
+
+            //Block có chứa chuyến tàu x kh
             $blockChuyen[$r->makhuvuc][$r->machuyentau] = true;
+
+            //Đếm số container nếu có chứa 1 or 2 thì +1
             $blockLoad[$r->makhuvuc] = ($blockLoad[$r->makhuvuc] ?? 0) + 1;
+
+            // Ghi nhận ngày rời bến theo đúng vị trí vật lý — dùng để so sánh thứ tự
+            // xếp chồng (LIFO) ở diemGoiYXuat().
+            $roiBenTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->thoigianroiben;
+
+            // Ghi nhận chuyến tàu theo đúng vị trí vật lý — dùng để ưu tiên xây cao
+            // cùng 1 cột theo đúng 1 chuyến, và mở rộng liền kề khi cột đã đầy.
+            $chuyenTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->machuyentau;
         }
 
+
+        //Đếm tổng số ô của các block loại các ô không hoạt động
         $totalPerBlock = OBai::whereNot('trangthai', 'khonghoatdong')
             ->groupBy('makhuvuc')
             ->select('makhuvuc', DB::raw('COUNT(*) as total'))
             ->pluck('total', 'makhuvuc');
 
-        return $emptySlots->map(function ($o) use ($container, $blockHangTau, $blockChuyen, $blockLoad, $totalPerBlock) {
-            $score = 0;
-            $kv    = $o->makhuvuc;
+        //Trả về 3 vị trí phù hợp nhất
+        return $emptySlots->map(function ($o) use ($container, $blockChuyen, $blockLoad, $totalPerBlock, $roiBenTheoViTri, $chuyenTheoViTri) {
+            $kv = $o->makhuvuc;
+            $total = $totalPerBlock[$kv] ?? 1;
+            $tyLeDayBlock = ($blockLoad[$kv] ?? 0) / $total;
 
-            // Cùng chuyến tàu trong block: +30 (ưu tiên cao nhất — Full Yard gom theo voyage)
-            if (!empty($blockChuyen[$kv][$container->machuyentau])) {
-                $score += 30;
-            }
-            // Cùng hãng tàu trong block: +20
-            if (!empty($blockHangTau[$kv][$container->chuyentau?->mahangtau])) {
-                $score += 20;
-            }
-            // Ưu tiên tầng thấp: -10 mỗi tầng
-            $score -= $o->tang * 10;
-            // Ưu tiên block ít hàng hơn: -tối đa 20 điểm
-            $total  = $totalPerBlock[$kv] ?? 1;
-            $score -= (int) round(($blockLoad[$kv] ?? 0) / $total * 20);
+            $score = $container->loai_hinh === 'xuat'
+                ? $this->diemGoiYXuat($container, $o, $kv, $blockChuyen, $tyLeDayBlock, $roiBenTheoViTri, $chuyenTheoViTri)
+                : $this->diemGoiYNhap($container, $o, $tyLeDayBlock);
 
             return [
                 'maobai'      => $o->maobai,
@@ -358,5 +440,127 @@ class SoDoBaiController extends Controller
         ->sortByDesc('score')
         ->take(3)
         ->values();
+    }
+
+    // Điểm gợi ý cho container XUẤT — ưu tiên gom theo chuyến tàu để dễ
+    // bốc lên tàu, càng gần ngày tàu rời bến càng cần đặt thấp để lấy nhanh
+    private function diemGoiYXuat(Container $container, OBai $o, int $kv, array $blockChuyen, float $tyLeDayBlock, array $roiBenTheoViTri, array $chuyenTheoViTri): int
+    {
+        $score = 0;
+        $sotang = $o->khuvucbai->sotang;
+
+        //Nếu trong block hiện tại đã tồn tại ít nhất một container cùng chuyến tàu với container đang xét score + 15
+        if (!empty($blockChuyen[$kv][$container->machuyentau])) {
+            $score += 15;
+        }
+
+        if ($o->tang > 1) {
+            $chuyenBenDuoi = $chuyenTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
+
+            if ($chuyenBenDuoi !== null && (int) $chuyenBenDuoi === (int) $container->machuyentau) {
+                // TIER 1 — ƯU TIÊN TUYỆT ĐỐI: đúng chuyến tàu đang nằm ngay bên dưới.
+                // Càng lên cao càng cộng NHIỀU điểm hơn (không phải ít đi) — khuyến
+                // khích xây ĐẦY 1 cột theo đúng 1 chuyến trước khi mở cột khác, tránh
+                // tình trạng 1 cột lẫn lộn 2-3 chuyến tàu khác nhau theo từng tầng.
+                $score += 20 + $o->tang * 10;
+            } else {
+                // Buộc phải chồng lên 1 chuyến KHÁC (không còn cột nào cùng chuyến để
+                // xây cao tiếp) — phạt cơ bản vì làm 1 cột lẫn nhiều chuyến tàu.
+                $score -= 20;
+
+                // TIER 2 — PHỤ: chỉ xét đúng/sai thứ tự ngày rời bến (LIFO) KHI đã
+                // buộc phải trộn chuyến — vẫn cần tránh chặn đường lấy hàng của chuyến
+                // rời sớm hơn, nhưng trọng số nhỏ hơn hẳn tiêu chí gom theo chuyến ở
+                // Tier 1, vì đây chỉ là "chọn cái ít tệ hơn" khi hết lựa chọn tốt.
+                $roiBenBenDuoi = $roiBenTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
+                $roiBenCuaMinh = $container->chuyentau?->thoigianroiben;
+
+                if ($roiBenBenDuoi && $roiBenCuaMinh) {
+                    if ($roiBenCuaMinh->lessThanOrEqualTo(\Carbon\Carbon::parse($roiBenBenDuoi))) {
+                        $score += 15; // đúng thứ tự: cont mới rời sớm hơn/bằng cont bên dưới
+                    } else {
+                        $score -= 30; // sai thứ tự: sẽ chặn đường lấy cont bên dưới
+                    }
+                }
+            }
+        } else {
+            // TIER 1b — Tầng 1 (mở cột mới): thưởng nếu liền kề (4 hướng khoang/hàng)
+            // 1 cột ĐÃ ĐẦY (chạm sotang) của ĐÚNG chuyến tàu này — khi cột cũ hết chỗ
+            // xây cao tiếp, ưu tiên mở rộng NGAY XUNG QUANH thay vì rải rác khắp
+            // block, giữ container cùng chuyến tụ lại thành 1 khu vực liền mạch.
+            $lienKe = [
+                [$o->khoang - 1, $o->hang],
+                [$o->khoang + 1, $o->hang],
+                [$o->khoang, $o->hang - 1],
+                [$o->khoang, $o->hang + 1],
+            ];
+            foreach ($lienKe as [$k, $h]) {
+                $chuyenODinhCot = $chuyenTheoViTri["{$kv}-{$k}-{$h}-{$sotang}"] ?? null;
+                if ($chuyenODinhCot !== null && (int) $chuyenODinhCot === (int) $container->machuyentau) {
+                    $score += 25;
+                    break;
+                }
+            }
+        }
+
+        // Vị trí tương đối trong ngăn xếp — CHUẨN HÓA theo sotang thực tế của TỪNG
+        // block, thay vì dùng số tầng tuyệt đối: 0 = đáy/mở cột mới (không đè lên ai),
+        // 1 = đỉnh cao nhất được phép của block đó. Nhờ vậy "tầng 2" của block 4 tầng
+        // (A) và "tầng 2" của block 3 tầng (C) được so sánh công bằng theo đúng MỨC ĐỘ
+        // CAO tương đối, không bị đánh đồng chỉ vì cùng là "tầng 2". Block chỉ có 1
+        // tầng (G — hazmat) thì không có khái niệm "cao/thấp", tỉ lệ luôn = 0. Đây vẫn
+        // là tiêu chí PHỤ, thường bị lấn át bởi tín hiệu "xây cao cùng chuyến" ở Tier 1.
+        $tyLeTang = $sotang > 1 ? ($o->tang - 1) / ($sotang - 1) : 0.0;
+
+        // Phạt theo vị trí tương đối: càng gần đỉnh cho phép của block càng bị trừ
+        // nhiều (đang chồng lên nhiều container hơn) — tối đa 24 điểm ở đỉnh.
+        $score -= (int) round($tyLeTang * 24);
+
+        // Càng gần giờ đóng hạ bãi (cut-off — mốc cảng lập kế hoạch xếp dỡ, không phải
+        // ETD) càng cần đặt thấp để lấy nhanh, tránh đảo chuyển gấp. Dùng hàm giảm dần
+        // TUYẾN TÍNH theo số ngày còn lại (không phải bậc thang) để tránh 2 container
+        // lệch nhau 1 ngày quanh 1 mốc cứng bị chấm điểm lệch hẳn.
+        $soNgayConLai = $container->chuyentau?->thoiGianDongHaBai()
+            ? now()->diffInDays($container->chuyentau->thoiGianDongHaBai(), false)
+            : null;
+
+        //Nếu đã lên lịch tức là có số ngày còn lại và số ngày đó >=0
+        if ($soNgayConLai !== null && $soNgayConLai >= 0) {
+            // Hệ số theo vị trí tương đối: đáy (tyLeTang=0) hưởng lợi tối đa (5), đỉnh
+            // cho phép (tyLeTang=1) hết tác dụng (0) — giảm dần MƯỢT, không còn mốc
+            // cứng "tầng ≥3 thì hết bonus" như trước, và tự thích ứng theo sotang.
+            $heSoTang = 5 * (1 - $tyLeTang);
+            // Còn 0 ngày -> hệ số khẩn cấp 4; còn ≥4 ngày -> hết khẩn cấp (bonus = 0).
+            $score += (int) round(max(0, 4 - $soNgayConLai) * $heSoTang);
+        }
+
+        // Ưu tiên block ít hàng hơn: -tối đa 15 điểm
+        $score -= (int) round($tyLeDayBlock * 15);
+
+        return $score;
+    }
+
+    // ─── Điểm gợi ý cho container NHẬP — ưu tiên đặt thấp để khách lấy hàng
+    // thuận tiện bất cứ lúc nào, không phụ thuộc lịch tàu ───────────────────
+    private function diemGoiYNhap(Container $container, OBai $o, float $tyLeDayBlock): int
+    {
+        $score = 0;
+
+        // Ưu tiên tầng thấp: -15 mỗi tầng — tiêu chí chính cho hàng nhập
+        $score -= $o->tang * 15;
+
+        // Đã thông quan (có thể lấy ngay): thưởng thêm cho vị trí càng thấp càng tốt
+        if ($container->da_thong_quan) {
+            $score += match (true) {
+                $o->tang === 1 => 15,
+                $o->tang === 2 => 7,
+                default        => 0,
+            };
+        }
+
+        // Ưu tiên block ít hàng hơn: -tối đa 20 điểm
+        $score -= (int) round($tyLeDayBlock * 20);
+
+        return $score;
     }
 }

@@ -80,7 +80,7 @@ class BookingKHController extends Controller
             'mota_hanghoa'      => $request->mota_hanghoa,
             'ghichu'            => $request->ghichu,
             'trangthai'         => 'dangky',
-            'trangthai_haiquan' => 'chua_khai',
+            ...Container::phanLuongNgauNhien(),
         ]);
 
         return response()->json([

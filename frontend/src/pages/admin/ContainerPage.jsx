@@ -9,7 +9,7 @@ import ConfirmDelete from '@/components/ui/ConfirmDelete';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import LoaiContainerSelect from '@/components/shared/LoaiContainerSelect';
-import { useContainerList, useThemContainer, useCapNhatContainer, useXoaContainer, useCapNhatHaiQuan } from '@/hooks/admin/useContainer';
+import { useContainerList, useThemContainer, useCapNhatContainer, useXoaContainer } from '@/hooks/admin/useContainer';
 import useAuthStore from '@/store/authStore';
 import { useLoaiContainerList } from '@/hooks/admin/useLoaiContainer';
 import { useHangTauList } from '@/hooks/admin/useHangTau';
@@ -70,9 +70,6 @@ export default function ContainerPage() {
   const [detailRow, setDetailRow]       = useState(null);
   const [editRow, setEditRow]           = useState(null);
   const [deleteRow, setDeleteRow]       = useState(null);
-  const [hqRow, setHqRow]               = useState(null);
-  const [hqTT, setHqTT]                 = useState('');
-  const [hqGhiChu, setHqGhiChu]         = useState('');
   const [serverErr, setServerErr]       = useState('');
   const [maloaiChon, setMaloaiChon]     = useState('');
 
@@ -84,7 +81,6 @@ export default function ContainerPage() {
   const them       = useThemContainer();
   const capNhat    = useCapNhatContainer();
   const xoa        = useXoaContainer();
-  const capNhatHQ  = useCapNhatHaiQuan();
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({ defaultValues });
 
@@ -141,7 +137,7 @@ export default function ContainerPage() {
       render: (v, row) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
           {haiquanBadge(v)}
-          {v !== 'chua_khai' && thongQuanBadge(row.da_thong_quan)}
+          {thongQuanBadge(row.da_thong_quan)}
         </div>
       ),
     },
@@ -149,15 +145,11 @@ export default function ContainerPage() {
       key: 'actions',
       label: 'Thao tác',
       align: 'center',
-      width: 170,
+      width: 140,
       render: (_, row) => (
         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
           <Button size="sm" variant="secondary" onClick={() => setDetailRow(row)}>Chi tiết</Button>
           {isAdmin() && <>
-            <Button size="sm" variant="ghost"
-              onClick={() => { setHqRow(row); setHqTT(row.trangthai_haiquan); setHqGhiChu(''); }}
-              title="Cập nhật trạng thái hải quan"
-            >HQ</Button>
             <Button size="sm" variant="ghost"
               onClick={() => openSua(row)}
               disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
@@ -467,7 +459,7 @@ export default function ContainerPage() {
               ['Trọng lượng',    detailRow.trongluong_kg ? `${detailRow.trongluong_kg} kg` : '—'],
               ['Trạng thái',     trangThaiBadge(detailRow.trangthai, detailRow)],
               ['Hải quan',       haiquanBadge(detailRow.trangthai_haiquan)],
-              ['Thông quan',     detailRow.trangthai_haiquan !== 'chua_khai' ? thongQuanBadge(detailRow.da_thong_quan) : '—'],
+              ['Thông quan',     thongQuanBadge(detailRow.da_thong_quan)],
               ['Ngày vào bãi',   detailRow.thoigian_vaobai || '—'],
               ['Ngày ra bãi',    detailRow.thoigian_rabai || '—'],
               ['Bị hỏng',        detailRow.bi_hong ? '⚠️ Có' : 'Không'],
@@ -502,168 +494,6 @@ export default function ContainerPage() {
           loading={xoa.isPending}
         />
       )}
-
-      {/* ── Modal Cập nhật hải quan ── */}
-      {hqRow && (
-        <Modal
-          open={!!hqRow}
-          onClose={() => setHqRow(null)}
-          title={`Cập nhật hải quan — ${hqRow.socontainer}`}
-          width={420}
-        >
-          <HaiQuanModal
-            row={hqRow}
-            value={hqTT}
-            onChange={setHqTT}
-            ghichu={hqGhiChu}
-            onGhichuChange={setHqGhiChu}
-            loading={capNhatHQ.isPending}
-            onSubmit={async () => {
-              await capNhatHQ.mutateAsync({ macontainer: hqRow.macontainer, trangthai_haiquan: hqTT, ghichu_haiquan: hqGhiChu });
-              setHqRow(null);
-            }}
-            onClose={() => setHqRow(null)}
-          />
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-/* ── Component modal hải quan (dùng chung) ── */
-// Luồng (Xanh/Vàng/Đỏ) là nhãn cố định do hệ thống hải quan phân loại — chỉ khai báo
-// được 1 lần, không đổi sau đó. Việc "thông quan" là trạng thái RIÊNG: luồng xanh
-// tự động thông quan, còn luồng vàng/đỏ phải qua kiểm hóa (lập Biên bản kiểm tra
-// loại "Hải quan") mới được thông quan — xem BienBanKTController.
-const HQ_LABEL = { luong_xanh: 'Luồng xanh', luong_vang: 'Luồng vàng', luong_do: 'Luồng đỏ' };
-const HQ_COLOR = { luong_xanh: '#16a34a', luong_vang: '#ca8a04', luong_do: '#dc2626' };
-
-export function HaiQuanModal({ row, value, onChange, ghichu, onGhichuChange, loading, onSubmit, onClose }) {
-  const [err, setErr] = useState('');
-  const daKhai = row.trangthai_haiquan !== 'chua_khai';
-
-  const handle = async () => {
-    setErr('');
-    try { await onSubmit(); }
-    catch (e) { setErr(e?.response?.data?.message || 'Đã có lỗi xảy ra.'); }
-  };
-
-  // ── Đã khai luồng: chỉ hiển thị thông tin, không cho đổi luồng nữa ──
-  if (daKhai) {
-    return (
-      <div>
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Luồng đã phân (cố định)</div>
-            <span style={{
-              display: 'inline-block', padding: '4px 12px', borderRadius: 20,
-              background: HQ_COLOR[row.trangthai_haiquan] + '1a',
-              color: HQ_COLOR[row.trangthai_haiquan],
-              fontWeight: 600, fontSize: 13,
-            }}>
-              {HQ_LABEL[row.trangthai_haiquan] || row.trangthai_haiquan}
-            </span>
-          </div>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Thông quan</div>
-            <span style={{
-              display: 'inline-block', padding: '4px 12px', borderRadius: 20,
-              background: row.da_thong_quan ? '#16a34a1a' : '#ca8a041a',
-              color: row.da_thong_quan ? '#16a34a' : '#ca8a04',
-              fontWeight: 600, fontSize: 13,
-            }}>
-              {row.da_thong_quan ? 'Đã thông quan' : 'Chưa thông quan'}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#475569' }}>
-          Luồng là nhãn cố định do hệ thống hải quan phân loại từ đầu, không thể chỉnh sửa.
-          {!row.da_thong_quan && (row.trangthai_haiquan === 'luong_vang' || row.trangthai_haiquan === 'luong_do')
-            ? ' Container ở luồng vàng/đỏ cần qua kiểm hóa — vào trang "Biên bản kiểm tra", lập biên bản loại "Hải quan" với kết luận "Đạt yêu cầu" để xác nhận thông quan.'
-            : ''}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-          <button
-            type="button" onClick={onClose}
-            style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13 }}
-          >Đóng</button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Chưa khai: khai báo luồng lần đầu (1 lần duy nhất) ──
-  return (
-    <div>
-      <div style={{ marginBottom: 14 }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
-          Kết quả phân luồng từ hệ thống hải quan <span style={{ color: '#ef4444' }}>*</span>
-        </label>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {['luong_xanh', 'luong_vang', 'luong_do'].map(tt => (
-            <button
-              key={tt}
-              type="button"
-              onClick={() => onChange(tt)}
-              style={{
-                flex: 1, padding: '9px 6px', borderRadius: 8, cursor: 'pointer',
-                border: `2px solid ${value === tt ? HQ_COLOR[tt] : '#e2e8f0'}`,
-                background: value === tt ? HQ_COLOR[tt] + '15' : '#fff',
-                color: value === tt ? HQ_COLOR[tt] : '#374151',
-                fontWeight: value === tt ? 700 : 400,
-                fontSize: 13, transition: 'all .15s',
-              }}
-            >
-              {HQ_LABEL[tt]}
-            </button>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
-          Lưu ý: sau khi lưu, luồng sẽ không thể thay đổi. Luồng vàng/đỏ sẽ cần kiểm hóa để được thông quan.
-        </p>
-      </div>
-
-      {/* Ghi chú lý do */}
-      <div style={{ marginBottom: 6 }}>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
-          Ghi chú <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 400 }}>(không bắt buộc)</span>
-        </label>
-        <textarea
-          value={ghichu}
-          onChange={e => onGhichuChange(e.target.value)}
-          rows={3}
-          placeholder="VD: Kết quả phân luồng từ hệ thống VNACCS ngày 20/06/2026…"
-          style={{
-            width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0',
-            borderRadius: 8, fontSize: 13, outline: 'none', resize: 'none',
-            fontFamily: 'inherit', boxSizing: 'border-box',
-          }}
-        />
-      </div>
-
-      {err && (
-        <div style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
-        <button
-          type="button" onClick={onClose}
-          style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13 }}
-        >Hủy</button>
-        <button
-          type="button" onClick={handle} disabled={loading || !value}
-          style={{
-            padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: loading || !value ? '#e2e8f0' : '#0d6efd',
-            color: loading || !value ? '#9ca3af' : '#fff',
-            fontSize: 13, fontWeight: 600,
-          }}
-        >
-          {loading ? 'Đang lưu…' : 'Khai báo luồng'}
-        </button>
-      </div>
     </div>
   );
 }
