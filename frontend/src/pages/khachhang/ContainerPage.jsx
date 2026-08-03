@@ -4,8 +4,9 @@ import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
-import { useContainerKHList, useContainerKHDetail } from '@/hooks/khachhang/useContainerKH';
+import { useContainerKHList, useContainerKHDetail, useNhanTheoVanDon } from '@/hooks/khachhang/useContainerKH';
 
 const trangThaiBadge = (v, row) => {
   const map = {
@@ -110,12 +111,70 @@ function ContainerDetailModal({ macontainer, onClose }) {
   );
 }
 
+function NhanContainerModal({ onClose }) {
+  const [soVanDon, setSoVanDon] = useState('');
+  const [err, setErr]           = useState('');
+  const [ketQua, setKetQua]     = useState('');
+  const nhan = useNhanTheoVanDon();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    setKetQua('');
+    try {
+      const res = await nhan.mutateAsync({ so_vandon: soVanDon.trim() });
+      setKetQua(res.message);
+      setSoVanDon('');
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Đã có lỗi xảy ra.');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
+        Nhập đúng <strong>số vận đơn (B/L)</strong> theo đúng chứng từ vận đơn bạn nhận được — hệ thống sẽ tự
+        động liên kết toàn bộ container thuộc lô hàng đó về tài khoản của bạn.
+      </p>
+
+      {err && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13, marginBottom: 14 }}>
+          {err}
+        </div>
+      )}
+      {ketQua && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', color: '#166534', fontSize: 13, marginBottom: 14 }}>
+          {ketQua}
+        </div>
+      )}
+
+      <div style={{ marginBottom: 4 }}>
+        <Input
+          label="Số vận đơn (B/L)"
+          placeholder="VD: MSCUVN123456"
+          required
+          value={soVanDon}
+          onChange={e => setSoVanDon(e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+        <Button type="button" variant="secondary" onClick={onClose}>Đóng</Button>
+        <Button type="submit" disabled={nhan.isPending}>
+          {nhan.isPending ? 'Đang xử lý…' : 'Nhận container'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function ContainerKHPage() {
   const [trang, setTrang]             = useState(1);
   const [search, setSearch]           = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [filterTT, setFilterTT]       = useState('');
   const [detailId, setDetailId]       = useState(null);
+  const [nhanModalOpen, setNhanModalOpen] = useState(false);
 
   const { data, isLoading } = useContainerKHList({ trang, search, trangthai: filterTT });
 
@@ -178,6 +237,7 @@ export default function ContainerKHPage() {
       <PageHeader
         title="Container của tôi"
         description="Theo dõi trạng thái tất cả container đã đăng ký"
+        action={<Button onClick={() => setNhanModalOpen(true)}>+ Nhận container theo vận đơn</Button>}
       />
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -221,6 +281,15 @@ export default function ContainerKHPage() {
         {detailId && (
           <ContainerDetailModal macontainer={detailId} onClose={() => setDetailId(null)} />
         )}
+      </Modal>
+
+      <Modal
+        open={nhanModalOpen}
+        onClose={() => setNhanModalOpen(false)}
+        title="Nhận container theo vận đơn"
+        width={480}
+      >
+        <NhanContainerModal onClose={() => setNhanModalOpen(false)} />
       </Modal>
     </div>
   );

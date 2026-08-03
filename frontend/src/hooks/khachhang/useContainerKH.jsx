@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 
 const KEY = 'kh-container';
@@ -17,5 +17,13 @@ export function useContainerKHDetail(macontainer) {
     queryKey: [KEY, 'detail', macontainer],
     queryFn: () => api.get(`/kh/container/${macontainer}`).then(r => r.data),
     enabled: !!macontainer,
+  });
+}
+
+export function useNhanTheoVanDon() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => api.post('/kh/container/nhan-theo-van-don', payload).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }

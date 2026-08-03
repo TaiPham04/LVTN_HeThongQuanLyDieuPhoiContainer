@@ -43,6 +43,50 @@ class ContainerKHController extends Controller
         ]);
     }
 
+    // POST /api/kh/container/nhan-theo-van-don
+    // Liên kết container hàng NHẬP về tài khoản khách hàng — vì container nhập tạo
+    // qua Import Manifest không hề có makhachhang (khách không đăng nhập lúc đó),
+    // khách phải chủ động "nhận" bằng số vận đơn (biết từ giấy tờ thực tế ngoài hệ
+    // thống) để tự xác nhận quyền sở hữu. Sau bước này, container mới xuất hiện
+    // trong containerTrongBai() và tạo được phiếu lấy hàng bình thường.
+    public function nhanTheoVanDon(Request $request): JsonResponse
+    {
+        $request->validate([
+            'so_vandon' => 'required|string|max:50',
+        ], [
+            'so_vandon.required' => 'Vui lòng nhập số vận đơn.',
+        ]);
+
+        $soVanDon = trim($request->so_vandon);
+
+        // Vận đơn do hãng tàu cấp, đủ dài/khó đoán tương tự số container — không cần
+        // xác thực thêm yếu tố thứ 2 (không phân biệt hoa thường khi so khớp).
+        $containers = Container::where('loai_hinh', 'nhap')
+            ->whereRaw('UPPER(so_vandon) = ?', [mb_strtoupper($soVanDon)])
+            ->whereNull('makhachhang')
+            ->get();
+
+        if ($containers->isEmpty()) {
+            return response()->json([
+                'message' => 'Không tìm thấy lô hàng phù hợp với thông tin đã nhập, hoặc lô hàng đã được nhận trước đó.',
+            ], 422);
+        }
+
+        $makh = $request->user()->mataikhoan;
+
+        // Gán makhachhang cho TẤT CẢ container cùng vận đơn — 1 lô hàng có thể có
+        // nhiều container, khách nhận 1 lần là được cả lô, không cần lặp lại.
+        Container::whereIn('macontainer', $containers->pluck('macontainer'))
+            ->update(['makhachhang' => $makh]);
+
+        $containers->each(fn ($c) => $c->makhachhang = $makh);
+
+        return response()->json([
+            'message' => "Đã nhận thành công {$containers->count()} container thuộc vận đơn {$soVanDon}.",
+            'data'    => ContainerResource::collection($containers),
+        ]);
+    }
+
     // GET /api/kh/container/{container}
     public function show(Request $request, Container $container): JsonResponse
     {

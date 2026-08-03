@@ -231,8 +231,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('lich-tau',                  [BookingKHController::class, 'lichTau']);
 
         // Theo dõi container
-        Route::get('container',             [ContainerKHController::class, 'index']);
-        Route::get('container/{container}', [ContainerKHController::class, 'show']);
+        Route::get('container',                       [ContainerKHController::class, 'index']);
+        Route::post('container/nhan-theo-van-don',     [ContainerKHController::class, 'nhanTheoVanDon']);
+        Route::get('container/{container}',            [ContainerKHController::class, 'show']);
 
         // Phiếu lấy hàng
         Route::get('phieu-lay-hang',                      [PhieuLayHangKHController::class, 'index']);

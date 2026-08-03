@@ -348,7 +348,8 @@ class SoDoBaiController extends Controller
             ->whereNull('lichsuvitri.thoigian_roi')
             ->select(
                 'obai.makhuvuc', 'obai.khoang', 'obai.hang', 'obai.tang',
-                'container.machuyentau', 'chuyentau.thoigianroiben'
+                'container.machuyentau', 'chuyentau.thoigianroiben',
+                'container.so_vandon', 'container.thoigian_vaobai'
             )
             ->get();
 
@@ -356,12 +357,27 @@ class SoDoBaiController extends Controller
         $blockLoad       = [];
         $roiBenTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => ngày rời bến của container đang ở đúng ô đó
         $chuyenTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => machuyentau của container đang ở đúng ô đó
+        $blockVanDon     = []; // Block có chứa vận đơn x không — nền cho gom nhóm hàng NHẬP
+        $vanDonTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => so_vandon của container đang ở đúng ô đó
+        $vaoBaiTheoViTri = []; // "{block}-{khoang}-{hàng}-{tầng}" => thoigian_vaobai của container đang ở đúng ô đó
 
         foreach ($occupied as $r) {
             $blockChuyen[$r->makhuvuc][$r->machuyentau] = true;
             $blockLoad[$r->makhuvuc] = ($blockLoad[$r->makhuvuc] ?? 0) + 1;
             $roiBenTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->thoigianroiben;
             $chuyenTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->machuyentau;
+
+            // Gom nhóm hàng NHẬP theo so_vandon (biết từ lúc Import Manifest — có
+            // sớm hơn hẳn makhachhang, vốn chỉ được điền SAU KHI khách tự "nhận
+            // theo vận đơn", thường là sau lúc gán vị trí rất lâu).
+            if (!empty($r->so_vandon)) {
+                $blockVanDon[$r->makhuvuc][$r->so_vandon] = true;
+                $vanDonTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->so_vandon;
+            }
+
+            // Ghi nhận thời điểm vào bãi theo đúng vị trí vật lý — dùng làm proxy
+            // cho "hạn lấy hàng" khi buộc phải chồng khác vận đơn ở diemGoiYNhap().
+            $vaoBaiTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->thoigian_vaobai;
         }
 
         $totalPerBlock = OBai::whereNot('trangthai', 'khonghoatdong')
@@ -369,14 +385,14 @@ class SoDoBaiController extends Controller
             ->select('makhuvuc', DB::raw('COUNT(*) as total'))
             ->pluck('total', 'makhuvuc');
 
-        return $emptySlots->map(function ($o) use ($container, $blockChuyen, $blockLoad, $totalPerBlock, $roiBenTheoViTri, $chuyenTheoViTri) {
+        return $emptySlots->map(function ($o) use ($container, $blockChuyen, $blockLoad, $totalPerBlock, $roiBenTheoViTri, $chuyenTheoViTri, $blockVanDon, $vanDonTheoViTri, $vaoBaiTheoViTri) {
             $kv = $o->makhuvuc;
             $total = $totalPerBlock[$kv] ?? 1;
             $tyLeDayBlock = ($blockLoad[$kv] ?? 0) / $total;
 
             $score = $container->loai_hinh === 'xuat'
                 ? $this->diemGoiYXuat($container, $o, $kv, $blockChuyen, $tyLeDayBlock, $roiBenTheoViTri, $chuyenTheoViTri)
-                : $this->diemGoiYNhap($container, $o, $tyLeDayBlock);
+                : $this->diemGoiYNhap($container, $o, $kv, $blockVanDon, $tyLeDayBlock, $vaoBaiTheoViTri, $vanDonTheoViTri);
 
             return [
                 'maobai'      => $o->maobai,
@@ -485,22 +501,84 @@ class SoDoBaiController extends Controller
         return $score;
     }
 
-    // ─── Điểm gợi ý cho container NHẬP — ưu tiên đặt thấp để khách lấy hàng
-    // thuận tiện bất cứ lúc nào, không phụ thuộc lịch tàu ───────────────────
-    private function diemGoiYNhap(Container $container, OBai $o, float $tyLeDayBlock): int
+    // ─── Điểm gợi ý cho container NHẬP — tiêu chí CHÍNH vẫn là đặt thấp để khách
+    // lấy hàng thuận tiện bất cứ lúc nào (không phụ thuộc lịch tàu), nhưng ưu tiên
+    // TUYỆT ĐỐI gom các container CÙNG VẬN ĐƠN (cùng lô hàng) vào chung 1 cột hoặc
+    // liền kề — khách thường lấy cả lô 1 lần, gom chung giúp giảm hẳn số lượt đảo
+    // chuyển và tài xế không phải chạy lòng vòng nhiều khu vực trong bãi ────────
+    private function diemGoiYNhap(Container $container, OBai $o, int $kv, array $blockVanDon, float $tyLeDayBlock, array $vaoBaiTheoViTri, array $vanDonTheoViTri): int
     {
         $score = 0;
+        $sotang = $o->khuvucbai->sotang;
 
-        // Ưu tiên tầng thấp: -15 mỗi tầng — tiêu chí chính cho hàng nhập
-        $score -= $o->tang * 15;
+        // Tín hiệu NỀN: có container cùng vận đơn ở đâu đó trong block này không
+        // (bất kể vị trí cụ thể) — trọng số nhỏ, chỉ để phá thế hòa.
+        if (!empty($container->so_vandon) && !empty($blockVanDon[$kv][$container->so_vandon])) {
+            $score += 15;
+        }
+
+        if ($o->tang > 1) {
+            $vanDonBenDuoi = $vanDonTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
+
+            if (!empty($container->so_vandon) && $vanDonBenDuoi !== null && $vanDonBenDuoi === $container->so_vandon) {
+                // TIER 1 — ƯU TIÊN TUYỆT ĐỐI: đúng vận đơn đang nằm ngay bên dưới.
+                // Càng lên cao càng cộng nhiều điểm hơn — khuyến khích xây ĐẦY 1 cột
+                // cho cùng 1 lô hàng trước khi mở cột khác, để khách lấy cả lô 1 lần
+                // mà không phải chạy nhiều vị trí rải rác trong bãi.
+                $score += 20 + $o->tang * 10;
+            } else {
+                // Buộc phải chồng lên container KHÁC vận đơn (hoặc container này chưa
+                // có so_vandon) — phạt nhẹ, không nặng bằng "trộn chuyến" ở hàng xuất
+                // vì hàng nhập vốn không bị áp lực thời hạn tàu chạy như nhau.
+                $score -= 10;
+
+                // TIER 2 — PHỤ: khi đã buộc phải trộn lô hàng, vẫn cần tránh chặn
+                // đường lấy hàng — container vào bãi CÀNG SỚM thì càng gần hết free
+                // time, càng cần lấy ra trước, nên nên nằm ở tầng CAO HƠN (LIFO theo
+                // thời điểm vào bãi — cùng nguyên lý với "ngày rời bến" ở hàng xuất).
+                $vaoBaiBenDuoi = $vaoBaiTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
+
+                if ($vaoBaiBenDuoi && $container->thoigian_vaobai) {
+                    if ($container->thoigian_vaobai->lessThanOrEqualTo(\Carbon\Carbon::parse($vaoBaiBenDuoi))) {
+                        $score += 10; // đúng thứ tự: cont mới vào sớm hơn/bằng cont bên dưới
+                    } else {
+                        $score -= 15; // sai thứ tự: sẽ chặn đường lấy cont bên dưới (vào trước, cần lấy trước)
+                    }
+                }
+            }
+        } else {
+            // TIER 1b — Tầng 1 (mở cột mới): thưởng nếu liền kề (4 hướng khoang/hàng)
+            // 1 cột ĐÃ ĐẦY (chạm sotang) của ĐÚNG vận đơn này — mở rộng ngay xung
+            // quanh thay vì rải rác khắp block.
+            if (!empty($container->so_vandon)) {
+                $lienKe = [
+                    [$o->khoang - 1, $o->hang],
+                    [$o->khoang + 1, $o->hang],
+                    [$o->khoang, $o->hang - 1],
+                    [$o->khoang, $o->hang + 1],
+                ];
+                foreach ($lienKe as [$k, $h]) {
+                    $vanDonODinhCot = $vanDonTheoViTri["{$kv}-{$k}-{$h}-{$sotang}"] ?? null;
+                    if ($vanDonODinhCot !== null && $vanDonODinhCot === $container->so_vandon) {
+                        $score += 25;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Vị trí tương đối trong ngăn xếp — CHUẨN HÓA theo sotang thực tế của block,
+        // cùng nguyên lý ở diemGoiYXuat. Trọng số CAO HƠN xuất (30 so với 24) vì "đặt
+        // thấp" vẫn là tiêu chí CHÍNH của nhập (không phải phụ như ở xuất) — khách có
+        // thể đến lấy bất cứ lúc nào, không có lịch tàu cố định để bám vào.
+        $tyLeTang = $sotang > 1 ? ($o->tang - 1) / ($sotang - 1) : 0.0;
+        $score -= (int) round($tyLeTang * 30);
 
         // Đã thông quan (có thể lấy ngay): thưởng thêm cho vị trí càng thấp càng tốt
+        // — dùng công thức MƯỢT theo tyLeTang thay vì bậc thang cứng "tầng 1/2/khác"
+        // cũ, đồng nhất phong cách với diemGoiYXuat.
         if ($container->da_thong_quan) {
-            $score += match (true) {
-                $o->tang === 1 => 15,
-                $o->tang === 2 => 7,
-                default        => 0,
-            };
+            $score += (int) round((1 - $tyLeTang) * 15);
         }
 
         // Ưu tiên block ít hàng hơn: -tối đa 20 điểm
