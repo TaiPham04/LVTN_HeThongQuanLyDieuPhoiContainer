@@ -521,10 +521,16 @@ class SoDoBaiController extends Controller
             $vanDonBenDuoi = $vanDonTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
 
             if (!empty($container->so_vandon) && $vanDonBenDuoi !== null && $vanDonBenDuoi === $container->so_vandon) {
-                // TIER 1 — ƯU TIÊN TUYỆT ĐỐI: đúng vận đơn đang nằm ngay bên dưới.
-                // Càng lên cao càng cộng nhiều điểm hơn — khuyến khích xây ĐẦY 1 cột
-                // cho cùng 1 lô hàng trước khi mở cột khác, để khách lấy cả lô 1 lần
-                // mà không phải chạy nhiều vị trí rải rác trong bãi.
+                // TIER 1 — ƯU TIÊN TUYỆT ĐỐI: đúng vận đơn đang nằm ngay bên dưới. Điểm
+                // cộng +10/tầng ở đây đúng bằng bước phạt tầng bên dưới (30 chia đều
+                // (sotang-1) bước) nên điểm RÒNG giữ NGUYÊN ổn định ở mọi tầng khi xây
+                // cùng 1 cột — KHÁC với xuất (điểm ròng TĂNG dần theo tầng để ép xây
+                // đầy 1 cột theo đúng 1 chuyến trước khi mở cột khác). Nhập không cần
+                // ép xây cao như vậy: hàng nhập khách lấy lẻ, không có deadline tàu
+                // chạy để chạy đua, chỉ cần đảm bảo "gom đúng vận đơn luôn thắng áp
+                // đảo so với trộn vận đơn khác" ở MỌI tầng (ròng +30 ổn định so với
+                // nhánh trộn dưới đây luôn âm) — vậy là đủ, không cần thêm động lực
+                // xây cao nữa.
                 $score += 20 + $o->tang * 10;
             } else {
                 // Buộc phải chồng lên container KHÁC vận đơn (hoặc container này chưa
