@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 
@@ -9,10 +10,16 @@ export default function TaiXeLayout() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user, logout } = useAuthStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const goTo = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
   };
 
   const vietTat = user?.hoten
@@ -23,8 +30,31 @@ export default function TaiXeLayout() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @media (max-width: 767px) {
+          .tx-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 50 !important;
+            transform: translateX(${sidebarOpen ? '0' : '-100%'}) !important;
+            transition: transform .2s ease;
+          }
+        }
+      `}</style>
+
+      {/* ─── BACKDROP (mobile) ─── */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden"
+          style={s.backdrop}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ─── SIDEBAR ─── */}
-      <aside style={s.sidebar}>
+      <aside className="tx-sidebar" style={s.sidebar}>
         <div style={s.logo}>
           <div style={s.logoBox}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -43,7 +73,7 @@ export default function TaiXeLayout() {
           {MENU.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             return (
-              <div key={item.path} onClick={() => navigate(item.path)}
+              <div key={item.path} onClick={() => goTo(item.path)}
                 style={{ ...s.navItem, ...(isActive ? s.navActive : {}) }}>
                 <i className={`ti ${item.icon}`} style={{ fontSize: 17, flexShrink: 0 }} />
                 <span style={s.navLabel}>{item.label}</span>
@@ -63,7 +93,18 @@ export default function TaiXeLayout() {
       {/* ─── MAIN ─── */}
       <div style={s.main}>
         <header style={s.header}>
-          <span style={s.breadcrumb}>{tenTrang}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              className="flex md:hidden"
+              onClick={() => setSidebarOpen(true)}
+              style={s.hamburger}
+              type="button"
+              aria-label="Mở menu"
+            >
+              <i className="ti ti-menu-2" style={{ fontSize: 20 }} />
+            </button>
+            <span style={s.breadcrumb}>{tenTrang}</span>
+          </div>
           <div
             style={{ ...s.headerRight, cursor: 'pointer' }}
             onClick={() => navigate('/driver/profile')}
@@ -99,13 +140,15 @@ const s = {
   navActive:    { background: 'rgba(13,148,136,0.25)', color: '#5eead4' },
   navLabel:     { fontSize: 13 },
   sidebarFooter:{ borderTop: '0.5px solid rgba(255,255,255,0.07)', padding: '8px 0' },
-  main:         { flex: 1, display: 'flex', flexDirection: 'column', background: '#f3f4f6', minHeight: '100vh' },
-  header:       { background: '#fff', borderBottom: '0.5px solid #e5e7eb', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 },
+  main:         { flex: 1, display: 'flex', flexDirection: 'column', background: '#f3f4f6', minHeight: '100vh', minWidth: 0 },
+  header:       { background: '#fff', borderBottom: '0.5px solid #e5e7eb', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10 },
   breadcrumb:   { fontSize: 14, fontWeight: 500, color: '#111827' },
   headerRight:  { display: 'flex', alignItems: 'center', gap: 12 },
   userInfo:     { textAlign: 'right' },
   userName:     { fontSize: 13, fontWeight: 500, color: '#111827' },
   userRole:     { fontSize: 11, color: '#6b7280' },
   avatar:       { width: 32, height: 32, background: TEAL, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#fff', flexShrink: 0 },
-  content:      { flex: 1, padding: 24 },
+  content:      { flex: 1, padding: 16 },
+  backdrop:     { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 40 },
+  hamburger:    { background: 'none', border: 'none', cursor: 'pointer', color: '#111827', alignItems: 'center', padding: 4, borderRadius: 6, flexShrink: 0 },
 };

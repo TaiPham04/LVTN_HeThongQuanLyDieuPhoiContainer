@@ -44,10 +44,18 @@ export default function LoginPage() {
 
   return (
     <div style={s.page}>
-      <div style={s.wrap}>
+      <style>{`
+        @media (max-width: 767px) {
+          .login-wrap { flex-direction: column !important; min-height: auto !important; max-width: 480px !important; }
+          .login-left { min-height: auto !important; padding: 28px 24px !important; }
+          .login-right { width: 100% !important; padding: 24px 20px !important; }
+          .login-formcard { min-height: auto !important; padding: 28px 20px !important; }
+        }
+      `}</style>
+      <div className="login-wrap" style={s.wrap}>
 
         {/* TRÁI */}
-        <div style={s.left}>
+        <div className="login-left" style={s.left}>
           <img src={anhCang} alt="Cảng LogiCon" style={s.bg} />
           <div style={s.overlay} />
           <div style={s.logoWrap}>
@@ -80,8 +88,8 @@ export default function LoginPage() {
         </div>
 
         {/* PHẢI */}
-        <div style={s.right}>
-          <div style={s.formCard}>
+        <div className="login-right" style={s.right}>
+          <div className="login-formcard" style={s.formCard}>
             <div style={s.tabs}>
               {['login','register'].map((t)=>(
                 <button key={t} onClick={()=>switchTab(t)} style={{...s.tab,...(tab===t?s.tabActive:{})}}>
@@ -205,7 +213,7 @@ const s={
   leftBottom:{position:'relative',zIndex:2},
   headline:{fontSize:24,fontWeight:600,color:'#fff',lineHeight:1.4,marginBottom:10},
   desc:{fontSize:13,color:'rgba(255,255,255,0.65)',lineHeight:1.75,maxWidth:360},
-  statsRow:{display:'flex',gap:12,marginTop:24},
+  statsRow:{display:'flex',gap:12,marginTop:24,flexWrap:'wrap'},
   statBox:{background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'10px 16px'},
   statNum:{fontSize:20,fontWeight:700,color:OR},
   statLbl:{fontSize:11,color:'rgba(255,255,255,0.55)',marginTop:2},

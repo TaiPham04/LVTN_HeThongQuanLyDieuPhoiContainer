@@ -63,6 +63,7 @@ const s = {
     borderRadius: 12,
     boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
     maxHeight: '90vh',
+    maxWidth: '100%',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
