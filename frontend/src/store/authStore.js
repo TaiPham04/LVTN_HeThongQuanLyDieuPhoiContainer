@@ -30,9 +30,8 @@ const useAuthStore = create(
       register: async (formData) => {
         set({ isLoading: true });
         try {
-          const { data } = await api.post('/auth/register', formData);
-          localStorage.setItem('auth_token', data.token);
-          set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
+          await api.post('/auth/register', formData);
+          set({ isLoading: false });
           return { success: true };
         } catch (error) {
           set({ isLoading: false });

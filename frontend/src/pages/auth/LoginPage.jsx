@@ -11,12 +11,14 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [showPassReg, setShowPassReg] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-  const switchTab = (t) => { setTab(t); setServerError(''); reset(); };
+  const switchTab = (t) => { setTab(t); setServerError(''); setSuccessMsg(''); reset(); };
 
   const onLogin = async (data) => {
     setServerError('');
+    setSuccessMsg('');
     const result = await login(data.email, data.password);
     if (result.success) {
       const role = result.user.role;
@@ -38,8 +40,11 @@ export default function LoginPage() {
       hoten: data.hoten, sodienthoai: data.sodienthoai, tentochuc: data.tentochuc,
       email: data.email, password: data.matkhau, password_confirmation: data.xacnhanmatkhau,
     });
-    if (result.success) navigate('/kh/dashboard');
-    else setServerError(result.message || 'Đăng ký thất bại.');
+    if (result.success) {
+      reset();
+      setTab('login');
+      setSuccessMsg('Đăng ký thành công! Vui lòng đăng nhập.');
+    } else setServerError(result.message || 'Đăng ký thất bại.');
   };
 
   return (
@@ -99,6 +104,7 @@ export default function LoginPage() {
             </div>
 
             {serverError && <div style={s.errBox}>{serverError}</div>}
+            {successMsg && <div style={s.okBox}>{successMsg}</div>}
 
             {tab==='login' && (
               <form onSubmit={handleSubmit(onLogin)} noValidate>
@@ -224,6 +230,7 @@ const s={
   tab:{flex:1,padding:'10px 0',textAlign:'center',fontSize:14,fontWeight:500,color:'#6b7280',cursor:'pointer',border:'none',background:'none',borderBottom:'2px solid transparent',marginBottom:-1,fontFamily:'inherit',transition:'all .15s'},
   tabActive:{color:OR,borderBottomColor:OR},
   errBox:{background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:8,padding:'10px 12px',fontSize:13,color:'#b91c1c',marginBottom:16},
+  okBox:{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:8,padding:'10px 12px',fontSize:13,color:'#15803d',marginBottom:16},
   label:{display:'block',fontSize:12,fontWeight:500,color:'#374151',marginBottom:6},
   fieldErr:{fontSize:12,color:'#e24b4a',marginTop:4},
   ico:{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',width:16,height:16,pointerEvents:'none'},
