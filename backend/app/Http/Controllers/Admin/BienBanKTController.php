@@ -9,6 +9,7 @@ use App\Models\BienBanKT;
 use App\Models\Container;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BienBanKTController extends Controller
 {
@@ -58,32 +59,36 @@ class BienBanKTController extends Controller
             ], 422);
         }
 
-        $bienban = BienBanKT::create([
-            'macontainer'  => $container->macontainer,
-            'manhanvien'   => $request->user()->mataikhoan,
-            'loaiktd'      => $request->loaiktd,
-            'chu_ky'       => $request->chu_ky,
-            'ketqua_ktd'   => $request->ketqua_ktd,
-            'bi_hong'      => $request->bi_hong,
-            'ketluan'      => $request->ketluan,
-            'thoigian_ktd' => $request->thoigian_ktd,
-        ]);
+        $bienban = DB::transaction(function () use ($request, $container) {
+            $bienban = BienBanKT::create([
+                'macontainer'  => $container->macontainer,
+                'manhanvien'   => $request->user()->mataikhoan,
+                'loaiktd'      => $request->loaiktd,
+                'chu_ky'       => $request->chu_ky,
+                'ketqua_ktd'   => $request->ketqua_ktd,
+                'bi_hong'      => $request->bi_hong,
+                'ketluan'      => $request->ketluan,
+                'thoigian_ktd' => $request->thoigian_ktd,
+            ]);
 
-        $containerUpdate = [];
+            $containerUpdate = [];
 
-        if ($request->bi_hong) {
-            $containerUpdate['bi_hong'] = true;
-        }
+            if ($request->bi_hong) {
+                $containerUpdate['bi_hong'] = true;
+            }
 
-        // Kiểm hóa chỉ thay đổi trạng thái THÔNG QUAN, không đổi luồng đã phân —
-        // luồng (xanh/vàng/đỏ) là nhãn cố định gắn với tờ khai từ đầu.
-        if ($request->loaiktd === 'haiquan') {
-            $containerUpdate['da_thong_quan'] = $request->ketluan === 'datieu';
-        }
+            // Kiểm hóa chỉ thay đổi trạng thái THÔNG QUAN, không đổi luồng đã phân —
+            // luồng (xanh/vàng/đỏ) là nhãn cố định gắn với tờ khai từ đầu.
+            if ($request->loaiktd === 'haiquan') {
+                $containerUpdate['da_thong_quan'] = $request->ketluan === 'datieu';
+            }
 
-        if (!empty($containerUpdate)) {
-            $container->update($containerUpdate);
-        }
+            if (!empty($containerUpdate)) {
+                $container->update($containerUpdate);
+            }
+
+            return $bienban;
+        });
 
         return response()->json([
             'message' => "Đã lập biên bản kiểm tra container {$container->socontainer}.",

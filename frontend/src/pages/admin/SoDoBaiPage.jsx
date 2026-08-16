@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import Badge from '@/components/ui/Badge';
 import {
@@ -39,11 +39,19 @@ function HaiQuanBadge({ v }) {
   return <Badge variant={variant}>{label}</Badge>;
 }
 
+/* ── Tính vị trí popup theo rect của ô được click ─────────────── */
+function buildPopupPos(rect) {
+  const popW = 260, popH = 340; // đã tăng để chừa chỗ cho khối thông tin chuyến tàu
+  const left = rect.right + 10 + popW > window.innerWidth ? rect.left - popW - 4 : rect.right + 8;
+  const top  = Math.max(8, Math.min(rect.top, window.innerHeight - popH - 8));
+  return { top, left };
+}
+
 function PopupRow({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-      <span style={{ color: '#6b7280', fontSize: 12, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontWeight: 500, fontSize: 13 }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+      <span style={{ color: '#6b7280', fontSize: 12, flexShrink: 0, paddingTop: 1 }}>{label}</span>
+      <span style={{ fontWeight: 500, fontSize: 13, textAlign: 'right' }}>{value}</span>
     </div>
   );
 }
@@ -109,6 +117,13 @@ export default function SoDoBaiPage() {
   // Đảo chuyển context: ô nguồn
   const [daoCtx, setDaoCtx] = useState(null); // { maobai_cu, maobai_code, socontainer }
 
+  // Ref tới vùng sơ đồ (ô bãi) để auto-scroll khi bắt đầu đảo chuyển
+  const gridRef = useRef(null);
+
+  // Nhớ đã auto-nhảy tầng cho lượt chọn (container/ô) nào rồi — tránh nhảy lại
+  // khi gợi ý refetch ngầm (sau khi gán/đảo xong, hoặc dữ liệu bãi đổi giữa chừng)
+  const lastJumpKeyRef = useRef(null);
+
   /* ── Data hooks ── */
   const { data: listData }                      = useSoDoBaiList();
   const { data: sodoBai, isLoading }            = useSoDoBai(selectedBlock);
@@ -146,10 +161,18 @@ export default function SoDoBaiPage() {
     if (blockA) setSelectedBlock(String(blockA.makhuvuc));
   }, [blockList]); // eslint-disable-line
 
-  /* ── Auto-chuyển block/tầng khi gợi ý load xong ── */
+  /* ── Auto-chuyển block/tầng khi gợi ý load xong — chỉ nhảy 1 lần cho mỗi lượt
+     chọn container/ô mới, không nhảy lại khi gợi ý refetch ngầm (vd sau khi
+     gán/đảo xong bị invalidateQueries kéo theo) ── */
   useEffect(() => {
-    const items = ganCtx ? goiYGan?.data : daoCtx ? goiYDao?.data : null;
+    const key = ganCtx ? `gan-${ganCtx.macontainer}` : daoCtx ? `dao-${daoCtx.maobai_cu}` : null;
+    if (!key) { lastJumpKeyRef.current = null; return; }
+    if (lastJumpKeyRef.current === key) return; // đã nhảy cho lượt chọn này rồi
+
+    const items = ganCtx ? goiYGan?.data : goiYDao?.data;
     if (!items?.length) return;
+
+    lastJumpKeyRef.current = key;
     const top = items[0];
     if (String(top.makhuvuc) !== String(selectedBlock)) {
       setSelectedBlock(String(top.makhuvuc));
@@ -157,7 +180,7 @@ export default function SoDoBaiPage() {
     } else if (top.tang !== selectedTang) {
       setSelectedTang(top.tang);
     }
-  }, [goiYGan?.data, goiYDao?.data]); // eslint-disable-line
+  }, [ganCtx, daoCtx, goiYGan?.data, goiYDao?.data]); // eslint-disable-line
 
   /* ── Sets of highlighted maobai ── */
   const ganSuggestSet = new Set((goiYGan?.data ?? []).map(s => s.maobai));
@@ -200,11 +223,17 @@ export default function SoDoBaiPage() {
     // Chế độ xem — click ô có container
     if (o.trangthai === 'dangsudung' && o.container) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const popW = 260, popH = 240;
-      const left = rect.right + 10 + popW > window.innerWidth ? rect.left - popW - 4 : rect.right + 8;
-      const top  = Math.min(rect.top, window.innerHeight - popH - 8);
-      setPopup({ obai: o, top, left });
+      setPopup({ obai: o, ...buildPopupPos(rect) });
     }
+  };
+
+  /* ── Xem chi tiết container bằng chuột phải — hoạt động cả khi đang ở mode gán/đảo ── */
+  const handleCellRightClick = (o, e) => {
+    if (o.trangthai !== 'dangsudung' || !o.container) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopup({ obai: o, ...buildPopupPos(rect), viaRightClick: true });
   };
 
   /* ── Xác nhận gán vị trí ── */
@@ -231,6 +260,7 @@ export default function SoDoBaiPage() {
     });
     setGanCtx(null);
     setPopup(null);
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   /* ── Xác nhận đảo chuyển ── */
@@ -302,48 +332,6 @@ export default function SoDoBaiPage() {
         )}
       </div>
 
-      {/* ── Info bar khi đang trong mode ── */}
-      {(ganCtx || daoCtx) && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: ganCtx ? '#fefce8' : '#fff7ed',
-          border: `1px solid ${ganCtx ? '#fde047' : '#fdba74'}`,
-          borderRadius: 10, padding: '10px 16px', marginBottom: 16,
-        }}>
-          <span style={{ fontSize: 13, color: '#374151' }}>
-            {ganCtx && (
-              <>
-                <strong>Gán vị trí:</strong> {ganCtx.socontainer}
-                {loadGG
-                  ? ' — Đang tải gợi ý…'
-                  : ganSuggestSet.size > 0
-                    ? ` — Chọn 1 trong ${ganSuggestSet.size} ô được đề xuất (màu vàng)`
-                    : ' — Không có ô trống phù hợp'}
-              </>
-            )}
-            {daoCtx && (
-              <>
-                <strong>Đảo chuyển:</strong> {daoCtx.socontainer} từ ô {daoCtx.maobai_code}
-                {loadGD
-                  ? ' — Đang tải gợi ý…'
-                  : daoSuggestSet.size > 0
-                    ? ` — Chọn ô đích (màu xanh lá)`
-                    : ' — Không tìm được ô phù hợp'}
-              </>
-            )}
-          </span>
-          <button
-            onClick={cancelMode}
-            style={{
-              padding: '4px 14px', fontSize: 12, border: '1px solid #e2e8f0',
-              borderRadius: 6, background: '#fff', cursor: 'pointer', color: '#374151',
-            }}
-          >
-            Hủy
-          </button>
-        </div>
-      )}
-
       {/* ── Panel: Containers chờ gán vị trí (nhóm theo block phù hợp) ── */}
       {choGanList.length > 0 && !daoCtx && (
         <div style={{
@@ -409,6 +397,48 @@ export default function SoDoBaiPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Info bar khi đang trong mode — đặt sát ngay trên khối "Gợi ý vị trí" để không bị panel Chờ gán (có thể rất dài) chen vào giữa ── */}
+      {(ganCtx || daoCtx) && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: ganCtx ? '#fefce8' : '#fff7ed',
+          border: `1px solid ${ganCtx ? '#fde047' : '#fdba74'}`,
+          borderRadius: 10, padding: '10px 16px', marginBottom: 16,
+        }}>
+          <span style={{ fontSize: 13, color: '#374151' }}>
+            {ganCtx && (
+              <>
+                <strong>Gán vị trí:</strong> {ganCtx.socontainer}
+                {loadGG
+                  ? ' — Đang tải gợi ý…'
+                  : ganSuggestSet.size > 0
+                    ? ` — Chọn 1 trong ${ganSuggestSet.size} ô được đề xuất (màu vàng)`
+                    : ' — Không có ô trống phù hợp'}
+              </>
+            )}
+            {daoCtx && (
+              <>
+                <strong>Đảo chuyển:</strong> {daoCtx.socontainer} từ ô {daoCtx.maobai_code}
+                {loadGD
+                  ? ' — Đang tải gợi ý…'
+                  : daoSuggestSet.size > 0
+                    ? ` — Chọn ô đích (màu xanh lá)`
+                    : ' — Không tìm được ô phù hợp'}
+              </>
+            )}
+          </span>
+          <button
+            onClick={cancelMode}
+            style={{
+              padding: '4px 14px', fontSize: 12, border: '1px solid #e2e8f0',
+              borderRadius: 6, background: '#fff', cursor: 'pointer', color: '#374151',
+            }}
+          >
+            Hủy
+          </button>
         </div>
       )}
 
@@ -529,7 +559,7 @@ export default function SoDoBaiPage() {
           </div>
 
           {/* ── Grid ── */}
-          <div style={{
+          <div ref={gridRef} style={{
             overflowX: 'auto', background: '#fff',
             border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px 20px 20px 8px',
           }}>
@@ -566,6 +596,7 @@ export default function SoDoBaiPage() {
                     <div
                       key={k}
                       onClick={e => handleCellClick(o, e)}
+                      onContextMenu={e => handleCellRightClick(o, e)}
                       onMouseEnter={e => { if (isClickable) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)'; }}
                       onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
                       title={o.maobai_code}
@@ -586,7 +617,7 @@ export default function SoDoBaiPage() {
                             {o.container.socontainer.slice(0, 4)}
                           </div>
                           <div style={{ fontSize: 9, color: th.text, opacity: 0.8 }}>
-                            {o.container.socontainer.slice(4, 7)}
+                            {o.container.socontainer.slice(4, 11)}
                           </div>
                         </>
                       )}
@@ -602,8 +633,8 @@ export default function SoDoBaiPage() {
         </>
       )}
 
-      {/* ── Popup thông tin container ── */}
-      {popup && !isInMode && (
+      {/* ── Popup thông tin container — luôn hiện nếu mở bằng chuột phải, kể cả đang ở mode gán/đảo ── */}
+      {popup && (!isInMode || popup.viaRightClick) && (
         <div
           onClick={e => e.stopPropagation()}
           style={{
@@ -612,6 +643,7 @@ export default function SoDoBaiPage() {
             border: '1px solid #e2e8f0', borderRadius: 10,
             boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
             padding: '14px 16px', zIndex: 1000,
+            maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -635,6 +667,20 @@ export default function SoDoBaiPage() {
               {popup.obai.container.thoigian_vaobai && (
                 <PopupRow label="Vào bãi" value={popup.obai.container.thoigian_vaobai} />
               )}
+              {popup.obai.container.chuyentau && (
+                <>
+                  <PopupRow
+                    label="Chuyến tàu"
+                    value={`${popup.obai.container.chuyentau.tentau ?? '—'} · ${popup.obai.container.chuyentau.sovoyage ?? '—'}`}
+                  />
+                  <PopupRow
+                    label={popup.obai.container.loai_hinh === 'nhap' ? 'Dự kiến cập cảng' : 'Dự kiến rời bến'}
+                    value={(popup.obai.container.loai_hinh === 'nhap'
+                      ? popup.obai.container.chuyentau.thoigiandukien
+                      : popup.obai.container.chuyentau.thoigianroiben) ?? '—'}
+                  />
+                </>
+              )}
               <button
                 onClick={handleBatDauDaoChuyen}
                 style={{
@@ -649,6 +695,23 @@ export default function SoDoBaiPage() {
           )}
         </div>
       )}
+
+      {/* ── Nút về đầu trang — luôn hiện, làm mờ bớt để không che nội dung ── */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        title="Về đầu trang để đổi khu vực bãi"
+        style={{
+          position: 'fixed', bottom: 24, right: 28, zIndex: 1500,
+          width: 44, height: 44, borderRadius: '50%',
+          background: '#2563eb', color: '#fff', border: 'none',
+          fontSize: 18, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+          opacity: 0.55, transition: 'opacity 0.15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = 1; }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = 0.55; }}
+      >
+        ↑
+      </button>
 
       <Toast msg={toast?.msg} type={toast?.type} />
     </div>

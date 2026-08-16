@@ -29,7 +29,11 @@ class SoDoBaiController extends Controller
     {
         $obaiList = $khuvucbai->obai()
             ->with(['vitriHienTai.container' => function ($q) {
-                $q->select('macontainer', 'socontainer', 'bi_hong', 'trangthai_haiquan', 'da_thong_quan', 'thoigian_vaobai');
+                $q->select('macontainer', 'socontainer', 'bi_hong', 'trangthai_haiquan', 'da_thong_quan', 'thoigian_vaobai', 'machuyentau', 'loai_hinh')
+                  ->with(['chuyentau' => function ($q2) {
+                      $q2->select('machuyentau', 'mahangtau', 'sovoyage', 'tentau', 'thoigiandukien', 'thoigianroiben')
+                         ->with(['hangtau:mahangtau,tenhangtau,mascac']);
+                  }]);
             }])
             ->orderBy('tang')
             ->orderBy('hang')
@@ -48,6 +52,15 @@ class SoDoBaiController extends Controller
                     'trangthai_haiquan' => $o->vitriHienTai->container->trangthai_haiquan,
                     'da_thong_quan'     => (bool) $o->vitriHienTai->container->da_thong_quan,
                     'thoigian_vaobai'   => $o->vitriHienTai->container->thoigian_vaobai?->format('d/m/Y H:i'),
+                    'loai_hinh'         => $o->vitriHienTai->container->loai_hinh,
+                    'chuyentau'         => $o->vitriHienTai->container->chuyentau ? [
+                        'sovoyage'       => $o->vitriHienTai->container->chuyentau->sovoyage,
+                        'tentau'         => $o->vitriHienTai->container->chuyentau->tentau,
+                        'tenhangtau'     => $o->vitriHienTai->container->chuyentau->hangtau?->tenhangtau,
+                        'mascac'         => $o->vitriHienTai->container->chuyentau->hangtau?->mascac,
+                        'thoigiandukien' => $o->vitriHienTai->container->chuyentau->thoigiandukien?->format('d/m/Y H:i'),
+                        'thoigianroiben' => $o->vitriHienTai->container->chuyentau->thoigianroiben?->format('d/m/Y H:i'),
+                    ] : null,
                 ] : null,
             ]);
 
@@ -186,12 +199,12 @@ class SoDoBaiController extends Controller
             return response()->json(['message' => 'Ô này không có container.'], 422);
         }
 
-        if ($this->coContTrenDau($obai)) {
+        if ($obai->coContTrenDau()) {
             return response()->json(['message' => 'Không thể đảo chuyển — có container đang xếp trên ô này.'], 422);
         }
 
         return response()->json([
-            'data'      => $this->tinhGoiY($lichSu->container, excludeObai: $obai->maobai, maxTang: $obai->tang),
+            'data'      => $this->tinhGoiY($lichSu->container, excludeObai: $obai),
             'container' => [
                 'socontainer' => $lichSu->container->socontainer,
                 'maobai_cu'   => $obai->maobai,
@@ -219,7 +232,7 @@ class SoDoBaiController extends Controller
                     throw new GanViTriException('Ô đích đã được sử dụng.');
                 }
 
-                if ($this->coContTrenDau($obaiCu)) {
+                if ($obaiCu->coContTrenDau()) {
                     throw new GanViTriException('Không thể đảo chuyển — có container đang xếp trên ô này.');
                 }
 
@@ -243,7 +256,9 @@ class SoDoBaiController extends Controller
                     throw new GanViTriException($this->thongBaoSaiLuong($obaiMoi->khuvucbai, $lichSuCu->container->loai_hinh));
                 }
 
-                // Kiểm tra vật lý: tầng > 1 phải có container ở tầng bên dưới
+                // Kiểm tra vật lý: tầng > 1 phải có container ở tầng bên dưới — ô hỗ trợ
+                // không được CHÍNH LÀ ô nguồn đang đảo chuyển, vì ô đó sẽ trống ngay sau
+                // bước này (không thể vừa làm chỗ đứng cho ô đích vừa tự dời đi khỏi đó).
                 if ($obaiMoi->tang > 1) {
                     $obaiDuoi = OBai::where('makhuvuc', $obaiMoi->makhuvuc)
                         ->where('khoang', $obaiMoi->khoang)
@@ -252,7 +267,7 @@ class SoDoBaiController extends Controller
                         ->where('trangthai', 'dangsudung')
                         ->first();
 
-                    if (!$obaiDuoi) {
+                    if (!$obaiDuoi || $obaiDuoi->maobai === $obaiCu->maobai) {
                         throw new GanViTriException('Không thể đảo chuyển vào ô này — tầng bên dưới chưa có container.');
                     }
                 }
@@ -297,17 +312,9 @@ class SoDoBaiController extends Controller
         return "Khu vực bãi {$khuvucbai?->tenblock} chỉ ưu tiên cho luồng {$uutienLabel}, không phù hợp với container luồng {$loaiHinhLabel}.";
     }
 
-    private function coContTrenDau(OBai $obai): bool
-    {
-        return OBai::where('makhuvuc', $obai->makhuvuc)
-            ->where('khoang',    $obai->khoang)
-            ->where('hang',      $obai->hang)
-            ->where('tang',      $obai->tang + 1)
-            ->where('trangthai', 'dangsudung')
-            ->exists();
-    }
 
-    private function tinhGoiY(Container $container, ?int $excludeObai = null, ?int $maxTang = null): \Illuminate\Support\Collection
+    // $excludeObai: ô hiện tại của container đang đảo chuyển (null nếu là gán vị trí lần đầu)
+    private function tinhGoiY(Container $container, ?OBai $excludeObai = null): \Illuminate\Support\Collection
     {
         $container->loadMissing('loaicontainer');
         $loai = $container->loaicontainer;
@@ -318,13 +325,20 @@ class SoDoBaiController extends Controller
         // vật lý ngẫu nhiên MySQL trả về.
         $query = OBai::where('trangthai', 'trong')->with('khuvucbai')
             ->orderBy('tang')->orderBy('makhuvuc')->orderBy('khoang')->orderBy('hang');
-        if ($excludeObai) $query->where('maobai', '!=', $excludeObai);
-        if ($maxTang !== null) $query->where('tang', '<=', $maxTang);
+        if ($excludeObai) $query->where('maobai', '!=', $excludeObai->maobai);
 
         $occupiedKeys = OBai::where('trangthai', 'dangsudung')
             ->get(['makhuvuc', 'khoang', 'hang', 'tang'])
             ->mapWithKeys(fn ($o) => ["{$o->makhuvuc}-{$o->khoang}-{$o->hang}-{$o->tang}" => true])
             ->all();
+
+        // Ô nguồn của container đang đảo chuyển sẽ trống ngay sau khi di chuyển xong —
+        // không được tính là "có container bên dưới" hỗ trợ cho bất kỳ ứng viên nào,
+        // nếu không hệ thống sẽ gợi ý xếp container lên ngay trên đầu vị trí cũ của
+        // chính nó, và ô cũ trống đi ngay sau đó tạo lại đúng tình trạng lơ lửng.
+        if ($excludeObai) {
+            unset($occupiedKeys["{$excludeObai->makhuvuc}-{$excludeObai->khoang}-{$excludeObai->hang}-{$excludeObai->tang}"]);
+        }
 
         $emptySlots = $query->get()->filter(function ($o) use ($nhom, $container, $occupiedKeys) {
             if ($o->khuvucbai?->loai_nhom !== $nhom) return false;

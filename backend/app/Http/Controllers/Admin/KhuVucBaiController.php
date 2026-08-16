@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\KhuVucBai\LuuKhuVucBai;
 use App\Http\Requests\KhuVucBai\XoaKhuVucBai;
 use App\Http\Resources\KhuVucBaiResource;
+use App\Exceptions\KhuVucBaiException;
 use App\Models\KhuVucBai;
 use App\Models\LogXoa;
 use App\Models\OBai;
@@ -86,43 +87,55 @@ class KhuVucBaiController extends Controller
             ], 422);
         }
 
-        $soKhoangCu = $khuvucbai->sokhoang;
-        $soHangCu   = $khuvucbai->sohang;
-        $soTangCu   = $khuvucbai->sotang;
-
-        DB::transaction(function () use ($request, $khuvucbai) {
-            $khuvucbai->update([
-                'sokhoang'         => $request->sokhoang,
-                'sohang'           => $request->sohang,
-                'sotang'           => $request->sotang,
-                'loai_nhom'        => $request->loai_nhom,
-                'loai_hinh_uutien' => $request->loai_hinh_uutien,
-            ]);
-        });
-
-        $kichThuocThayDoi = $soKhoangCu !== $khuvucbai->sokhoang
-            || $soHangCu !== $khuvucbai->sohang
-            || $soTangCu !== $khuvucbai->sotang;
-
         $canh_bao = null;
-        if ($kichThuocThayDoi) {
-            $oDu = OBai::where('makhuvuc', $khuvucbai->makhuvuc)
-                ->where(function ($q) use ($khuvucbai) {
-                    $q->where('khoang', '>', $khuvucbai->sokhoang)
-                      ->orWhere('hang',  '>', $khuvucbai->sohang)
-                      ->orWhere('tang',  '>', $khuvucbai->sotang);
-                });
 
-            $soDangDung = (clone $oDu)->where('trangthai', 'dangsudung')->count();
-            if ($soDangDung > 0) {
-                return response()->json([
-                    'message' => "Không thể giảm kích thước — có {$soDangDung} container đang nằm ngoài vùng kích thước mới.",
-                ], 422);
-            }
+        try {
+            DB::transaction(function () use ($request, $khuvucbai, &$canh_bao) {
+                $kichThuocThayDoi = $khuvucbai->sokhoang !== (int) $request->sokhoang
+                    || $khuvucbai->sohang !== (int) $request->sohang
+                    || $khuvucbai->sotang !== (int) $request->sotang;
 
-            $oDu->update(['trangthai' => 'khonghoatdong']);
-            $this->taoOBaiBoSung($khuvucbai);
-            $canh_bao = 'Kích thước block đã cập nhật. Ô bãi dư đã được vô hiệu hóa, ô mới đã được tạo thêm nếu cần.';
+                // Kiểm tra TRƯỚC khi ghi: nếu còn container ngoài vùng kích thước mới,
+                // hủy toàn bộ thao tác (throw để rollback) thay vì ghi đè rồi mới báo lỗi.
+                if ($kichThuocThayDoi) {
+                    $soDangDung = OBai::where('makhuvuc', $khuvucbai->makhuvuc)
+                        ->where('trangthai', 'dangsudung')
+                        ->where(function ($q) use ($request) {
+                            $q->where('khoang', '>', $request->sokhoang)
+                              ->orWhere('hang',  '>', $request->sohang)
+                              ->orWhere('tang',  '>', $request->sotang);
+                        })
+                        ->lockForUpdate()
+                        ->count();
+
+                    if ($soDangDung > 0) {
+                        throw new KhuVucBaiException("Không thể giảm kích thước — có {$soDangDung} container đang nằm ngoài vùng kích thước mới.");
+                    }
+                }
+
+                $khuvucbai->update([
+                    'sokhoang'         => $request->sokhoang,
+                    'sohang'           => $request->sohang,
+                    'sotang'           => $request->sotang,
+                    'loai_nhom'        => $request->loai_nhom,
+                    'loai_hinh_uutien' => $request->loai_hinh_uutien,
+                ]);
+
+                if ($kichThuocThayDoi) {
+                    OBai::where('makhuvuc', $khuvucbai->makhuvuc)
+                        ->where(function ($q) use ($khuvucbai) {
+                            $q->where('khoang', '>', $khuvucbai->sokhoang)
+                              ->orWhere('hang',  '>', $khuvucbai->sohang)
+                              ->orWhere('tang',  '>', $khuvucbai->sotang);
+                        })
+                        ->update(['trangthai' => 'khonghoatdong']);
+
+                    $this->taoOBaiBoSung($khuvucbai);
+                    $canh_bao = 'Kích thước block đã cập nhật. Ô bãi dư đã được vô hiệu hóa, ô mới đã được tạo thêm nếu cần.';
+                }
+            });
+        } catch (KhuVucBaiException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
         return response()->json([

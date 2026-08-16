@@ -215,12 +215,19 @@ class PhieuLayHangController extends Controller
                 'thoigian_rabai' => $now,
             ]);
 
-            // Giải phóng ô bãi đang chiếm — nếu không, ô sẽ kẹt vĩnh viễn ở 'dangsudung'
+            // Giải phóng ô bãi đang chiếm — nếu không, ô sẽ kẹt vĩnh viễn ở 'dangsudung'.
+            // Phải khóa + kiểm tra "có container xếp trên ô này không" trước khi giải
+            // phóng — nếu không, tài xế lấy container tầng dưới trong khi tầng trên
+            // vẫn còn container sẽ tạo trạng thái lơ lửng phi vật lý.
             $viTriHienTai = LichSuViTri::where('macontainer', $container->macontainer)
                 ->whereNull('thoigian_roi')
                 ->first();
             if ($viTriHienTai) {
-                OBai::where('maobai', $viTriHienTai->maobai)->update(['trangthai' => 'trong']);
+                $obaiHienTai = OBai::where('maobai', $viTriHienTai->maobai)->lockForUpdate()->first();
+                if ($obaiHienTai?->coContTrenDau()) {
+                    abort(422, "Không thể cho {$container->socontainer} ra cổng — đang có container khác xếp trên ô của nó, phải đảo chuyển container phía trên trước.");
+                }
+                $obaiHienTai?->update(['trangthai' => 'trong']);
             }
 
             LichSuViTri::where('macontainer', $container->macontainer)

@@ -140,12 +140,18 @@ class ManifestController extends Controller
 
         $chuyen = ChuyenTau::findOrFail($request->machuyentau);
 
-        Container::where('machuyentau', $chuyen->machuyentau)
-            ->where('loai_hinh', 'nhap')
-            ->where('trangthai', 'choxacnhan')
-            ->delete();
+        if ($chuyen->trangthai !== 'dalenlich') {
+            return response()->json(['message' => 'Chỉ được import manifest cho chuyến tàu đang ở trạng thái "Đã lên lịch". Tàu đã cập cảng hoặc đã rời bến không thể import thêm.'], 422);
+        }
 
-        return $this->processImport($request, $chuyen);
+        return DB::transaction(function () use ($request, $chuyen) {
+            Container::where('machuyentau', $chuyen->machuyentau)
+                ->where('loai_hinh', 'nhap')
+                ->where('trangthai', 'choxacnhan')
+                ->delete();
+
+            return $this->processImport($request, $chuyen);
+        });
     }
 
     // GET /api/admin/manifest/danh-sach/{machuyentau}
@@ -259,9 +265,11 @@ class ManifestController extends Controller
         }
 
         if (!empty($successes)) {
-            foreach (array_chunk($successes, 500) as $chunk) {
-                DB::table('container')->insert($chunk);
-            }
+            DB::transaction(function () use ($successes) {
+                foreach (array_chunk($successes, 500) as $chunk) {
+                    DB::table('container')->insert($chunk);
+                }
+            });
         }
 
         return response()->json([

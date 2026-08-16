@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [tab, setTab] = useState('login');
   const [showPass, setShowPass] = useState(false);
   const [showPassReg, setShowPassReg] = useState(false);
+  const [showForgotInfo, setShowForgotInfo] = useState(false);
   const [serverError, setServerError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
