@@ -22,7 +22,7 @@ class AuthController extends Controller
         // Kiểm tra tài khoản tồn tại và mật khẩu đúng
         if (!$user || !Hash::check($request->password, $user->matkhau)) {
             return response()->json([
-                'message' => 'Email hoặc mật khẩu không đúng.',
+                'message' => 'Tài khoản hoặc mật khẩu chưa đúng.',
             ], 401);
         }
 
