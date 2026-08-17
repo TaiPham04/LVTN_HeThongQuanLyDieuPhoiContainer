@@ -28,6 +28,12 @@ export function useLoaiContainerKH() {
   });
 }
 
+// Tra cứu loại/kích thước nếu số container này đã từng có trong hệ thống —
+// dùng để tự điền tiện lợi, gọi thủ công (không phải query tự động theo key).
+export function traCuuLoaiContainer(socontainer) {
+  return api.get('/kh/booking/tra-cuu-loai', { params: { socontainer } }).then(r => r.data);
+}
+
 export function useCreateBooking() {
   const qc = useQueryClient();
   return useMutation({

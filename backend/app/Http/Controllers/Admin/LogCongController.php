@@ -20,7 +20,14 @@ class LogCongController extends Controller
     // ─── GET /api/admin/cong ──────────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = LogCong::with(['container.chuyentau.hangtau', 'chuyentau', 'taixe', 'nhanvien']);
+        // "Cổng" chỉ theo dõi xe tải qua cổng đường bộ — loại các log THUẦN theo tàu
+        // (không có biển số/tài xế nào cả, từ luồng "Tàu biển" cũ) khỏi danh sách.
+        // Lưu ý: nhiều log "xuất" vẫn có machuyentau đi kèm biển số/tài xế thật (tham
+        // chiếu chuyến tàu của container) — KHÔNG được lọc theo machuyentau đơn thuần.
+        $query = LogCong::with(['container.chuyentau.hangtau', 'chuyentau', 'taixe', 'nhanvien'])
+            ->where(function ($q) {
+                $q->whereNotNull('biensoxe')->orWhereNotNull('mataixe');
+            });
 
         if ($request->kieu_xuatnhap) {
             $query->where('kieu_xuatnhap', $request->kieu_xuatnhap);

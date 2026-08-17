@@ -403,7 +403,10 @@ export default function ContainerPage() {
               error={errors.soniemchi?.message}
               {...register('soniemchi', {
                 required: 'Vui lòng nhập số niêm chì.',
+                minLength: { value: 6, message: 'Tối thiểu 6 ký tự.' },
                 maxLength: { value: 50, message: 'Tối đa 50 ký tự' },
+                pattern: { value: /^[A-Z0-9-]+$/, message: 'Chỉ gồm chữ hoa, số và dấu gạch ngang.' },
+                onChange: (e) => { e.target.value = e.target.value.toUpperCase().replace(/\s/g, ''); },
               })}
             />
             <Input

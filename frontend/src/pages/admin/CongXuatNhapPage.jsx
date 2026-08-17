@@ -48,7 +48,9 @@ function TabCong() {
   const [trang, setTrang]             = useState(1);
   const [search, setSearch]           = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [filterKieu, setFilterKieu]   = useState('');
+  // Mặc định lọc "Nhập bãi" — đồng bộ với form ghi nhận đã đơn giản hóa chỉ còn 1
+  // luồng; bấm "Tất cả" vẫn xem được đủ lịch sử thật (kể cả Xuất bãi từ Phiếu lấy hàng).
+  const [filterKieu, setFilterKieu]   = useState('nhap');
   const [filterNgay, setFilterNgay]   = useState('');
   const [modalOpen, setModalOpen]     = useState(false);
   const [serverErr, setServerErr]     = useState('');
@@ -147,13 +149,9 @@ function TabCong() {
       key: 'biensoxe',
       label: 'Phương tiện / Tài xế',
       render: (_, row) => {
-        if (row.sovoyage) return (
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 500 }}>{row.sovoyage}</div>
-            <div style={{ fontSize: 11, color: '#6b7280' }}>{row.tentau}</div>
-          </div>
-        );
-        return (
+        // Ưu tiên hiện biển số/tài xế thật nếu có — machuyentau chỉ là tham chiếu
+        // chuyến tàu của container, không có nghĩa "phương tiện là con tàu".
+        if (row.biensoxe || row.hoten_taixe) return (
           <div>
             <div style={{ fontSize: 13, fontWeight: 500 }}>{row.biensoxe || <span style={{ color: '#cbd5e1' }}>—</span>}</div>
             {row.hoten_taixe && (
@@ -163,6 +161,13 @@ function TabCong() {
             )}
           </div>
         );
+        if (row.sovoyage) return (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 500 }}>{row.sovoyage}</div>
+            <div style={{ fontSize: 11, color: '#6b7280' }}>{row.tentau}</div>
+          </div>
+        );
+        return <span style={{ color: '#cbd5e1' }}>—</span>;
       },
     },
     {
@@ -239,26 +244,18 @@ function TabCong() {
             </div>
           )}
 
-          {/* Nhập / Xuất */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Loại <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select style={selectStyle(false)} {...register('kieu_xuatnhap')}>
-                <option value="nhap">Nhập bãi</option>
-                <option value="xuat">Xuất bãi</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 4 }}>
-                Phương tiện <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <select style={selectStyle(false)} {...register('kieu_phuongtien')}>
-                <option value="xetai">Xe tải</option>
-                <option value="tau">Tàu biển</option>
-              </select>
-            </div>
+          {/* Nhập / Xuất — chỉ còn "Nhập bãi bằng xe tải": đây là con đường DUY NHẤT
+              để 1 container đã E-Booking (dangky) chuyển thành trongbai. Xuất bãi bằng
+              xe tải đã có luồng riêng (Phiếu lấy hàng + quét QR); "Tàu biển" không đi
+              qua cổng đường bộ nên không thuộc màn hình này — ẩn cả 2 để tránh nhầm. */}
+          <input type="hidden" {...register('kieu_xuatnhap')} />
+          <input type="hidden" {...register('kieu_phuongtien')} />
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+            padding: '8px 12px', background: '#eff6ff', border: '1px solid #bfdbfe',
+            borderRadius: 8, fontSize: 13, color: '#1e40af', fontWeight: 500,
+          }}>
+            Nhập bãi bằng xe tải
           </div>
 
           {/* Số container + info panel */}

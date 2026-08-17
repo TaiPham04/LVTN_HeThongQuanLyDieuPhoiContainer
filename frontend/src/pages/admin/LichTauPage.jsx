@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import ConfirmDelete from '@/components/ui/ConfirmDelete';
+import Toast from '@/components/ui/Toast';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import {
@@ -54,6 +55,12 @@ export default function LichTauPage() {
   const [deleteRow, setDeleteRow]     = useState(null);
   const [serverErr, setServerErr]     = useState('');
   const [huyErr, setHuyErr]           = useState('');
+  const [toast, setToast]             = useState(null); // { msg, type }
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const { data, isLoading }  = useChuyenTauList({ trang, search, trangthai: filterTT, per_page: 10 });
   const { data: htData }     = useHangTauList({ per_page: 100 });
@@ -119,14 +126,18 @@ export default function LichTauPage() {
             <Button
               size="sm" variant="warning"
               disabled={chuyenTT.isPending}
-              onClick={() => chuyenTT.mutate(row.machuyentau)}
+              onClick={() => chuyenTT.mutate(row.machuyentau, {
+                onError: (e) => showToast(e?.response?.data?.message || 'Không thể chuyển trạng thái.'),
+              })}
             >Đã đến cảng</Button>
           )}
           {row.trangthai === 'dadencang' && (
             <Button
               size="sm" variant="success"
               disabled={chuyenTT.isPending}
-              onClick={() => chuyenTT.mutate(row.machuyentau)}
+              onClick={() => chuyenTT.mutate(row.machuyentau, {
+                onError: (e) => showToast(e?.response?.data?.message || 'Không thể chuyển trạng thái.'),
+              })}
             >Đã rời bến</Button>
           )}
           <Button
@@ -431,6 +442,8 @@ export default function LichTauPage() {
           hanhDong="Hủy"
         />
       )}
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

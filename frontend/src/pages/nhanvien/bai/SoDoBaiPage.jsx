@@ -276,7 +276,7 @@ export default function SoDoBaiNVPage() {
               {g.items.map(b => (
                 <option key={b.makhuvuc} value={b.makhuvuc}>
                   Block {b.tenblock}{b.loai_nhom === 'reefer' ? ' ❄' : ''}
-                  {' '}({b.sokhoang}×{b.sohang}×{b.sotang})
+                  {' '}— {NHOM_LABEL[b.loai_nhom] ?? b.loai_nhom}
                 </option>
               ))}
             </optgroup>

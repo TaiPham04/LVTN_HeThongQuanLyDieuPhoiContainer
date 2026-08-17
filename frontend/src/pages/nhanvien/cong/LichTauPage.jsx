@@ -4,6 +4,7 @@ import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Pagination from '@/components/ui/Pagination';
+import Toast from '@/components/ui/Toast';
 import { useLichTauCongList, useChuyenTrangThaiCong } from '@/hooks/nhanvien/useLichTauCong';
 
 /* ── helpers ── */
@@ -28,9 +29,15 @@ export default function LichTauCongPage() {
   const [searchInput, setSearchInput] = useState('');
   const [filterTT, setFilterTT]       = useState('');
   const [confirming, setConfirming]   = useState(null);
+  const [toast, setToast]             = useState(null); // { msg, type }
 
   const { data, isLoading } = useLichTauCongList({ trang, search, trangthai: filterTT });
   const chuyenTT            = useChuyenTrangThaiCong();
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const handleChuyenTT = async (row) => {
     if (!confirming || confirming !== row.machuyentau) {
@@ -39,6 +46,8 @@ export default function LichTauCongPage() {
     }
     try {
       await chuyenTT.mutateAsync(row.machuyentau);
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'Không thể chuyển trạng thái.');
     } finally {
       setConfirming(null);
     }
@@ -147,6 +156,8 @@ export default function LichTauCongPage() {
         meta={meta}
         onChange={setTrang}
       />
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

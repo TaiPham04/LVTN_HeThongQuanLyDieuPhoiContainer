@@ -7,6 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
+import Toast from '@/components/ui/Toast';
 import {
   usePhieuLayHangKHList, useContainerTrongBaiKH, useCreatePhieuLayHangKH, useHuyPhieuLayHangKH,
   usePhieuLayHangKHDetail,
@@ -96,6 +97,12 @@ export default function PhieuLayHangKHPage() {
   const [detailId, setDetailId]       = useState(null);
   const [serverErr, setServerErr]     = useState('');
   const [successMsg, setSuccessMsg]   = useState('');
+  const [toast, setToast]             = useState(null); // { msg, type }
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const { data, isLoading }      = usePhieuLayHangKHList({ trang, search, trangthai: filterTT });
   const { data: contData }       = useContainerTrongBaiKH();
@@ -138,7 +145,7 @@ export default function PhieuLayHangKHPage() {
       const res = await huyMut.mutateAsync(huyRow.maphieu);
       showSuccess(res.message);
     } catch (e) {
-      alert(e?.response?.data?.message || 'Không thể hủy.');
+      showToast(e?.response?.data?.message || 'Không thể hủy.');
     } finally {
       setHuyRow(null);
     }
@@ -185,7 +192,13 @@ export default function PhieuLayHangKHPage() {
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
           <Button size="sm" variant="ghost" onClick={() => setDetailId(row.maphieu)}>Chi tiết</Button>
           {row.trangthai === 'cho_lay' && (
-            <Button size="sm" variant="danger" onClick={() => setHuyRow(row)}>Hủy</Button>
+            <Button size="sm" variant="danger"
+              onClick={() => setHuyRow(row)}
+              disabled={!!(row.thoigian_vao_cong || row.thoigian_den_cang)}
+              title={(row.thoigian_vao_cong || row.thoigian_den_cang)
+                ? 'Không thể hủy — xe đã được ghi nhận vào cổng hoặc tài xế đã xác nhận đến cảng.'
+                : undefined}
+            >Hủy</Button>
           )}
         </div>
       ),
@@ -416,6 +429,8 @@ export default function PhieuLayHangKHPage() {
           </div>
         )}
       </Modal>
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

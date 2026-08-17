@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
+import Toast from '@/components/ui/Toast';
 import {
   usePhieuLayHangList,
   useTaoPhieu,
@@ -194,6 +195,12 @@ export default function PhieuLayHangPage() {
   const [modalOpen, setModalOpen]   = useState(false);
   const [phieuResult, setPhieuResult] = useState(null);
   const [serverErr, setServerErr]   = useState('');
+  const [toast, setToast]           = useState(null); // { msg, type }
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const { data, isLoading } = usePhieuLayHangList({ trang, search, trangthai: filterTT, ngay });
   const { data: txData }    = useTaiXeListCong();
@@ -234,7 +241,7 @@ export default function PhieuLayHangPage() {
     try {
       await xacNhan.mutateAsync(maphieu);
     } catch (e) {
-      alert(e?.response?.data?.message || 'Không thể xác nhận.');
+      showToast(e?.response?.data?.message || 'Không thể xác nhận.');
     }
   };
 
@@ -243,7 +250,7 @@ export default function PhieuLayHangPage() {
     try {
       await huyPhieu.mutateAsync(maphieu);
     } catch (e) {
-      alert(e?.response?.data?.message || 'Không thể hủy phiếu.');
+      showToast(e?.response?.data?.message || 'Không thể hủy phiếu.');
     }
   };
 
@@ -497,6 +504,8 @@ export default function PhieuLayHangPage() {
       {phieuResult && (
         <PhieuElectronic phieu={phieuResult} onClose={() => setPhieuResult(null)} />
       )}
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

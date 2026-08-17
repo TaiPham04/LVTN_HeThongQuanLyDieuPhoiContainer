@@ -202,6 +202,15 @@ class PhieuLayHangKHController extends Controller
             return response()->json(['message' => 'Chỉ có thể hủy phiếu đang chờ lấy hàng.'], 422);
         }
 
+        // Xe đã được ghi nhận vào cổng hoặc tài xế đã xác nhận đến cảng — coi như
+        // quy trình lấy hàng đã bắt đầu ngoài thực tế, khách không thể tự hủy phiếu
+        // nữa (phải liên hệ nhân viên cổng để xử lý thủ công nếu có vấn đề).
+        if ($phieu->thoigian_vao_cong || $phieu->thoigian_den_cang) {
+            return response()->json([
+                'message' => 'Không thể hủy — xe đã được ghi nhận vào cổng hoặc tài xế đã xác nhận đến cảng. Vui lòng liên hệ nhân viên cổng.',
+            ], 422);
+        }
+
         $phieu->update(['trangthai' => 'huy']);
 
         return response()->json(['message' => 'Đã hủy phiếu lấy hàng.']);

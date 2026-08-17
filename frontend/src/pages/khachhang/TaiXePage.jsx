@@ -4,6 +4,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
+import Toast from '@/components/ui/Toast';
 import { useTaiXeKHList, useCreateTaiXeKH, useUpdateTaiXeKH, useDeleteTaiXeKH, useDoiMatKhauTaiXeKH } from '@/hooks/khachhang/useTaiXeKH';
 
 const defValues = { hoten: '', sodienthoai: '', cccd: '', biensoxe: '', email: '', password: '' };
@@ -17,6 +18,12 @@ export default function TaiXeKHPage() {
   const [detailRow, setDetailRow]   = useState(null);
   const [serverErr, setServerErr]   = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [toast, setToast]           = useState(null); // { msg, type }
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const { data, isLoading } = useTaiXeKHList();
   const createMut     = useCreateTaiXeKH();
@@ -96,7 +103,7 @@ export default function TaiXeKHPage() {
       const res = await deleteMut.mutateAsync(deleteRow.mataixe);
       showSuccess(res.message);
     } catch (e) {
-      alert(e?.response?.data?.message || 'Không thể xóa.');
+      showToast(e?.response?.data?.message || 'Không thể xóa.');
     } finally {
       setDeleteRow(null);
     }
@@ -350,6 +357,8 @@ export default function TaiXeKHPage() {
           </div>
         )}
       </Modal>
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

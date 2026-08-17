@@ -313,8 +313,7 @@ export default function SoDoBaiPage() {
             <optgroup key={g.key} label={g.label}>
               {g.items.map(b => (
                 <option key={b.makhuvuc} value={b.makhuvuc}>
-                  Block {b.tenblock}{b.loai_nhom === 'reefer' ? ' ❄' : ''}
-                  {' '}({b.sokhoang}×{b.sohang}×{b.sotang})
+                  Block {b.tenblock}{' '} - {NHOM_LABEL[b.loai_nhom] ?? b.loai_nhom}
                 </option>
               ))}
             </optgroup>

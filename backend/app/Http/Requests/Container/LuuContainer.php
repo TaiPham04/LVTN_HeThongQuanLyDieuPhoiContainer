@@ -17,7 +17,11 @@ class LuuContainer extends FormRequest
             'loai_hinh'     => ['required', 'in:nhap,xuat'],
             'maloai'        => ['required', 'exists:loaicontainer,maloai'],
             'machuyentau'   => ['required', 'exists:chuyentau,machuyentau'],
-            'soniemchi'     => ['required', 'string', 'max:50'],
+            // ISO 17712 không quy định 1 định dạng chuỗi thống nhất toàn cầu cho mã
+            // niêm chì (khác ISO 6346 của số container có checksum chuẩn) — mỗi nhà
+            // sản xuất tự đặt mã. Chỉ chặn được các giá trị RÕ RÀNG không hợp lệ:
+            // quá ngắn, hoặc chứa ký tự lạ ngoài chữ/số/gạch ngang.
+            'soniemchi'     => ['required', 'string', 'min:6', 'max:50', 'regex:/^[A-Z0-9\-]+$/'],
             'trongluong_kg' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'mota_hanghoa'  => ['nullable', 'string', 'max:1000'],
         ];
@@ -44,6 +48,8 @@ class LuuContainer extends FormRequest
             'machuyentau.required'  => 'Vui lòng chọn chuyến tàu.',
             'machuyentau.exists'    => 'Chuyến tàu không hợp lệ.',
             'soniemchi.required'   => 'Vui lòng nhập số niêm chì.',
+            'soniemchi.min'        => 'Số niêm chì quá ngắn (tối thiểu 6 ký tự).',
+            'soniemchi.regex'      => 'Số niêm chì chỉ gồm chữ hoa, số và dấu gạch ngang.',
             'trongluong_kg.numeric' => 'Trọng lượng phải là số.',
             'trongluong_kg.min'     => 'Trọng lượng không được âm.',
         ];

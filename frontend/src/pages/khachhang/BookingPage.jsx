@@ -7,10 +7,11 @@ import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
+import Toast from '@/components/ui/Toast';
 import LoaiContainerSelect from '@/components/shared/LoaiContainerSelect';
 import {
   useBookingKHList, useLichTauKH, useLoaiContainerKH,
-  useCreateBooking, useHuyBooking,
+  useCreateBooking, useHuyBooking, traCuuLoaiContainer,
 } from '@/hooks/khachhang/useBookingKH';
 
 const trangThaiBadge = (v, row) => {
@@ -52,6 +53,14 @@ export default function BookingKHPage() {
   const [serverErr, setServerErr]     = useState('');
   const [successMsg, setSuccessMsg]   = useState('');
   const [maloaiChon, setMaloaiChon]   = useState('');
+  const [toast, setToast]             = useState(null); // { msg, type }
+  const [goiYLoai, setGoiYLoai]       = useState(''); // ghi chú "đã tự điền theo lần trước" nếu tìm thấy
+  const [dangTraCuu, setDangTraCuu]   = useState(false);
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const { data, isLoading }   = useBookingKHList({ trang, search, trangthai: filterTT });
   const { data: lichTauData } = useLichTauKH();
@@ -69,8 +78,27 @@ export default function BookingKHPage() {
   const openThem = () => {
     reset(defValues);
     setMaloaiChon('');
+    setGoiYLoai('');
     setServerErr('');
     setModalOpen(true);
+  };
+
+  // Số container này đã từng có trong hệ thống (lượt trước) chưa — nếu có thì tự
+  // điền sẵn loại/kích thước, khách chỉ cần đổi lại nếu không đúng.
+  const handleSoContainerBlur = async (e) => {
+    const sc = e.target.value.toUpperCase().trim();
+    if (!sc || maloaiChon) return; // đã chọn tay rồi thì không ghi đè
+    setDangTraCuu(true);
+    try {
+      const res = await traCuuLoaiContainer(sc);
+      if (res.data) {
+        setMaloaiChon(res.data.maloai);
+      }
+    } catch {
+      // tra cứu thất bại thì bỏ qua lặng lẽ — không chặn khách nhập tiếp
+    } finally {
+      setDangTraCuu(false);
+    }
   };
 
   const onSubmit = async (values) => {
@@ -97,8 +125,7 @@ export default function BookingKHPage() {
       const res = await huyMut.mutateAsync(huyRow.macontainer);
       showSuccess(res.message);
     } catch (e) {
-      showSuccess('');
-      alert(e?.response?.data?.message || 'Không thể hủy.');
+      showToast(e?.response?.data?.message || 'Không thể hủy.');
     } finally {
       setHuyRow(null);
     }
@@ -224,8 +251,15 @@ export default function BookingKHPage() {
                 minLength: { value: 11, message: '11 ký tự.' },
                 maxLength: { value: 11, message: '11 ký tự.' },
                 onChange: (e) => { e.target.value = e.target.value.toUpperCase().replace(/\s/g, ''); },
+                onBlur: handleSoContainerBlur,
               })}
             />
+            {dangTraCuu && (
+              <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>Đang tra cứu…</p>
+            )}
+            {!dangTraCuu && goiYLoai && (
+              <p style={{ fontSize: 12, color: '#0d9488', marginTop: 4 }}>✓ {goiYLoai}</p>
+            )}
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -261,7 +295,12 @@ export default function BookingKHPage() {
               required
               placeholder="VD: ML12345"
               error={errors.soniemchi?.message}
-              {...register('soniemchi', { required: 'Vui lòng nhập số niêm chì.' })}
+              {...register('soniemchi', {
+                required: 'Vui lòng nhập số niêm chì.',
+                minLength: { value: 6, message: 'Tối thiểu 6 ký tự.' },
+                pattern: { value: /^[A-Z0-9-]+$/, message: 'Chỉ gồm chữ hoa, số và dấu gạch ngang.' },
+                onChange: (e) => { e.target.value = e.target.value.toUpperCase().replace(/\s/g, ''); },
+              })}
             />
             <Input
               label="Trọng lượng (kg)"
@@ -315,6 +354,8 @@ export default function BookingKHPage() {
           </div>
         )}
       </Modal>
+
+      <Toast msg={toast?.msg} type={toast?.type} />
     </div>
   );
 }

@@ -385,13 +385,6 @@ class SoDoBaiController extends Controller
             return collect(); //Trả về collection rỗng nếu kh có ô nào hợp lệ
         }
 
-        // Thống kê block từ các container đang chiếm ô: block chứa container của
-        // những chuyến tàu nào. KHÔNG còn thống kê theo hãng tàu — tiêu chí "cùng
-        // hãng tàu" đã bị loại bỏ (xem diemGoiYXuat): 2 container cùng hãng nhưng
-        // khác chuyến/khác ngày rời bến vẫn có lịch bốc dỡ hoàn toàn độc lập, gom
-        // chung chỉ làm tăng nguy cơ đảo chuyển thừa mà không mang lại lợi ích gì —
-        // "cùng chuyến" (+40) và "đúng thứ tự ngày rời bến" (±30) đã đủ để gom nhóm
-        // đúng nghĩa (theo lịch bốc dỡ thực tế), không cần thêm tiêu chí phụ này.
         $occupied = DB::table('lichsuvitri')
             ->join('obai',      'lichsuvitri.maobai',      '=', 'obai.maobai')
             ->join('container', 'lichsuvitri.macontainer', '=', 'container.macontainer')
@@ -430,18 +423,11 @@ class SoDoBaiController extends Controller
             // cùng 1 cột theo đúng 1 chuyến, và mở rộng liền kề khi cột đã đầy.
             $chuyenTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->machuyentau;
 
-            // Gom nhóm hàng NHẬP theo so_vandon (biết từ lúc Import Manifest — có
-            // sớm hơn hẳn makhachhang, vốn chỉ được điền SAU KHI khách tự "nhận
-            // theo vận đơn", thường là sau lúc gán vị trí rất lâu). Container chưa
-            // có so_vandon (import tắt/demo) thì đơn giản không tham gia gom nhóm.
             if (!empty($r->so_vandon)) {
                 $blockVanDon[$r->makhuvuc][$r->so_vandon] = true;
                 $vanDonTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->so_vandon;
             }
 
-            // Ghi nhận thời điểm vào bãi theo đúng vị trí vật lý — dùng làm proxy
-            // cho "hạn lấy hàng" (vào sớm hơn = gần hết free time hơn = cần lấy ra
-            // sớm hơn) khi buộc phải chồng khác vận đơn ở diemGoiYNhap().
             $vaoBaiTheoViTri["{$r->makhuvuc}-{$r->khoang}-{$r->hang}-{$r->tang}"] = $r->thoigian_vaobai;
         }
 

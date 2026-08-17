@@ -228,6 +228,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('booking',                   [BookingKHController::class, 'index']);
         Route::post('booking',                  [BookingKHController::class, 'store']);
         Route::patch('booking/{container}/huy', [BookingKHController::class, 'huy']);
+        Route::get('booking/tra-cuu-loai',       [BookingKHController::class, 'traCuuLoai']);
         Route::get('lich-tau',                  [BookingKHController::class, 'lichTau']);
 
         // Theo dõi container

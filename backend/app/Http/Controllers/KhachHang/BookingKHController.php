@@ -16,11 +16,18 @@ class BookingKHController extends Controller
     public function index(Request $request): JsonResponse
     {
         $makh  = $request->user()->mataikhoan;
+        // Chỉ hàng XUẤT — đây là danh sách container khách tự đăng ký qua E-Booking
+        // (store() luôn tạo loai_hinh='xuat'). Container NHẬP khách nhận qua vận đơn
+        // không phải "booking", không nên lẫn vào đây — kẻo trùng hệt trang "Container
+        // của tôi" (ContainerKHController::index, hiện cả nhập lẫn xuất).
         $query = Container::with(['loaicontainer', 'chuyentau.hangtau'])
-            ->where('makhachhang', $makh);
+            ->where('makhachhang', $makh)
+            ->where('loai_hinh', 'xuat');
 
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);
+        } else {
+            $query->whereNotIn('trangthai', ['khonghoatdong']);
         }
 
         if ($request->search) {
@@ -48,12 +55,17 @@ class BookingKHController extends Controller
             'socontainer'   => 'required|string|min:11|max:11',
             'maloai'        => 'required|integer|exists:loaicontainer,maloai',
             'machuyentau'   => 'required|integer|exists:chuyentau,machuyentau',
-            'soniemchi'     => 'required|string|max:50',
+            // ISO 17712 không có 1 định dạng chuỗi thống nhất toàn cầu cho mã niêm chì
+            // (khác số container có checksum ISO 6346 chuẩn) — chỉ chặn được giá trị
+            // rõ ràng không hợp lệ: quá ngắn, hoặc chứa ký tự lạ ngoài chữ/số/gạch ngang.
+            'soniemchi'     => ['required', 'string', 'min:6', 'max:50', 'regex:/^[A-Z0-9\-]+$/'],
             'trongluong_kg' => 'nullable|numeric|min:0',
             'mota_hanghoa'  => 'nullable|string|max:500',
             'ghichu'        => 'nullable|string|max:500',
         ], [
             'soniemchi.required' => 'Vui lòng nhập số niêm chì.',
+            'soniemchi.min'      => 'Số niêm chì quá ngắn (tối thiểu 6 ký tự).',
+            'soniemchi.regex'    => 'Số niêm chì chỉ gồm chữ hoa, số và dấu gạch ngang.',
         ]);
 
         $socontainer = strtoupper(trim($request->socontainer));
@@ -132,5 +144,33 @@ class BookingKHController extends Controller
             ]);
 
         return response()->json(['data' => $data]);
+    }
+
+    // GET /api/kh/booking/tra-cuu-loai?socontainer=XXX — gợi ý loại/kích thước nếu
+    // số container này đã từng có trong hệ thống (lượt trước, kể cả đã hủy) — chỉ
+    // để tự điền tiện lợi, KHÔNG ảnh hưởng validate trùng số container lúc submit.
+    public function traCuuLoai(Request $request): JsonResponse
+    {
+        $request->validate(['socontainer' => 'required|string|max:20']);
+
+        $socontainer = strtoupper(trim($request->socontainer));
+
+        $container = Container::withTrashed()
+            ->with('loaicontainer')
+            ->where('socontainer', $socontainer)
+            ->latest('created_at')
+            ->first();
+
+        if (!$container || !$container->loaicontainer) {
+            return response()->json(['data' => null]);
+        }
+
+        return response()->json([
+            'data' => [
+                'maloai'    => $container->loaicontainer->maloai,
+                'tenloai'   => $container->loaicontainer->tenloai,
+                'kieu_cont' => $container->loaicontainer->kieu_cont,
+            ],
+        ]);
     }
 }
