@@ -72,6 +72,7 @@ export default function KhuVucBaiPage() {
   const [editRow, setEditRow] = useState(null);
   const [deleteRow, setDeleteRow] = useState(null);
   const [serverErr, setServerErr] = useState('');
+  const [xoaErr, setXoaErr] = useState('');
 
   // Số khu vực bãi luôn ít (dữ liệu cấu hình, không phải giao dịch) nên lấy hết 1 lần
   // để nhóm hiển thị theo area — không cần phân trang.
@@ -153,7 +154,13 @@ export default function KhuVucBaiPage() {
       render: (_, row) => (
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
           <Button size="sm" variant="ghost" onClick={() => openSua(row)}>Sửa</Button>
-          <Button size="sm" variant="danger" onClick={() => setDeleteRow(row)}>Xóa</Button>
+          <Button size="sm" variant="danger"
+            onClick={() => { setXoaErr(''); setDeleteRow(row); }}
+            disabled={row.so_o_dang_dung > 0}
+            title={row.so_o_dang_dung > 0
+              ? `Không thể xóa — đang có ${row.so_o_dang_dung} ô bãi đang sử dụng.`
+              : undefined}
+          >Xóa</Button>
         </div>
       ),
     },
@@ -219,12 +226,13 @@ export default function KhuVucBaiPage() {
   };
 
   /* ── xóa ── */
-  const handleXoa = async ({ lydo, xacNhan }) => {
+  const handleXoa = async (payload) => {
+    setXoaErr('');
     try {
-      await xoa.mutateAsync({ makhuvuc: deleteRow.makhuvuc, lydo, xac_nhan: xacNhan });
+      await xoa.mutateAsync({ makhuvuc: deleteRow.makhuvuc, ...payload });
       setDeleteRow(null);
     } catch (e) {
-      return e?.response?.data?.message || 'Lỗi khi xóa.';
+      setXoaErr(e?.response?.data?.message || 'Lỗi khi xóa.');
     }
   };
 
@@ -240,7 +248,7 @@ export default function KhuVucBaiPage() {
     <div>
       <PageHeader
         title="Khu vực bãi"
-        description="Quản lý các khu vực lưu trữ container — mỗi khu vực chuyên biệt cho 1 luồng Xuất hoặc Nhập"
+        subtitle="Quản lý các khu vực lưu trữ container — mỗi khu vực chuyên biệt cho 1 luồng Xuất hoặc Nhập"
         action={<Button onClick={openThem}>+ Thêm khu vực</Button>}
       />
 
@@ -418,11 +426,12 @@ export default function KhuVucBaiPage() {
       {deleteRow && (
         <ConfirmDelete
           open={!!deleteRow}
-          onClose={() => setDeleteRow(null)}
+          onClose={() => { setDeleteRow(null); setXoaErr(''); }}
           onConfirm={handleXoa}
           identifier={deleteRow.makhuvuc}
-          tenHienThi={`khu vực ${deleteRow.tenblock}`}
-          loading={xoa.isPending}
+          tenDoiTuong={`khu vực ${deleteRow.tenblock}`}
+          isLoading={xoa.isPending}
+          error={xoaErr}
         />
       )}
     </div>

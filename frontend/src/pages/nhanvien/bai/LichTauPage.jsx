@@ -189,7 +189,7 @@ export default function LichTauBaiPage() {
     <div>
       <PageHeader
         title="Lịch tàu"
-        description="Theo dõi và cập nhật trạng thái chuyến tàu vào bãi"
+        subtitle="Theo dõi và cập nhật trạng thái chuyến tàu vào bãi"
       />
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>

@@ -53,6 +53,7 @@ export default function LichTauPage() {
   const [editRow, setEditRow]         = useState(null);
   const [deleteRow, setDeleteRow]     = useState(null);
   const [serverErr, setServerErr]     = useState('');
+  const [huyErr, setHuyErr]           = useState('');
 
   const { data, isLoading }  = useChuyenTauList({ trang, search, trangthai: filterTT, per_page: 10 });
   const { data: htData }     = useHangTauList({ per_page: 100 });
@@ -62,9 +63,11 @@ export default function LichTauPage() {
   const chuyenTT      = useChuyenTrangThai();
 
   const {
-    register, handleSubmit, reset,
+    register, handleSubmit, reset, watch,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues });
+
+  const watchThoiGianDuKien = watch('thoigiandukien');
 
   /* ── columns ── */
   const columns = [
@@ -133,8 +136,15 @@ export default function LichTauPage() {
           >Sửa</Button>
           <Button
             size="sm" variant="danger"
-            onClick={() => setDeleteRow(row)}
-            disabled={row.trangthai === 'dahuy'}
+            onClick={() => { setHuyErr(''); setDeleteRow(row); }}
+            disabled={row.trangthai !== 'dalenlich' || row.so_container_lien_ket > 0}
+            title={
+              row.trangthai === 'daroi' ? 'Chuyến tàu đã hoàn thành (đã rời bến) — không thể hủy.'
+              : row.trangthai === 'dadencang' ? 'Chuyến tàu đang ở cảng (đang xếp/dỡ hàng) — không thể hủy.'
+              : row.trangthai === 'dahuy' ? 'Chuyến tàu này đã được hủy trước đó.'
+              : row.so_container_lien_ket > 0 ? `Không thể hủy — đang có ${row.so_container_lien_ket} container liên kết (đã import manifest).`
+              : undefined
+            }
           >Hủy</Button>
         </div>
       ),
@@ -191,16 +201,13 @@ export default function LichTauPage() {
   };
 
   /* ── hủy ── */
-  const handleHuy = async ({ lydo, xacNhan }) => {
+  const handleHuy = async (payload) => {
+    setHuyErr('');
     try {
-      await huy.mutateAsync({
-        machuyentau: deleteRow.machuyentau,
-        lydo_xoa:    lydo,
-        xacnhan_xoa: xacNhan,
-      });
+      await huy.mutateAsync({ machuyentau: deleteRow.machuyentau, ...payload });
       setDeleteRow(null);
     } catch (e) {
-      return e?.response?.data?.message || 'Lỗi khi hủy.';
+      setHuyErr(e?.response?.data?.message || 'Lỗi khi hủy.');
     }
   };
 
@@ -220,7 +227,7 @@ export default function LichTauPage() {
     <div>
       <PageHeader
         title="Lịch tàu"
-        description="Quản lý lịch chạy tàu và chuyến tàu ra vào cảng"
+        subtitle="Quản lý lịch chạy tàu và chuyến tàu ra vào cảng"
         action={<Button onClick={openThem}>+ Thêm lịch tàu</Button>}
       />
 
@@ -376,8 +383,14 @@ export default function LichTauPage() {
             <Input
               label="Dự kiến rời bến"
               type="datetime-local"
+              min={watchThoiGianDuKien || undefined}
               error={errors.thoigianroiben?.message}
-              {...register('thoigianroiben', { required: 'Bắt buộc.' })}
+              {...register('thoigianroiben', {
+                required: 'Bắt buộc.',
+                validate: (v) =>
+                  !watchThoiGianDuKien || !v || v > watchThoiGianDuKien
+                    || 'Thời gian rời bến phải sau thời gian đến.',
+              })}
             />
           </div>
 
@@ -409,11 +422,13 @@ export default function LichTauPage() {
       {deleteRow && (
         <ConfirmDelete
           open={!!deleteRow}
-          onClose={() => setDeleteRow(null)}
+          onClose={() => { setDeleteRow(null); setHuyErr(''); }}
           onConfirm={handleHuy}
           identifier={deleteRow.sovoyage}
-          tenHienThi={`chuyến tàu ${deleteRow.sovoyage} — ${deleteRow.tentau}`}
-          loading={huy.isPending}
+          tenDoiTuong={`chuyến tàu ${deleteRow.sovoyage} — ${deleteRow.tentau}`}
+          isLoading={huy.isPending}
+          error={huyErr}
+          hanhDong="Hủy"
         />
       )}
     </div>

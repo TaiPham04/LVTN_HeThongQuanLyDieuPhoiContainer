@@ -31,6 +31,7 @@ export default function LoaiContainerPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected]     = useState(null);
   const [serverErr, setServerErr]   = useState('');
+  const [xoaErr, setXoaErr]         = useState('');
 
   const { data, isLoading } = useLoaiContainerList({ trang, search, per_page: 10 });
   const them     = useThemLoaiContainer();
@@ -65,11 +66,12 @@ export default function LoaiContainerPage() {
   };
 
   const onXoa = async (payload) => {
+    setXoaErr('');
     try {
       await xoa.mutateAsync({ maloai: selected.maloai, ...payload });
       setDeleteOpen(false); setSelected(null);
     } catch (err) {
-      setServerErr(err.response?.data?.message || 'Có lỗi xảy ra.');
+      setXoaErr(err.response?.data?.message || 'Có lỗi xảy ra.');
     }
   };
 
@@ -99,7 +101,13 @@ export default function LoaiContainerPage() {
         <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
           <Button size="sm" variant="ghost" onClick={() => moModalSua(row)}>Sửa</Button>
           {row.trangthai === 'hoatdong'
-            ? <Button size="sm" variant="danger" onClick={() => { setSelected(row); setDeleteOpen(true); }}>Xóa</Button>
+            ? <Button size="sm" variant="danger"
+                onClick={() => { setSelected(row); setXoaErr(''); setDeleteOpen(true); }}
+                disabled={row.so_container_dang_dung > 0}
+                title={row.so_container_dang_dung > 0
+                  ? `Không thể xóa — đang có ${row.so_container_dang_dung} container sử dụng loại này.`
+                  : undefined}
+              >Xóa</Button>
             : <Button size="sm" variant="secondary" onClick={() => khoiPhuc.mutate(row.maloai)}>Khôi phục</Button>
           }
         </div>
@@ -187,9 +195,9 @@ export default function LoaiContainerPage() {
 
       {/* Modal xóa */}
       <ConfirmDelete open={deleteOpen}
-        onClose={() => { setDeleteOpen(false); setSelected(null); }}
+        onClose={() => { setDeleteOpen(false); setSelected(null); setXoaErr(''); }}
         onConfirm={onXoa} identifier={selected?.maiso}
-        tenDoiTuong="loại container" isLoading={xoa.isPending} />
+        tenDoiTuong="loại container" isLoading={xoa.isPending} error={xoaErr} />
     </div>
   );
 }

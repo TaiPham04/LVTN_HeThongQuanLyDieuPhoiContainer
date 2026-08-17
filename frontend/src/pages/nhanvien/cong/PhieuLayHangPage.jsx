@@ -231,12 +231,20 @@ export default function PhieuLayHangPage() {
 
   const handleXacNhan = async (maphieu) => {
     if (!window.confirm('Xác nhận tài xế đã lấy hàng?')) return;
-    await xacNhan.mutateAsync(maphieu);
+    try {
+      await xacNhan.mutateAsync(maphieu);
+    } catch (e) {
+      alert(e?.response?.data?.message || 'Không thể xác nhận.');
+    }
   };
 
   const handleHuy = async (maphieu) => {
     if (!window.confirm('Hủy phiếu này?')) return;
-    await huyPhieu.mutateAsync(maphieu);
+    try {
+      await huyPhieu.mutateAsync(maphieu);
+    } catch (e) {
+      alert(e?.response?.data?.message || 'Không thể hủy phiếu.');
+    }
   };
 
   const taixeOptions = txData?.data ?? [];
@@ -312,7 +320,7 @@ export default function PhieuLayHangPage() {
     <div>
       <PageHeader
         title="Phiếu lấy hàng"
-        description="Xuất phiếu vị trí container cho tài xế đến lấy hàng"
+        subtitle="Xuất phiếu vị trí container cho tài xế đến lấy hàng"
         action={<Button onClick={openTao}>+ Xuất phiếu</Button>}
       />
 

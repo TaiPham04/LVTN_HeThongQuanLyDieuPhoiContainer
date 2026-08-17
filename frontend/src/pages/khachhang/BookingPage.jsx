@@ -161,7 +161,7 @@ export default function BookingKHPage() {
     <div>
       <PageHeader
         title="E-Booking"
-        description="Đăng ký container theo chuyến tàu"
+        subtitle="Đăng ký container theo chuyến tàu"
         action={<Button onClick={openThem}>+ Đăng ký mới</Button>}
       />
 

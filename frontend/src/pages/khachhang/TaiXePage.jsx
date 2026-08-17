@@ -108,7 +108,7 @@ export default function TaiXeKHPage() {
     <div>
       <PageHeader
         title="Tài xế của tôi"
-        description="Quản lý danh sách tài xế thuộc công ty"
+        subtitle="Quản lý danh sách tài xế thuộc công ty"
         action={<Button onClick={openAdd}>+ Thêm tài xế</Button>}
       />
 

@@ -16,7 +16,11 @@ class HangTauController extends Controller
     // ─── GET /api/admin/hang-tau ──────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = HangTau::query();
+        // "dang_su_dung" đúng theo điều kiện chặn xóa ở dangDuocSuDung() — dùng để
+        // frontend biết trước mà làm mờ nút Xóa, tránh bấm xong mới báo lỗi.
+        $query = HangTau::withCount(['chuyentau as so_chuyen_tau_active' => function ($q) {
+            $q->whereIn('trangthai', ['dalenlich', 'dadencang']);
+        }]);
 
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);

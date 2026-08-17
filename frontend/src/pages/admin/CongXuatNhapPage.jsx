@@ -37,7 +37,7 @@ export default function CongXuatNhapPage() {
     <div>
       <PageHeader
         title="Xuất nhập cổng"
-        description="Ghi nhận container vào/ra cổng"
+        subtitle="Ghi nhận container vào/ra cổng"
       />
       <TabCong />
     </div>

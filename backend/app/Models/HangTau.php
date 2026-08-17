@@ -23,6 +23,15 @@ class HangTau extends Model
         return $this->hasMany(ChuyenTau::class, 'mahangtau', 'mahangtau');
     }
 
+    // Container không có cột mahangtau trực tiếp — chỉ liên kết qua chuyentau
+    public function containers()
+    {
+        return $this->hasManyThrough(
+            Container::class, ChuyenTau::class,
+            'mahangtau', 'machuyentau', 'mahangtau', 'machuyentau'
+        );
+    }
+
     // ─── Scopes ──────────────────────────────────────────────────
     public function scopeHoatDong($query)
     {

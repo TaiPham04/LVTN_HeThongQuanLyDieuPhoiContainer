@@ -3,6 +3,7 @@ const VARIANTS = {
   secondary:{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' },
   danger:   { background: '#dc2626', color: '#fff', border: 'none' },
   success:  { background: '#16a34a', color: '#fff', border: 'none' },
+  warning:  { background: '#f59e0b', color: '#fff', border: 'none' },
   ghost:    { background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb' },
 };
 
@@ -22,6 +23,7 @@ export default function Button({
   fullWidth = false,
   icon,
   style: extraStyle = {},
+  title,
 }) {
   const base = {
     display: 'inline-flex',
@@ -42,7 +44,7 @@ export default function Button({
   };
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} style={base}>
+    <button type={type} onClick={onClick} disabled={disabled} style={base} title={title}>
       {icon && <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>}
       {children}
     </button>

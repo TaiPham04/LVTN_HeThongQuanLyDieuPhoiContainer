@@ -36,11 +36,13 @@ const SIZE_TYPE_MAP = [
     '20RF' => 4,  // Container 20 feet lạnh (Reefer)
     "20'RF" => 4,
     '20RE' => 4,
-    '40RF' => 5,  // Container 40 feet lạnh cao
+    '40RF' => 5,  // Container 40 feet lạnh cao — danh mục chỉ có 1 loại reefer 40ft
+                  // (đã là high-cube, cao 9.5ft), nên 40RFHC/40RH dùng chung mã này
+                  // thay vì trỏ tới maloai=14 không tồn tại trong bảng loaicontainer.
     "40'RF" => 5,
     '40RE' => 5,
-    '40RFHC' => 14, // Reefer HC 40ft
-    '40RH'  => 14,
+    '40RFHC' => 5, // Reefer HC 40ft — cùng loại vật lý với 40RF trong danh mục
+    '40RH'  => 5,
     '20OT' => 6,  // Open Top 20ft
     "20'OT" => 6,
     '40OT' => 7,  // Open Top 40ft
@@ -88,14 +90,19 @@ class ManifestImport implements \Maatwebsite\Excel\Concerns\WithMultipleSheets
 // ─── Controller ───────────────────────────────────────────────────────────────
 class ManifestController extends Controller
 {
+    // Tập hợp maloai thực sự tồn tại trong danh mục — nạp 1 lần mỗi lượt import,
+    // dùng bởi resolveMaLoai() để không tin mù bảng cứng SIZE_TYPE_MAP.
+    private $maloaiHopLe;
+
     // GET /api/admin/manifest/template
     public function template(): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $path = storage_path('app/templates/manifest_template.xlsx');
 
-        if (!file_exists($path)) {
-            $this->generateTemplate($path);
-        }
+        // Luôn tạo lại mới — nếu cache theo file_exists(), template cũ sinh ra từ lần
+        // trước sẽ bị "đóng băng" mãi mãi dù logic sinh mẫu/parser sau này có đổi khác,
+        // khiến người dùng tải mẫu về rồi nộp lại y nguyên vẫn bị báo lỗi không nhận dạng.
+        $this->generateTemplate($path);
 
         return response()->download($path, 'manifest_template.xlsx');
     }
@@ -199,6 +206,12 @@ class ManifestController extends Controller
             ->pluck('socontainer')
             ->map(fn ($s) => Str::upper(trim($s)))
             ->flip();
+
+        // Cache các maloai thực sự tồn tại trong danh mục — SIZE_TYPE_MAP là bảng cứng,
+        // có thể trỏ tới 1 maloai đã bị xóa/chưa từng tạo. Nếu không kiểm tra trước, 1
+        // dòng maloai "ma" sẽ làm cả lô insert vỡ FK constraint và crash toàn bộ import
+        // (mất luôn cả các dòng hợp lệ khác), thay vì chỉ bỏ qua đúng dòng lỗi đó.
+        $this->maloaiHopLe = LoaiContainer::pluck('maloai')->flip();
 
         foreach ($rows as $i => $row) {
             $line = $i + 2;
@@ -305,9 +318,11 @@ class ManifestController extends Controller
     {
         if (!$sizeType) return null;
 
-        // Tra bảng cứng trước
+        // Tra bảng cứng trước — nhưng phải xác nhận maloai đó thật sự tồn tại trong
+        // danh mục hiện tại, tránh trỏ tới 1 ID đã bị xóa/chưa từng tạo.
         if (isset(SIZE_TYPE_MAP[$sizeType])) {
-            return SIZE_TYPE_MAP[$sizeType];
+            $maloai = SIZE_TYPE_MAP[$sizeType];
+            return isset($this->maloaiHopLe[$maloai]) ? $maloai : null;
         }
 
         // Fallback: tra DB theo maloai số

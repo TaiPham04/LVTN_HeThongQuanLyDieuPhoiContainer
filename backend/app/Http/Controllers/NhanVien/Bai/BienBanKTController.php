@@ -8,6 +8,7 @@ use App\Models\BienBanKT;
 use App\Models\Container;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BienBanKTController extends Controller
 {
@@ -63,20 +64,24 @@ class BienBanKTController extends Controller
 
         $container = Container::where('socontainer', strtoupper(trim($request->socontainer)))->first();
 
-        $bienban = BienBanKT::create([
-            'macontainer'  => $container->macontainer,
-            'manhanvien'   => $request->user()->mataikhoan,
-            'loaiktd'      => 'dinhky',
-            'chu_ky'       => $request->chu_ky,
-            'ketqua_ktd'   => $request->ketqua_ktd,
-            'bi_hong'      => $request->bi_hong,
-            'ketluan'      => $request->ketluan,
-            'thoigian_ktd' => $request->thoigian_ktd,
-        ]);
+        $bienban = DB::transaction(function () use ($request, $container) {
+            $bienban = BienBanKT::create([
+                'macontainer'  => $container->macontainer,
+                'manhanvien'   => $request->user()->mataikhoan,
+                'loaiktd'      => 'dinhky',
+                'chu_ky'       => $request->chu_ky,
+                'ketqua_ktd'   => $request->ketqua_ktd,
+                'bi_hong'      => $request->bi_hong,
+                'ketluan'      => $request->ketluan,
+                'thoigian_ktd' => $request->thoigian_ktd,
+            ]);
 
-        if ($request->bi_hong) {
-            $container->update(['bi_hong' => true]);
-        }
+            if ($request->bi_hong) {
+                $container->update(['bi_hong' => true]);
+            }
+
+            return $bienban;
+        });
 
         return response()->json([
             'message' => "Đã lập biên bản kiểm tra định kỳ container {$container->socontainer}.",

@@ -231,7 +231,7 @@ export default function TaiKhoanPage() {
     <div>
       <PageHeader
         title="Quản lý tài khoản"
-        description="Quản lý tài khoản người dùng hệ thống"
+        subtitle="Quản lý tài khoản người dùng hệ thống"
         action={<Button onClick={openThem}>+ Thêm tài khoản</Button>}
       />
 

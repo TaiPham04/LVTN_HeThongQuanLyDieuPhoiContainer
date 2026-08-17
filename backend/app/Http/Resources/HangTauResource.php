@@ -15,6 +15,8 @@ class HangTauResource extends JsonResource
             'tenhangtau' => $this->tenhangtau,
             'quocgia'    => $this->quocgia,
             'email'      => $this->email,
+            // Đúng theo điều kiện chặn xóa ở HangTau::dangDuocSuDung()
+            'so_chuyen_tau_active' => $this->so_chuyen_tau_active ?? 0,
             'trangthai'  => $this->trangthai,
             'created_at' => $this->created_at?->format('d/m/Y H:i'),
             'updated_at' => $this->updated_at?->format('d/m/Y H:i'),

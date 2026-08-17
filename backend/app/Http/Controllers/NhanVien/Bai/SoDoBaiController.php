@@ -99,13 +99,21 @@ class SoDoBaiController extends Controller
                     ->pluck('tenblock')->sort()->implode(', ');
 
                 return [
-                    'macontainer'     => $c->macontainer,
-                    'socontainer'     => $c->socontainer,
-                    'mascac'          => $c->chuyentau?->hangtau?->mascac,
-                    'sovoyage'        => $c->chuyentau?->sovoyage,
-                    'thoigian_vaobai' => $c->thoigian_vaobai?->format('d/m/Y H:i'),
-                    'nhom'            => $nhom,
-                    'block_phuhop'    => $blockPhuHop ?: null,
+                    'macontainer'      => $c->macontainer,
+                    'socontainer'      => $c->socontainer,
+                    'mascac'           => $c->chuyentau?->hangtau?->mascac,
+                    'tenhangtau'       => $c->chuyentau?->hangtau?->tenhangtau,
+                    'sovoyage'         => $c->chuyentau?->sovoyage,
+                    'tentau'           => $c->chuyentau?->tentau,
+                    'loai_hinh'        => $c->loai_hinh,
+                    'thoigiandukien'   => $c->chuyentau?->thoigiandukien?->format('d/m/Y H:i'),
+                    'thoigianroiben'   => $c->chuyentau?->thoigianroiben?->format('d/m/Y H:i'),
+                    'thoigian_vaobai'  => $c->thoigian_vaobai?->format('d/m/Y H:i'),
+                    'trangthai_haiquan'=> $c->trangthai_haiquan,
+                    'bi_hong'          => (bool) $c->bi_hong,
+                    'tenloai'          => $c->loaicontainer?->tenloai,
+                    'nhom'             => $nhom,
+                    'block_phuhop'     => $blockPhuHop ?: null,
                 ];
             });
 

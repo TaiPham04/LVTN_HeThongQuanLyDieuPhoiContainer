@@ -58,8 +58,12 @@ class BookingKHController extends Controller
 
         $socontainer = strtoupper(trim($request->socontainer));
 
-        // Kiểm tra số container chưa tồn tại
-        if (Container::where('socontainer', $socontainer)->exists()) {
+        // Kiểm tra số container chưa tồn tại — phải tính cả bản ghi đã hủy (soft-delete),
+        // vì cột socontainer có UNIQUE KEY ở tầng DB không loại trừ deleted_at. Nếu chỉ
+        // check qua Eloquent thường (tự động bỏ qua bản ghi đã xóa mềm), container đã hủy
+        // đăng ký trước đó vẫn "biến mất" khỏi check này rồi làm INSERT sau đó vỡ UNIQUE
+        // constraint → lỗi 500 thay vì thông báo nghiệp vụ rõ ràng.
+        if (Container::withTrashed()->where('socontainer', $socontainer)->exists()) {
             return response()->json(['message' => "Số container {$socontainer} đã tồn tại trong hệ thống."], 422);
         }
 

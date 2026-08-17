@@ -162,7 +162,18 @@ class TaiXeKHController extends Controller
         }
 
         $hoten = $taixe->hoten;
-        $taixe->delete();
+
+        DB::transaction(function () use ($taixe) {
+            // Vô hiệu hóa tài khoản đăng nhập tương ứng — nếu không, tài xế đã "xóa"
+            // vẫn đăng nhập được vào hệ thống (chỉ mất quyền truy cập dữ liệu tài xế).
+            $taikhoan = $taixe->taikhoan;
+            if ($taikhoan && $taikhoan->trangthai !== 'khonghoatdong') {
+                $taikhoan->update(['trangthai' => 'khonghoatdong']);
+                $taikhoan->tokens()->delete();
+            }
+
+            $taixe->delete();
+        });
 
         return response()->json(['message' => "Đã xóa tài xế {$hoten}."]);
     }

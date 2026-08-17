@@ -165,7 +165,7 @@ export default function BienBanKTPage() {
     <div>
       <PageHeader
         title="Biên bản kiểm tra định kỳ"
-        description="Lập và tra cứu biên bản kiểm tra container"
+        subtitle="Lập và tra cứu biên bản kiểm tra container"
         action={<Button onClick={openThem}>+ Tạo biên bản</Button>}
       />
 

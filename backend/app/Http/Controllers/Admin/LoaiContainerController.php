@@ -16,7 +16,11 @@ class LoaiContainerController extends Controller
     // ─── GET /api/admin/loai-container ───────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = LoaiContainer::query();
+        // "so_container_dang_dung" đúng theo điều kiện chặn xóa ở dangDuocSuDung() —
+        // dùng để frontend biết trước mà làm mờ nút Xóa, tránh bấm xong mới báo lỗi.
+        $query = LoaiContainer::withCount(['containers as so_container_dang_dung' => function ($q) {
+            $q->where('trangthai', '!=', 'khonghoatdong');
+        }]);
 
         // Lọc theo trạng thái
         if ($request->trangthai) {

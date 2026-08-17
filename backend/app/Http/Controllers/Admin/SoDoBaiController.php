@@ -100,13 +100,21 @@ class SoDoBaiController extends Controller
                     ->pluck('tenblock')->sort()->implode(', ');
 
                 return [
-                    'macontainer'     => $c->macontainer,
-                    'socontainer'     => $c->socontainer,
-                    'mascac'          => $c->chuyentau?->hangtau?->mascac,
-                    'sovoyage'        => $c->chuyentau?->sovoyage,
-                    'thoigian_vaobai' => $c->thoigian_vaobai?->format('d/m/Y H:i'),
-                    'nhom'            => $nhom,
-                    'block_phuhop'    => $blockPhuHop ?: null,
+                    'macontainer'      => $c->macontainer,
+                    'socontainer'      => $c->socontainer,
+                    'mascac'           => $c->chuyentau?->hangtau?->mascac,
+                    'tenhangtau'       => $c->chuyentau?->hangtau?->tenhangtau,
+                    'sovoyage'         => $c->chuyentau?->sovoyage,
+                    'tentau'           => $c->chuyentau?->tentau,
+                    'loai_hinh'        => $c->loai_hinh,
+                    'thoigiandukien'   => $c->chuyentau?->thoigiandukien?->format('d/m/Y H:i'),
+                    'thoigianroiben'   => $c->chuyentau?->thoigianroiben?->format('d/m/Y H:i'),
+                    'thoigian_vaobai'  => $c->thoigian_vaobai?->format('d/m/Y H:i'),
+                    'trangthai_haiquan'=> $c->trangthai_haiquan,
+                    'bi_hong'          => (bool) $c->bi_hong,
+                    'tenloai'          => $c->loaicontainer?->tenloai,
+                    'nhom'             => $nhom,
+                    'block_phuhop'     => $blockPhuHop ?: null,
                 ];
             });
 
@@ -517,20 +525,8 @@ class SoDoBaiController extends Controller
             }
         }
 
-        
-        //Mục đích quy về dạng tầng đáy là 0 -> đỉnh là 1 để đảm bảo hệ quy chiếu 
-        //của tất các các block nằm trong khoảng này mà kh phụ thuộc vào độ cao tầng.
-        //CHỗ này tại sao kh làm tròn? Tại vì để nó có độ mượt theo tầng
-        //Mượt ở đây là sao? HÌnh dung việc khi ta neo giá trị theo độ cao block
-        //khi cứ lên cao thì nó gaimr 1 số đơn vị nhất định dấn đến tình trạng nhảy bậc
-        //còn khi quy về khoảng 0->1 nó sẽ giới hạn 2 đầu đáy đỉnh từ đó lập thành 1 đường cong liên tục
-        //=>Nó gọi là Neo công bằng
-
-        //Tại sao lại phạt tàng cao? Vì khi càng lên cao càng nhiều cont bị chôn, độ an toàn 
-        //và ổn định vật lý giảm, tốn thời gian cẩu đưa lên cao
+        //Phạt tầng
         $tyLeTang = $sotang > 1 ? ($o->tang - 1) / ($sotang - 1) : 0.0;
-        
-        //Cơ chế phạt tầng: tầng càng cao phạt càng nặng tối đa 24 (Tiêu chí phụ)
         $score -= (int) round($tyLeTang * 24);
 
         $soNgayConLai = $container->chuyentau?->thoiGianDongHaBai()
@@ -540,11 +536,7 @@ class SoDoBaiController extends Controller
         //Nếu đã lên lịch tức là có số ngày còn lại và số ngày đó >=0
         if ($soNgayConLai !== null && $soNgayConLai >= 0) {
             
-            //Ở đây ta dùng hệ quy chiếu là Xe tải gắp cont, khi cont để cảng thấp thì 
-            //càng tiết kiệm thời gian và chi phí
-
-            // Ngược lại với tyLeTang ở đây tầng đáy là 5 và đỉnh là 0, ở đây mục để thưởng 
-            // cho tầng thấp
+            //Ở đây ta dùng hệ quy chiếu là Xe tải gắp cont
             $heSoTang = 5 * (1 - $tyLeTang);
 
             //Bonus khẩn cấp theo số ngày còn lại
@@ -557,18 +549,11 @@ class SoDoBaiController extends Controller
         return $score;
     }
 
-    // ─── Điểm gợi ý cho container NHẬP — tiêu chí CHÍNH vẫn là đặt thấp để khách
-    // lấy hàng thuận tiện bất cứ lúc nào (không phụ thuộc lịch tàu), nhưng ưu tiên
-    // TUYỆT ĐỐI gom các container CÙNG VẬN ĐƠN (cùng lô hàng) vào chung 1 cột hoặc
-    // liền kề — khách thường lấy cả lô 1 lần, gom chung giúp giảm hẳn số lượt đảo
-    // chuyển và tài xế không phải chạy lòng vòng nhiều khu vực trong bãi ────────
     private function diemGoiYNhap(Container $container, OBai $o, int $kv, array $blockVanDon, float $tyLeDayBlock, array $vaoBaiTheoViTri, array $vanDonTheoViTri): int
     {
         $score = 0;
         $sotang = $o->khuvucbai->sotang;
 
-        // Tín hiệu NỀN: có container cùng vận đơn ở đâu đó trong block này không
-        // (bất kể vị trí cụ thể) — trọng số nhỏ, chỉ để phá thế hòa.
         if (!empty($container->so_vandon) && !empty($blockVanDon[$kv][$container->so_vandon])) {
             $score += 15;
         }
@@ -577,25 +562,14 @@ class SoDoBaiController extends Controller
             $vanDonBenDuoi = $vanDonTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
 
             if (!empty($container->so_vandon) && $vanDonBenDuoi !== null && $vanDonBenDuoi === $container->so_vandon) {
-                // ƯU TIÊN: đúng vận đơn đang nằm ngay bên dưới. Điểm cộng +10/tầng ở
-                // đây đúng bằng bước phạt tầng bên dưới (30 chia đều (sotang-1) bước)
-                // nên điểm RÒNG giữ NGUYÊN ổn định ở mọi tầng khi xây cùng 1 cột —
-                // KHÁC với xuất (điểm ròng TĂNG dần theo tầng để ép xây đầy 1 cột theo
-                // đúng 1 chuyến trước khi mở cột khác). Nhập không cần ép xây cao như
-                // vậy: hàng nhập khách lấy lẻ, không có deadline tàu chạy để chạy đua,
-                // chỉ cần đảm bảo "gom đúng vận đơn luôn thắng áp đảo so với trộn vận
-                // đơn khác" ở MỌI tầng (ròng +30 ổn định so với nhánh trộn dưới đây
-                // luôn âm) — vậy là đủ, không cần thêm động lực xây cao nữa.
+                
                 $score += 20 + $o->tang * 10;
+                
             } else {
                 // Buộc phải chồng lên container KHÁC vận đơn  — phạt nhẹ, không nặng bằng "trộn chuyến" ở hàng xuất
                 // vì hàng nhập vốn không bị áp lực thời hạn tàu chạy như nhau.
                 $score -= 10;
 
-                // PHỤ: khi đã buộc phải trộn lô hàng, vẫn cần tránh chặn
-                // đường lấy hàng — container vào bãi CÀNG SỚM thì càng gần hết free
-                // time, càng cần lấy ra trước, nên nên nằm ở tầng CAO HƠN (LIFO theo
-                // thời điểm vào bãi — cùng nguyên lý với "ngày rời bến" ở hàng xuất).
                 $vaoBaiBenDuoi = $vaoBaiTheoViTri["{$kv}-{$o->khoang}-{$o->hang}-" . ($o->tang - 1)] ?? null;
 
                 if ($vaoBaiBenDuoi && $container->thoigian_vaobai) {
@@ -607,9 +581,7 @@ class SoDoBaiController extends Controller
                 }
             }
         } else {
-            // TIER 1b — Tầng 1 (mở cột mới): thưởng nếu liền kề (4 hướng khoang/hàng)
-            // 1 cột ĐÃ ĐẦY (chạm sotang) của ĐÚNG vận đơn này — mở rộng ngay xung
-            // quanh thay vì rải rác khắp block.
+            //Mở cột mới
             if (!empty($container->so_vandon)) {
                 $lienKe = [
                     [$o->khoang - 1, $o->hang],
@@ -627,8 +599,7 @@ class SoDoBaiController extends Controller
             }
         }
 
-        //Nguyên lý tương tự diemGoiYXuat, nhưng là tiêu chí chính ở đây phạt nặng hơn tối đa 30
-        //Phạt cao là do khi càng xếp chống rủi ro đảo chuyển càng lớn
+        
         $tyLeTang = $sotang > 1 ? ($o->tang - 1) / ($sotang - 1) : 0.0;
         $score -= (int) round($tyLeTang * 30);
 

@@ -36,7 +36,7 @@ export default function DashboardKHPage() {
   if (isLoading) {
     return (
       <div>
-        <PageHeader title="Tổng quan" description="Theo dõi container và hoạt động của bạn" />
+        <PageHeader title="Tổng quan" subtitle="Theo dõi container và hoạt động của bạn" />
         <div style={{ color: '#9ca3af', padding: 40, textAlign: 'center' }}>Đang tải…</div>
       </div>
     );
@@ -44,7 +44,7 @@ export default function DashboardKHPage() {
 
   return (
     <div>
-      <PageHeader title="Tổng quan" description="Theo dõi container và hoạt động của bạn" />
+      <PageHeader title="Tổng quan" subtitle="Theo dõi container và hoạt động của bạn" />
 
       {/* ── Cảnh báo Free Time (hiển thị nổi bật nếu có) ── */}
       {(daQua.length > 0 || sapQua.length > 0) && (

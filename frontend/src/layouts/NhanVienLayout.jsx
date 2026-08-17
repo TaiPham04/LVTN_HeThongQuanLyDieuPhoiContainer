@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 
@@ -26,10 +27,16 @@ export default function NhanVienLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const goTo = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
   };
 
   const menu = user?.role === 'nhanvien_cong' ? MENU_CONG : MENU_BAI;
@@ -43,8 +50,31 @@ export default function NhanVienLayout() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @media (max-width: 767px) {
+          .nv-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            z-index: 50 !important;
+            transform: translateX(${sidebarOpen ? '0' : '-100%'}) !important;
+            transition: transform .2s ease;
+          }
+        }
+      `}</style>
+
+      {/* ─── BACKDROP (mobile) ─── */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden"
+          style={s.backdrop}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ─── SIDEBAR ─── */}
-      <aside style={s.sidebar}>
+      <aside className="nv-sidebar" style={s.sidebar}>
         {/* Logo */}
         <div style={s.logo}>
           <div style={s.logoBox}>
@@ -69,7 +99,7 @@ export default function NhanVienLayout() {
             return (
               <div
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={() => goTo(item.path)}
                 style={{ ...s.navItem, ...(isActive ? s.navActive : {}) }}
               >
                 <i className={`ti ${item.icon}`} aria-hidden="true"
@@ -93,7 +123,18 @@ export default function NhanVienLayout() {
       <div style={s.main}>
         {/* Header */}
         <header style={s.header}>
-          <span style={s.breadcrumb}>{tenTrang}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              className="flex md:hidden"
+              onClick={() => setSidebarOpen(true)}
+              style={s.hamburger}
+              type="button"
+              aria-label="Mở menu"
+            >
+              <i className="ti ti-menu-2" style={{ fontSize: 20 }} />
+            </button>
+            <span style={s.breadcrumb}>{tenTrang}</span>
+          </div>
           <div
             style={{ ...s.headerRight, cursor: 'pointer' }}
             onClick={() => navigate(`/nv/${user?.role === 'nhanvien_cong' ? 'cong' : 'bai'}/profile`)}
@@ -201,6 +242,7 @@ const s = {
     flexDirection: 'column',
     background: '#f3f4f6',
     minHeight: '100vh',
+    minWidth: 0,
   },
   header: {
     background: '#fff',
@@ -253,5 +295,21 @@ const s = {
   content: {
     flex: 1,
     padding: 24,
+  },
+  backdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    zIndex: 40,
+  },
+  hamburger: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#111827',
+    alignItems: 'center',
+    padding: 4,
+    borderRadius: 6,
+    flexShrink: 0,
   },
 };

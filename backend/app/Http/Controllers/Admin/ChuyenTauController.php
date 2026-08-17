@@ -18,7 +18,12 @@ class ChuyenTauController extends Controller
     // ─── GET /api/admin/lich-tau ─────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $query = ChuyenTau::with('hangtau');
+        // "so_container_lien_ket" đếm đúng theo điều kiện chặn hủy ở destroy()/chuyenTrangThai() —
+        // dùng để frontend biết trước mà làm mờ nút Hủy, tránh bấm xong mới báo lỗi.
+        $query = ChuyenTau::with('hangtau')
+            ->withCount(['containers as so_container_lien_ket' => function ($q) {
+                $q->where('trangthai', '!=', 'khonghoatdong');
+            }]);
 
         if ($request->trangthai) {
             $query->where('trangthai', $request->trangthai);
@@ -72,6 +77,20 @@ class ChuyenTauController extends Controller
             return response()->json([
                 'message' => 'Không thể sửa chuyến tàu đã rời hoặc đã hủy.',
             ], 422);
+        }
+
+        // Không cho đổi hãng tàu sau khi chuyến đã có container liên kết — đổi hãng tàu
+        // lúc này sẽ làm sai lệch số liệu thống kê/báo cáo đã ghi nhận theo hãng tàu cũ.
+        if ((int) $request->mahangtau !== $chuyentau->mahangtau) {
+            $soContainer = Container::where('machuyentau', $chuyentau->machuyentau)
+                ->where('trangthai', '!=', 'khonghoatdong')
+                ->count();
+
+            if ($soContainer > 0) {
+                return response()->json([
+                    'message' => "Không thể đổi hãng tàu — chuyến tàu đang có {$soContainer} container liên kết.",
+                ], 422);
+            }
         }
 
         $chuyentau->update($request->validated());

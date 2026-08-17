@@ -30,6 +30,8 @@ class LoaiContainerResource extends JsonResource
             'taitrong_kg'    => (float) $this->taitrong_kg,
             'gialuubai_ngay'     => (float) $this->gialuubai_ngay,
             'soNgayMienPhi'  => $this->soNgayMienPhi,
+            // Đúng theo điều kiện chặn xóa ở LoaiContainer::dangDuocSuDung()
+            'so_container_dang_dung' => $this->so_container_dang_dung ?? 0,
             'trangthai'      => $this->trangthai,
             'created_at'     => $this->created_at?->format('d/m/Y H:i'),
             'updated_at'     => $this->updated_at?->format('d/m/Y H:i'),

@@ -91,7 +91,7 @@ export default function ScanQRPage() {
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
-      <PageHeader title="Quét mã QR cổng" description="Nhập hoặc quét mã QR để tra cứu phiếu lấy hàng" />
+      <PageHeader title="Quét mã QR cổng" subtitle="Nhập hoặc quét mã QR để tra cứu phiếu lấy hàng" />
 
       {/* ── Ô nhập QR ── */}
       <form onSubmit={handleScan} style={{ display: 'flex', gap: 8, marginBottom: 24 }}>

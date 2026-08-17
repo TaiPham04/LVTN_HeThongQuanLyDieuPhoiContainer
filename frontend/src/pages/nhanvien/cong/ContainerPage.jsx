@@ -162,7 +162,7 @@ export default function ContainerCongPage() {
     <div>
       <PageHeader
         title="Container"
-        description="Đăng ký và tra cứu container tại cổng"
+        subtitle="Đăng ký và tra cứu container tại cổng"
         action={<Button onClick={openThem}>+ Đăng ký container</Button>}
       />
 

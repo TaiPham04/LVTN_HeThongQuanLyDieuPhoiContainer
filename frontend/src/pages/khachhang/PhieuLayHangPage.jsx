@@ -201,7 +201,7 @@ export default function PhieuLayHangKHPage() {
     <div>
       <PageHeader
         title="Phiếu lấy hàng"
-        description="Tạo và quản lý phiếu lấy hàng D/O"
+        subtitle="Tạo và quản lý phiếu lấy hàng D/O"
         action={
           <Button onClick={openThem} disabled={contList.length === 0} title={contList.length === 0 ? 'Không có container đủ điều kiện' : ''}>
             + Tạo phiếu

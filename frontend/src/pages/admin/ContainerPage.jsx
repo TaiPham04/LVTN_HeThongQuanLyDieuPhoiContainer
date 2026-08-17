@@ -71,6 +71,7 @@ export default function ContainerPage() {
   const [editRow, setEditRow]           = useState(null);
   const [deleteRow, setDeleteRow]       = useState(null);
   const [serverErr, setServerErr]       = useState('');
+  const [xoaErr, setXoaErr]             = useState('');
   const [maloaiChon, setMaloaiChon]     = useState('');
 
   const { isAdmin, isNhanVienBai } = useAuthStore();
@@ -155,8 +156,13 @@ export default function ContainerPage() {
               disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
             >Sửa</Button>
             <Button size="sm" variant="danger"
-              onClick={() => setDeleteRow(row)}
+              onClick={() => { setXoaErr(''); setDeleteRow(row); }}
               disabled={['trongbai', 'khonghoatdong'].includes(row.trangthai)}
+              title={row.trangthai === 'trongbai'
+                ? 'Không thể xóa — container đang trong bãi.'
+                : row.trangthai === 'khonghoatdong'
+                  ? 'Container này đã bị vô hiệu hóa trước đó.'
+                  : undefined}
             >Xóa</Button>
           </>}
         </div>
@@ -216,16 +222,13 @@ export default function ContainerPage() {
   };
 
   /* ── xóa ── */
-  const handleXoa = async ({ lydo, xacNhan }) => {
+  const handleXoa = async (payload) => {
+    setXoaErr('');
     try {
-      await xoa.mutateAsync({
-        macontainer: deleteRow.macontainer,
-        lydo_xoa:    lydo,
-        xacnhan_xoa: xacNhan,
-      });
+      await xoa.mutateAsync({ macontainer: deleteRow.macontainer, ...payload });
       setDeleteRow(null);
     } catch (e) {
-      return e?.response?.data?.message || 'Lỗi khi xóa.';
+      setXoaErr(e?.response?.data?.message || 'Lỗi khi xóa.');
     }
   };
 
@@ -247,7 +250,7 @@ export default function ContainerPage() {
     <div>
       <PageHeader
         title="Quản lý container"
-        description="Đăng ký và quản lý thông tin container"
+        subtitle="Đăng ký và quản lý thông tin container"
         action={!isNhanVienBai() && <Button onClick={openThem}>+ Đăng ký container</Button>}
       />
 
@@ -487,11 +490,12 @@ export default function ContainerPage() {
       {deleteRow && (
         <ConfirmDelete
           open={!!deleteRow}
-          onClose={() => setDeleteRow(null)}
+          onClose={() => { setDeleteRow(null); setXoaErr(''); }}
           onConfirm={handleXoa}
           identifier={deleteRow.socontainer}
-          tenHienThi={`container ${deleteRow.socontainer}`}
-          loading={xoa.isPending}
+          tenDoiTuong={`container ${deleteRow.socontainer}`}
+          isLoading={xoa.isPending}
+          error={xoaErr}
         />
       )}
     </div>

@@ -31,6 +31,9 @@ class ChuyenTauResource extends JsonResource
                 fn () => $this->containers->where('loai_hinh', 'nhap')->whereIn('trangthai', ['trongbai', 'xuatcong'])->count(),
                 null
             ),
+            // Đúng theo điều kiện chặn hủy chuyến tàu ở ChuyenTauController::destroy()
+            'so_container_lien_ket' => $this->so_container_lien_ket
+                ?? $this->whenLoaded('containers', fn () => $this->containers->where('trangthai', '!=', 'khonghoatdong')->count(), null),
             'trangthai'          => $this->trangthai,
             'created_at'        => $this->created_at?->format('d/m/Y H:i'),
         ];

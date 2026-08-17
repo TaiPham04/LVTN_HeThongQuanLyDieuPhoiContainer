@@ -37,7 +37,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div>
-        <PageHeader title="Dashboard" description="Tổng quan hệ thống cảng Cát Lái" />
+        <PageHeader title="Dashboard" subtitle="Tổng quan hệ thống cảng Cát Lái" />
         <div style={{ textAlign: 'center', padding: 60, color: '#6b7280', fontSize: 14 }}>
           Đang tải dữ liệu…
         </div>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="Tổng quan trạng thái hệ thống cảng Cát Lái"
+        subtitle="Tổng quan trạng thái hệ thống cảng Cát Lái"
       />
 
       {/* ── Row 1: Biểu đồ ── */}

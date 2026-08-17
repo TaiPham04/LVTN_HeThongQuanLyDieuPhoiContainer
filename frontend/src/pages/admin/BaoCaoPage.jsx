@@ -424,7 +424,7 @@ export default function BaoCaoPage() {
     <div>
       <PageHeader
         title="Báo cáo"
-        description="Thống kê và tra cứu dữ liệu theo khoảng thời gian"
+        subtitle="Thống kê và tra cứu dữ liệu theo khoảng thời gian"
       />
 
       {/* Tabs */}

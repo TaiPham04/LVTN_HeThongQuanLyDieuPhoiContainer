@@ -94,7 +94,7 @@ export default function ContainerBaiPage() {
     <div>
       <PageHeader
         title="Container"
-        description="Tra cứu thông tin container trong bãi"
+        subtitle="Tra cứu thông tin container trong bãi"
       />
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>

@@ -190,6 +190,14 @@ export default function SoDoBaiNVPage() {
     setGanCtx({ macontainer: c.macontainer, socontainer: c.socontainer });
   };
 
+  /* ── Xem chi tiết container đang chờ gán (chuột phải) — không kích hoạt chọn gán ── */
+  const handleChoGanRightClick = (c, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopup({ choGan: c, ...buildPopupPos(rect), viaRightClick: true });
+  };
+
   const handleCellClick = (o, e) => {
     e.stopPropagation();
     if (ganCtx && o.trangthai === 'trong') {
@@ -251,7 +259,7 @@ export default function SoDoBaiNVPage() {
     <div onClick={() => { if (!isInMode) setPopup(null); }}>
       <PageHeader
         title="Sơ đồ bãi"
-        description="Trực quan hóa và điều phối vị trí container trong bãi"
+        subtitle="Trực quan hóa và điều phối vị trí container trong bãi"
       />
 
       {/* ── Chọn Block ── */}
@@ -320,6 +328,7 @@ export default function SoDoBaiNVPage() {
                         borderRadius: 8, padding: '8px 12px', background: '#f8fafc', cursor: 'pointer',
                       }}
                       onClick={() => handleChonGan(c)}
+                      onContextMenu={e => handleChoGanRightClick(c, e)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', letterSpacing: 1 }}>{c.socontainer}</span>
@@ -498,10 +507,12 @@ export default function SoDoBaiNVPage() {
           maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>{popup.obai.maobai_code}</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>
+              {popup.obai ? popup.obai.maobai_code : popup.choGan.socontainer}
+            </span>
             <span onClick={() => setPopup(null)} style={{ cursor: 'pointer', color: '#9ca3af', fontSize: 18, lineHeight: 1 }}>×</span>
           </div>
-          {popup.obai.container && (
+          {popup.obai?.container && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <PopupRow label="Số container" value={<span style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{popup.obai.container.socontainer}</span>} />
               <PopupRow label="Hải quan"     value={<HaiQuanBadge v={popup.obai.container.trangthai_haiquan} />} />
@@ -524,6 +535,30 @@ export default function SoDoBaiNVPage() {
               <button onClick={handleBatDauDaoChuyen}
                 style={{ marginTop: 6, width: '100%', padding: '7px 0', background: '#f97316', color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Đảo chuyển →
+              </button>
+            </div>
+          )}
+          {popup.choGan && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <PopupRow label="Loại container" value={popup.choGan.tenloai ?? (NHOM_LABEL[popup.choGan.nhom] ?? popup.choGan.nhom ?? '—')} />
+              <PopupRow label="Hải quan"     value={<HaiQuanBadge v={popup.choGan.trangthai_haiquan} />} />
+              <PopupRow label="Tình trạng"   value={popup.choGan.bi_hong ? <Badge variant="danger">Bị hỏng</Badge> : <Badge variant="success">Bình thường</Badge>} />
+              {popup.choGan.thoigian_vaobai && <PopupRow label="Vào bãi" value={popup.choGan.thoigian_vaobai} />}
+              {popup.choGan.sovoyage && (
+                <>
+                  <PopupRow label="Chuyến tàu" value={`${popup.choGan.tentau ?? '—'} · ${popup.choGan.sovoyage}`} />
+                  <PopupRow label="Hãng tàu" value={`${popup.choGan.mascac ?? '—'}${popup.choGan.tenhangtau ? ' · ' + popup.choGan.tenhangtau : ''}`} />
+                  <PopupRow
+                    label={popup.choGan.loai_hinh === 'nhap' ? 'Dự kiến cập cảng' : 'Dự kiến rời bến'}
+                    value={(popup.choGan.loai_hinh === 'nhap' ? popup.choGan.thoigiandukien : popup.choGan.thoigianroiben) ?? '—'}
+                  />
+                </>
+              )}
+              <PopupRow label="Block phù hợp" value={popup.choGan.block_phuhop ?? '—'} />
+              <button
+                onClick={() => { handleChonGan(popup.choGan); setPopup(null); }}
+                style={{ marginTop: 6, width: '100%', padding: '7px 0', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Chọn để gán vị trí →
               </button>
             </div>
           )}

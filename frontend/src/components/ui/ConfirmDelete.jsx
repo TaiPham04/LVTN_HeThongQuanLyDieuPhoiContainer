@@ -12,6 +12,8 @@ export default function ConfirmDelete({
   identifier,      // VD: "22G1"
   tenDoiTuong,     // VD: "Loại container"
   isLoading,
+  error,           // Lỗi từ server khi xác nhận thất bại (VD: còn dữ liệu liên kết)
+  hanhDong = 'Xóa', // VD: "Hủy" cho chuyến tàu — chỉ đổi nhãn hiển thị, không đổi chuỗi xác nhận
 }) {
   const [lydo, setLydo] = useState('');
   const [chuoiXacNhan, setChuoiXacNhan] = useState('');
@@ -45,19 +47,26 @@ export default function ConfirmDelete({
     <Modal
       open={open}
       onClose={handleClose}
-      title={`Xóa ${tenDoiTuong}`}
+      title={`${hanhDong} ${tenDoiTuong}`}
       width={460}
       footer={
         <>
           <Button variant="ghost" onClick={handleClose} disabled={isLoading}>
-            Hủy
+            Đóng
           </Button>
           <Button variant="danger" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? 'Đang xóa...' : 'Xác nhận xóa'}
+            {isLoading ? 'Đang xử lý...' : `Xác nhận ${hanhDong.toLowerCase()}`}
           </Button>
         </>
       }
     >
+      {/* Lỗi từ server (VD: còn container liên kết, không thể xóa/hủy) */}
+      {error && (
+        <div style={s.serverErr}>
+          {error}
+        </div>
+      )}
+
       {/* Cảnh báo */}
       <div style={s.warning}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -107,6 +116,15 @@ export default function ConfirmDelete({
 }
 
 const s = {
+  serverErr: {
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: 8,
+    padding: '10px 14px',
+    color: '#dc2626',
+    fontSize: 13,
+    marginBottom: 16,
+  },
   warning: {
     display: 'flex',
     gap: 10,
